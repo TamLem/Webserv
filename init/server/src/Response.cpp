@@ -22,7 +22,7 @@ void Response::create_messages(void)
 	this->messages[404] = "Not Found";
 }
 
-Response::Response(void)
+Response::Response(void) //AE init
 {
 	this->create_messages();
 }
@@ -31,6 +31,12 @@ Response::~Response(void)
 {
 
 }
+
+// std::ostream& operator<<(std::ostream& stream, const Response& response)
+// {
+// 	stream << response.get
+// 	return (stream);
+// }
 
 void Response::setProtocol(const std::string& protocol)
 {

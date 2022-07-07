@@ -2,6 +2,7 @@
 
 #include <string>
 #include <map>
+#include <ostream> //std::ostream
 
 class Response
 {
@@ -10,8 +11,8 @@ class Response
 		int status;
 		std::map<int, std::string> messages;
 		//container of header fields
-		Response(const Response& other);
-		Response& operator=(const Response& other);
+		Response(const Response&);
+		Response& operator=(const Response&);
 		void create_messages(void);
 	public:
 		Response(void);
@@ -26,3 +27,5 @@ class Response
 
 		std::string construct_header(void);
 };
+
+std::ostream& operator<<(std::ostream&, const Response&);

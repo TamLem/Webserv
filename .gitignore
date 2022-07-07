@@ -50,6 +50,7 @@
 
 # Debug files
 *.dSYM/
+*.DS_Store
 *.su
 *.idb
 *.pdb

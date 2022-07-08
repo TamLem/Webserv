@@ -38,6 +38,8 @@ struct client
 
 #define MAX_EVENTS 128
 
+static volatile int keep_running = 1;
+
 class Server
 {
 	public:
@@ -68,7 +70,16 @@ class Server
 			}
 		}
 		~Server()
-		{}
+		{
+			int reuse_port = 1;
+			int reuse_addr = 1;
+			std::cerr << RED << setsockopt(this->_server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(reuse_addr)) \
+			<< setsockopt(this->_server_fd, SOL_SOCKET, SO_REUSEPORT, &reuse_port, sizeof(reuse_port)) << std::endl;
+			socklen_t reuse_success;
+			std::cerr << "output getsock: "<< getsockopt(this->_server_fd, SOL_SOCKET, SO_REUSEPORT, &reuse_port, &reuse_success) << std::endl << reuse_port << std::endl;
+
+			close(this->_server_fd);
+		}
 		void stop();
 		int get_client(int fd)
 		{
@@ -204,7 +215,7 @@ class Server
 			struct kevent evList[MAX_EVENTS];
 			struct sockaddr_storage addr;
 
-			while(true)
+			while(keep_running)
 			{
 				int num_events = kevent(kq, NULL, 0, evList, MAX_EVENTS, NULL);
 				for (int i = 0; i < num_events; i++)

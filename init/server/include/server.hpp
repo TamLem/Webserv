@@ -46,7 +46,8 @@ class Server
 			struct sockaddr_in cli_addr;
 			_port = port;
 
-			if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+			if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+			{
 				std::cerr << RED << "Error creating socket" << std::endl;
 				perror(NULL);
 				std::cerr << RESET;
@@ -135,8 +136,7 @@ class Server
 				delete[] out_buffer;
 				close(fd);
 			}
-			// else if (strnstr(buffer, "GET", 3))
-			else if (strstr(buffer.c_str(), "GET")) //this is for linux if the above des not work
+			else if (strstr(buffer.c_str(), "GET"))
 			{
 				std::cout << GREEN << "@@@@@@ GET index @@@@@" << RESET << std::endl << std::endl;
 				std::ifstream myfile("/Users/tblaase/Documents/webserv/init/server/pages/index.html");
@@ -250,7 +250,8 @@ class Server
 #ifdef USE_KQUEUE
 			/*create a kqueue*/
 			int kq = kqueue();
-			if (kq == -1) {
+			if (kq == -1)
+			{
 				std::cerr << RED << "Error creating kqueue" << std::endl;
 				perror(NULL);
 				std::cerr << RESET;
@@ -259,7 +260,8 @@ class Server
 			struct kevent ev;
 			EV_SET(&ev, _server_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 			int ret = kevent(kq, &ev, 1, NULL, 0, NULL);
-			if (ret == -1) {
+			if (ret == -1)
+			{
 				std::cerr << RED << "Error adding server socket to kqueue" << std::endl;
 				perror(NULL);
 				std::cerr << RESET;

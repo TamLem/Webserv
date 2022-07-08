@@ -11,8 +11,6 @@
 #define YELLOW "\033[33m"
 #define BLUE "\033[34m"
 #define RED "\033[31m"
-#define UP "\033[A"
-#define CUT "\033[K"
 
 /** End of definitions */
 
@@ -102,6 +100,22 @@ namespace BaseLoop
 		loop_event_data_t pipe_event_data;
 		loop_event_data_t tcp_server_event_data;
 
+		static void handle_signal(int sig)
+		{
+			if (sig == SIGINT)
+			{
+				std::cerr << BLUE << "SIGINT detected, terminating server now" << std::endl;
+				exit(0);
+			}
+		}
+
+		void	handle_signals(void)
+		{
+			signal(SIGQUIT, SIG_IGN);
+			signal(SIGINT, SIG_IGN);
+			signal(SIGINT, handle_signal);
+		}
+
 		/// Accepting connections from server socket
 		inline void accept_tcp(loop_event_data_t *data)
 		{
@@ -117,6 +131,7 @@ namespace BaseLoop
 			socklen_t socklen;
 			for(;;)
 			{
+				// handle_signals();
 				const int fd = accept(this->tcp_listener, &addr, &socklen);
 				if(fd <= 0)
 				{
@@ -159,6 +174,7 @@ namespace BaseLoop
 
 			for(rp = res; rp != NULL; rp = rp->ai_next)
 			{
+				handle_signals();
 				ret_socket = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 				if(ret_socket <= 0)
 				{
@@ -462,6 +478,7 @@ namespace BaseLoop
 			for(;;)
 			{
 				r = read(data->fd, this->readable_buffer, BASE_LOOP_READABLE_DATA_SIZE);
+				handle_signals();
 				// if we have an error during read process
 				if(r <= 0)
 				{
@@ -523,6 +540,7 @@ namespace BaseLoop
 
 				for(i = 0; i < nev; i++)
 				{
+					handle_signals();
 					if(get_events[i].flags & EV_ERROR)
 					{
 						fprintf(stderr, "Event Loop error -> %s", strerror(get_events[i].data));

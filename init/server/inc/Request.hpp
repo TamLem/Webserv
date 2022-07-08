@@ -12,8 +12,10 @@ class Request
 		//some container fo headers
 		Request(const Request&);
 		Request& operator=(const Request&);
-	public:
 		Request(void);
+		void parseMessage(const std::string& message);
+	public:
+		Request(const std::string&);
 		~Request(void);
 
 		void setMethod(const std::string&);
@@ -25,6 +27,10 @@ class Request
 		const std::string& getProtocol(void) const;
 
 		// std::string construct_header(void);
+	class InvalidInput : public std::exception
+	{
+		const char* what() const throw();
+	};
 };
 
 std::ostream& operator<<(std::ostream&, const Request&);

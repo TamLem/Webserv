@@ -5,10 +5,18 @@
 
 static void static_test_request (void)
 {
-	Request request;
-	request.setMethod("GET");
-	request.setUrl("/index.html");
-	request.setProtocol("HTTP/1.1");
+	try
+	{
+		Request request("");
+	}
+	catch (std::exception & e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+	Request request("abc");
+	// request.setMethod("GET");
+	// request.setUrl("/index.html");
+	// request.setProtocol("HTTP/1.1");
 	std::cout << "HTTP request header:\n" << request << std::endl;
 }
 

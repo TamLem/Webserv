@@ -2,9 +2,18 @@
 
 #include <string>
 
-Request::Request(void) //AE init
+void Request::parseMessage(const std::string& message)
 {
+	if (message.empty())
+		throw InvalidInput();
+	this->method = "GET";
+	this->url = "/index.html";
+	this->protocol = "HTTP/1.1";
+}
 
+Request::Request(const std::string& message)
+{
+	parseMessage(message);
 }
 
 Request::~Request(void)
@@ -54,3 +63,8 @@ const std::string& Request::getProtocol(void) const
 // {
 
 // }
+
+const char* Request::InvalidInput::what() const throw()
+{
+	return ("Exception: invalid input");
+}

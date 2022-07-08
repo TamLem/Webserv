@@ -98,6 +98,28 @@ class Server
 			return (0);
 		}
 
+		size_t	ft_intlen(int n)
+		{
+			size_t	i;
+
+			i = 0;
+			if (n == -2147483648)
+				return (10);
+			if (n >= 0 && n <= 9)
+				return (1);
+			if (n < 0)
+			{
+				n = n * -1;
+				i++;
+			}
+			while (n > 0)
+			{
+				n = n / 10;
+				i++;
+			}
+			return (i);
+		}
+
 		void parse_request(std::string buffer, int fd)
 		{
 			if (strstr(buffer.c_str(), "GET") && strstr(buffer.c_str(), "favicon.ico"))
@@ -113,7 +135,8 @@ class Server
 					char *out_buffer = new char[size];
 					pbuf->sgetn(out_buffer,size);
 					input.close();
-					dprintf(fd, "HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/vdn.microsoft.icon\nContent-Length: %lu\n\n", size + 86);
+					size += strlen("HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/vdn.microsoft.icon\nContent-Length: \n\n") + ft_intlen(size);
+					dprintf(fd, "HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/vdn.microsoft.icon\nContent-Length: %lu\n\n", size);
 					write(fd, out_buffer, size);
 					delete[] out_buffer;
 				}
@@ -131,7 +154,8 @@ class Server
 				char *out_buffer = new char[size];
 				pbuf->sgetn(out_buffer,size);
 				input.close();
-				dprintf(fd, "HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/jpg\nContent-Length: %lu\n\n", size + 86);
+				size += strlen("HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/jpg\nContent-Length: \n\n") + ft_intlen(size);
+				dprintf(fd, "HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/jpg\nContent-Length: %lu\n\n", size);
 				write(fd, out_buffer, size);
 				delete[] out_buffer;
 				close(fd);
@@ -151,6 +175,7 @@ class Server
 						myline.append(out_buffer + "\n");
 					}
 					size = myline.length();
+					size += strlen("HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: text/html\nContent-Length: \n\n") + ft_intlen(size);
 					dprintf(fd, "HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: text/html\nContent-Length: %lu\n\n", size);
 					write(fd, myline.c_str(), myline.length());
 					myfile.close();
@@ -160,7 +185,9 @@ class Server
 					std::cerr << RED << "Couldn't open file" << std::endl;
 					perror(NULL);
 					std::cerr << RESET;
-					dprintf(fd, "HTTP/1.1 404 \nServer: localhost:8080\nContent-Type: image/jpg\nContent-Length: %d\n\n", 86);
+					size_t size = strlen("HTTP/1.1 404 \nServer: localhost:8080\nContent-Type: image/jpg\nContent-Length: \n\n");
+					size += ft_intlen(size);
+					dprintf(fd, "HTTP/1.1 404 \nServer: localhost:8080\nContent-Type: image/jpg\nContent-Length: %lu\n\n", size);
 				}
 				close(fd);
 			}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <iostream> //std::ostream
 
 class Request
 {

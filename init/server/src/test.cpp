@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-void test_request (void)
+static void static_test_request (void)
 {
 	Request request;
 	request.setMethod("GET");
@@ -12,19 +12,27 @@ void test_request (void)
 	std::cout << "HTTP request header:\n" << request << std::endl;
 }
 
-void test_response (void)
+static void static_test_response (void)
 {
-	Response response;
+	try
+	{
+		Response response("HTTP/1.1", -2);
+	}
+	catch (std::exception & e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+	Response response("HTTP/1.1", 200);
 	// std::cout << response.messages[100] << std::endl;
-	response.setProtocol("HTTP/1.1");
-	response.setStatus(200);
+	// response.setProtocol("HTTP/1.1");
+	// response.setStatus(200);
 	std::cout << "HTTP response header:\n" << response.construct_header() << std::endl;
 }
 
 int main (void)
 {
-	test_response();
-	test_request();
+	static_test_response();
+	static_test_request();
 }
 
 //c++ -I ../inc/ test.cpp Response.cpp Request.cpp

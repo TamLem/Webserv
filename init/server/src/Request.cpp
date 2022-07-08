@@ -12,10 +12,12 @@ Request::~Request(void)
 
 }
 
-std::ostream& operator<<(std::ostream& stream, const Request& request)
+std::ostream& operator<<(std::ostream& out, const Request& request)
 {
-	stream << request.getMethod();// << request.getUrl() << request.getProtocol();
-	return (stream);
+	out << request.getMethod() << " "
+	<< request.getUrl() << " "
+	<< request.getProtocol();
+	return (out);
 }
 
 void Request::setMethod(const std::string& method)

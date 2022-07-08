@@ -3,6 +3,7 @@
 #include <string> //std::string
 #include <iostream> //std::ostream
 #include <set> //std::set
+#include <vector> //std::vector
 #include "Message.hpp"
 
 class Request : public Message
@@ -15,6 +16,7 @@ class Request : public Message
 		void addMethods(void);
 		void parseMessage(const std::string& message);
 		bool isValidMethod(std::string);
+		void createTokens(std::vector<std::string>& tokens, const std::string& message);
 	public:
 		Request(const std::string&);
 		~Request(void);

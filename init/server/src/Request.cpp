@@ -1,6 +1,7 @@
 #include "Request.hpp"
 
 #include <string>
+#include <vector>
 
 bool Request::isValidMethod(std::string method)
 {
@@ -16,24 +17,42 @@ void Request::addMethods(void)
 	this->validMethods.insert("DELETE");
 }
 
+void Request::createTokens(std::vector<std::string>& tokens, const std::string& message)
+{
+	std::string delimiter = " ";
+	size_t last = 0;
+	size_t next = 0;
+
+	while ((next = message.find(delimiter, last)) != std::string::npos && tokens.size() < 3)
+	{
+		tokens.push_back(message.substr(last, next - last));
+		last = next + 1;
+	}
+	tokens.push_back(message.substr(last));
+	if (tokens.size() != 3)
+		throw InvalidInput();
+}
+
 void Request::parseMessage(const std::string& message)
 {
+	std::vector<std::string> tokens;
 	std::string method;
 	std::string url;
 	std::string protocol;
 	
 	if (message.empty())
 		throw InvalidInput();
-	method = "GET"; //AE testing
-	url = "/index.html"; //AE testing
-	protocol = "HTTP/1.1"; //AE testing
+	createTokens(tokens, message);
+	method = tokens[0];
+	url = tokens[1];
+	protocol = tokens[2];
 	if (!isValidMethod(method))
 		throw InvalidMethod();
-	if (!isValidProtocol("HTTP/1.1"))
+	if (!isValidProtocol(protocol))
 		throw InvalidProtocol();
-	this->method = "GET";
-	this->url = "/index.html";
-	this->protocol = "HTTP/1.1";
+	this->method = method;
+	this->url = url;
+	this->protocol = protocol;
 }
 
 Request::Request(const std::string& message)

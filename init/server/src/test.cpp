@@ -13,7 +13,7 @@ static void staticTestRequest (void)
 	{
 		std::cerr << e.what() << std::endl;
 	}
-	Request request("abc");
+	Request request("GET /index.html HTTP/1.1");
 	std::cout << "HTTP request header:\n" << request << std::endl;
 }
 

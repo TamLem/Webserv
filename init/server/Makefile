@@ -1,10 +1,10 @@
-NAME		=	server
+NAME		=	webserv
 
-CXX			=	c++
+CXX			=	g++
 
-CXXFLAGS	=	-std=c++11#-Wall -Werror -Wextra
+CXXFLAGS	=	-std=c++98#-Wall -Werror -Wextra
 
-CXXFLAGS	+=	-g
+# CXXFLAGS	+=	-g
 
 #directories
 PWD			=	$(shell pwd)
@@ -73,5 +73,9 @@ fclean: clean
 #re rule
 re: fclean all
 
+#run rule
+run: re
+	./$(NAME)
+
 #phony
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re run

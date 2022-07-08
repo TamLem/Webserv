@@ -4,53 +4,30 @@
 #include <map> //std::map
 #include <sstream> //std::stringstream
 
-
-// Response::Response(const Response& other)
-// {
-	
-// }
-
-// Response& Response::operator=(const Response& other)
-// {
-
-// }
-
-void Response::create_messages(void)
+void Response::createMessageMap(void)
 {
-	this->messages[100] = "Continue";
-	this->messages[200] = "OK";
-	this->messages[404] = "Not Found";
+	this->messageMap[100] = "Continue";
+	this->messageMap[200] = "OK";
+	this->messageMap[404] = "Not Found";
 }
 
-bool Response::is_valid_protocol(std::string protocol)
+bool Response::isValidStatus(int status)
 {
-	if (protocol == "HTTP/1.1")
+	if (this->messageMap.count(status))
 		return (true);
 	return (false);
 }
 
-bool Response::is_valid_status(int status)
+Response::Response(std::string protocol, int status)
 {
-	if (this->messages.count(status))
-		return (true);
-	return (false);
-}
-
-// Response::Response(void) //AE init
-// {
-// 	this->create_messages();
-// }
-
-Response::Response(std::string protocol, int status) //AE init
-{
-	this->create_messages();
-	if (!is_valid_protocol(protocol))
+	this->createMessageMap();
+	if (!isValidProtocol(protocol))
 		throw InvalidProtocol();
-	if (!is_valid_status(status))
+	if (!isValidStatus(status))
 		throw InvalidStatus();
 	this->protocol = protocol;
 	this->status = status;
-	this->message = this->messages[this->status];
+	this->statusMessage = this->messageMap[this->status];
 }
 
 Response::~Response(void)
@@ -62,23 +39,8 @@ std::ostream& operator<<(std::ostream& out, const Response& response)
 {
 	out << response.getProtocol() << " "
 	<< response.getStatus() << " "
-	<< response.getMessage();
+	<< response.getStatusMessage();
 	return (out);
-}
-
-// void Response::setProtocol(const std::string& protocol)
-// {
-// 	this->protocol = protocol;
-// }
-
-// void Response::setStatus(const int& status)
-// {
-// 	this->status = status;
-// }
-
-const std::string& Response::getProtocol(void) const
-{
-	return (this->protocol);
 }
 
 const int& Response::getStatus(void) const
@@ -86,18 +48,18 @@ const int& Response::getStatus(void) const
 	return (this->status);
 }
 
-const std::string& Response::getMessage(void) const
+const std::string& Response::getStatusMessage(void) const
 {
-	return (this->message);
+	return (this->statusMessage);
 }
 
-std::string Response::construct_header(void)
+std::string Response::constructHeader(void)
 {
 	std::stringstream stream;
 
 	stream.clear();
 	stream.str("");
-	stream << this->protocol << " " << this->status << " " << this->message
+	stream << this->protocol << " " << this->status << " " << this->statusMessage
 	// << "\n" <<
 	// "Date: " << responseClass.date << "\n" <<
 	// "Server: " << responseClass.server << "\n" <<
@@ -106,11 +68,6 @@ std::string Response::construct_header(void)
 	<< "\n\n";
 
 	return (stream.str());
-}
-
-const char* Response::InvalidProtocol::what() const throw()
-{
-	return ("Exception: invalid protocol");
 }
 
 const char* Response::InvalidStatus::what() const throw()

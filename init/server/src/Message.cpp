@@ -15,6 +15,11 @@ const std::string& Message::getProtocol(void) const
 	return (this->protocol);
 }
 
+const std::string& Message::getBody(void) const
+{
+	return (this->body);
+}
+
 const char* Message::InvalidProtocol::what() const throw()
 {
 	return ("Exception: invalid protocol");

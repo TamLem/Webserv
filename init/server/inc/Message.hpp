@@ -2,6 +2,10 @@
 
 #include <exception>
 #include <string>
+#include <utility> //std::pair
+#include <list> //std::list
+
+#define CRLF "\n"
 
 class Message
 {
@@ -14,8 +18,10 @@ class Message
 		Message(void);
 		bool isValidProtocol(std::string);
 	public:
+		std::list<std::pair<std::string, std::string>> headerFields;
 		virtual ~Message(void) = 0;
 		const std::string& getProtocol(void) const;
+		const std::string& getBody(void) const;
 
 	class InvalidProtocol : public std::exception
 	{

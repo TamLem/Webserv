@@ -14,9 +14,11 @@ class Request : public Message
 		std::string url;
 		// std::string protocol;
 		void addMethods(void);
-		void parseMessage(const std::string& message);
+		void parseMessage(const std::string&);
 		bool isValidMethod(std::string);
-		void createTokens(std::vector<std::string>& tokens, const std::string& message);
+		void parseStartLine(const std::string&);
+		void parseHeaderFields(const std::string&);
+		void createTokens(std::vector<std::string>&, const std::string&, const int&, const std::string&);
 	public:
 		Request(const std::string&);
 		~Request(void);

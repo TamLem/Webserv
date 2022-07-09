@@ -2,6 +2,8 @@
 
 #include <string>
 #include <vector>
+#include <sstream> //std::istringstream
+#include <ios> //ios::eof
 
 bool Request::isValidMethod(std::string method)
 {
@@ -17,42 +19,77 @@ void Request::addMethods(void)
 	this->validMethods.insert("DELETE");
 }
 
-void Request::createTokens(std::vector<std::string>& tokens, const std::string& message)
+void Request::createTokens(std::vector<std::string>& tokens, const std::string& message, const int& count, const std::string& delimiter)
 {
-	std::string delimiter = " ";
+	// std::string delimiter = " ";
 	size_t last = 0;
 	size_t next = 0;
 
-	while ((next = message.find(delimiter, last)) != std::string::npos && tokens.size() < 3)
+	while ((next = message.find(delimiter, last)) != std::string::npos && tokens.size() < count + 1)
 	{
 		tokens.push_back(message.substr(last, next - last));
-		last = next + 1;
+		last = next + delimiter.length();
 	}
 	tokens.push_back(message.substr(last));
-	if (tokens.size() != 3)
+	if (tokens.size() != count)
 		throw InvalidInput();
+}
+
+void Request::parseStartLine(const std::string& startLine)
+{
+	std::vector<std::string> tokens;
+
+	createTokens(tokens, startLine, 3, " ");
+	if (!isValidMethod(tokens[0]))
+		throw InvalidMethod();
+	if (!isValidProtocol(tokens[2]))
+		throw InvalidProtocol();
+	this->method = tokens[0];
+	this->url = tokens[1];
+	this->protocol = tokens[2];
+}
+
+void Request::parseHeaderFields(const std::string& line)
+{
+	std::vector<std::string> tokens;
+
+	createTokens(tokens, line, 2, ": ");
+	// std::pair<std::string, std::string> pair;
+	// pair = std::make_pair("tokens[0]", "tokens[1]");
+	// std::pair<std::string&, std::string&> = std::make_pair<tokens[0], tokens[1]>;
+	this->headerFields.push_back(std::make_pair(tokens[0], tokens[1]));
+	// this->headerFields.push_back(std::make_pair<tokens[0], tokens[1]>);
 }
 
 void Request::parseMessage(const std::string& message)
 {
-	std::vector<std::string> tokens;
-	std::string method;
-	std::string url;
-	std::string protocol;
-	
+	std::string line;
+
+
 	if (message.empty())
 		throw InvalidInput();
-	createTokens(tokens, message);
-	method = tokens[0];
-	url = tokens[1];
-	protocol = tokens[2];
-	if (!isValidMethod(method))
-		throw InvalidMethod();
-	if (!isValidProtocol(protocol))
-		throw InvalidProtocol();
-	this->method = method;
-	this->url = url;
-	this->protocol = protocol;
+	std::istringstream stream (message);
+	std::getline(stream, line);
+	parseStartLine(line);
+	while (stream.eof() == false)
+	{
+		std::getline(stream, line);
+		// std::cout << "LINE:" << line << "." << std::endl;
+		if (line.empty())
+			break ;
+		parseHeaderFields(line);
+	}
+	while (stream.eof() == false)
+	{
+		std::getline(stream, line);
+		this->body += line;
+	}
+	// while (stream.eof() == false)
+	// {
+	// 	std::getline(stream, line);
+	// 	parseHeaderFields(line);
+	// }
+	// parseStartLine(stream.getline(line,  CRLF));
 }
 
 Request::Request(const std::string& message)
@@ -70,7 +107,13 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 {
 	out << request.getMethod() << " "
 	<< request.getUrl() << " "
-	<< request.getProtocol();
+	<< request.getProtocol() << "\n";
+	for (std::list<std::pair<std::string, std::string>>::const_iterator it=request.headerFields.begin(); it != request.headerFields.end(); ++it)
+	{
+		out << it->first << ": "
+		<< it->second << "\n";
+	}
+	out << request.getBody() << std::endl;
 	return (out);
 }
 

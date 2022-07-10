@@ -25,6 +25,11 @@ const char* Message::InvalidProtocol::what() const throw()
 	return ("Exception: invalid protocol");
 }
 
+const char* Message::HeaderFieldDuplicate::what() const throw()
+{
+	return ("Exception: header field duplicate");
+}
+
 bool Message::isValidProtocol(std::string protocol)
 {
 	if (protocol == "HTTP/1.1")

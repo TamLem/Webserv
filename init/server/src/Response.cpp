@@ -6,9 +6,14 @@
 
 void Response::createMessageMap(void)
 {
+	//1xx informational response
 	this->messageMap[100] = "Continue";
+	//2xx success
 	this->messageMap[200] = "OK";
+	//3xx redirection
+	//4xx client errors
 	this->messageMap[404] = "Not Found";
+	//5xx server errors
 }
 
 bool Response::isValidStatus(int status)
@@ -28,6 +33,7 @@ Response::Response(std::string protocol, int status)
 	this->protocol = protocol;
 	this->status = status;
 	this->statusMessage = this->messageMap[this->status];
+	this->hasBody = true;
 }
 
 Response::~Response(void)

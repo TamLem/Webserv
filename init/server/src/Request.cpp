@@ -19,7 +19,7 @@ void Request::addMethods(void)
 	this->validMethods.insert("DELETE");
 }
 
-void Request::createTokens(std::vector<std::string>& tokens, const std::string& message, const int& count, const std::string& delimiter)
+void Request::createTokens(std::vector<std::string>& tokens, const std::string& message, const unsigned int& count, const std::string& delimiter)
 {
 	// std::string delimiter = " ";
 	size_t last = 0;
@@ -32,14 +32,16 @@ void Request::createTokens(std::vector<std::string>& tokens, const std::string& 
 	}
 	tokens.push_back(message.substr(last));
 	if (tokens.size() != count)
-		throw InvalidInput();
+		throw InvalidNumberOfTokens();
 }
 
-void Request::parseStartLine(const std::string& startLine)
+void Request::parseStartLine(std::istringstream& stream)
 {
 	std::vector<std::string> tokens;
+	std::string line;
 
-	createTokens(tokens, startLine, 3, " ");
+	std::getline(stream, line);
+	createTokens(tokens, line, 3u, " ");
 	if (!isValidMethod(tokens[0]))
 		throw InvalidMethod();
 	if (!isValidProtocol(tokens[2]))
@@ -49,51 +51,65 @@ void Request::parseStartLine(const std::string& startLine)
 	this->protocol = tokens[2];
 }
 
-void Request::parseHeaderFields(const std::string& line)
+void Request::parseHeaderFieldLine(const std::string& line)
 {
 	std::vector<std::string> tokens;
 
 	createTokens(tokens, line, 2, ": ");
-	// std::pair<std::string, std::string> pair;
-	// pair = std::make_pair("tokens[0]", "tokens[1]");
-	// std::pair<std::string&, std::string&> = std::make_pair<tokens[0], tokens[1]>;
-	this->headerFields.push_back(std::make_pair(tokens[0], tokens[1]));
-	// this->headerFields.push_back(std::make_pair<tokens[0], tokens[1]>);
+	if (this->headerFields.count(tokens[0]))
+		throw HeaderFieldDuplicate();
+	this->headerFields[tokens[0]] = tokens[1];
+}
+
+void Request::parseHeaderFields(std::istringstream& stream)
+{
+	while (stream.eof() == false)
+	{
+		std::string line;
+		
+		std::getline(stream, line);
+		if (line.empty())
+			break ;
+		parseHeaderFieldLine(line);
+	}
+}
+
+void Request::parseBody(std::istringstream& stream)
+{
+	int length = 0;
+	
+	while (stream.eof() == false)
+	// while (length < this->headerFields["Content-Length"]) AE length check, how to ptotect agains invalid chars?
+	{
+		std::string line;
+		
+		std::getline(stream, line);
+		length += line.length();
+		this->body += line;
+	}
+}
+
+void Request::setBodyFlag(void)
+{
+	if (this->headerFields.count("Content-Length") || this->headerFields.count("Transfer-Encoding")) //AE handle caseinsensitivity
+		this->hasBody = true;
 }
 
 void Request::parseMessage(const std::string& message)
 {
-	std::string line;
-
-
 	if (message.empty())
-		throw InvalidInput();
+		throw EmptyMessage();
 	std::istringstream stream (message);
-	std::getline(stream, line);
-	parseStartLine(line);
-	while (stream.eof() == false)
-	{
-		std::getline(stream, line);
-		// std::cout << "LINE:" << line << "." << std::endl;
-		if (line.empty())
-			break ;
-		parseHeaderFields(line);
-	}
-	while (stream.eof() == false)
-	{
-		std::getline(stream, line);
-		this->body += line;
-	}
-	// while (stream.eof() == false)
-	// {
-	// 	std::getline(stream, line);
-	// 	parseHeaderFields(line);
-	// }
-	// parseStartLine(stream.getline(line,  CRLF));
+	parseStartLine(stream);
+	parseHeaderFields(stream);
+	setBodyFlag();
+	if (this->hasBody == true)
+		parseBody(stream);
 }
 
 Request::Request(const std::string& message)
 {
+	this->hasBody = false;
 	addMethods();
 	parseMessage(message);
 }
@@ -108,7 +124,7 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 	out << request.getMethod() << " "
 	<< request.getUrl() << " "
 	<< request.getProtocol() << "\n";
-	for (std::list<std::pair<std::string, std::string>>::const_iterator it=request.headerFields.begin(); it != request.headerFields.end(); ++it)
+	for (std::map<std::string, std::string>::const_iterator it=request.headerFields.begin(); it != request.headerFields.end(); ++it)
 	{
 		out << it->first << ": "
 		<< it->second << "\n";
@@ -117,20 +133,20 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 	return (out);
 }
 
-void Request::setMethod(const std::string& method)
-{
-	this->method = method;
-}
+// void Request::setMethod(const std::string& method)
+// {
+// 	this->method = method;
+// }
 
-void Request::setUrl(const std::string& url)
-{
-	this->url = url;
-}
+// void Request::setUrl(const std::string& url)
+// {
+// 	this->url = url;
+// }
 
-void Request::setProtocol(const std::string& protocol)
-{
-	this->protocol = protocol;
-}
+// void Request::setProtocol(const std::string& protocol)
+// {
+// 	this->protocol = protocol;
+// }
 
 const std::string& Request::getMethod(void) const
 {
@@ -147,9 +163,14 @@ const std::string& Request::getUrl(void) const
 // 	return (this->protocol);
 // }
 
-const char* Request::InvalidInput::what() const throw()
+const char* Request::InvalidNumberOfTokens::what() const throw()
 {
-	return ("Exception: invalid input");
+	return ("Exception: invalid number of tokens");
+}
+
+const char* Request::EmptyMessage::what() const throw()
+{
+	return ("Exception: empty message");
 }
 
 const char* Request::InvalidMethod::what() const throw()

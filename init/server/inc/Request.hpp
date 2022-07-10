@@ -16,22 +16,30 @@ class Request : public Message
 		void addMethods(void);
 		void parseMessage(const std::string&);
 		bool isValidMethod(std::string);
-		void parseStartLine(const std::string&);
-		void parseHeaderFields(const std::string&);
-		void createTokens(std::vector<std::string>&, const std::string&, const int&, const std::string&);
+		void parseStartLine(std::istringstream&);
+		void parseHeaderFields(std::istringstream&);
+		void parseHeaderFieldLine(const std::string&);
+		void parseBody(std::istringstream&);
+		void createTokens(std::vector<std::string>&, const std::string&, const unsigned int&, const std::string&);
+		void setBodyFlag(void);
 	public:
 		Request(const std::string&);
 		~Request(void);
 
-		void setMethod(const std::string&);
-		void setUrl(const std::string&);
-		void setProtocol(const std::string&);
+		// void setMethod(const std::string&);
+		// void setUrl(const std::string&);
+		// void setProtocol(const std::string&);
 
 		const std::string& getMethod(void) const;
 		const std::string& getUrl(void) const;
 		// const std::string& getProtocol(void) const;
 
-	class InvalidInput : public std::exception
+	class InvalidNumberOfTokens : public std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class EmptyMessage : public std::exception
 	{
 		const char* what() const throw();
 	};

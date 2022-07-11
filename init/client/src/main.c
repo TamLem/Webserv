@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 
+// rewrite a client in c++!!!!!!!!!!!!!
 int main()
 {
 	for (int i = 0; i < 2000; ++i)

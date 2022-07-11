@@ -1,6 +1,7 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
+/* system includes */
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -15,21 +16,17 @@
 #include <cstdio>
 #include <fcntl.h>
 #include <fstream>
-#include "response.hpp"
+#include <sys/event.h>
+#include <csignal> // check if forbidden !!!!!!!!!!
 
-#if defined(__FreeBSD__) || defined(__APPLE__) || defined(__OpenBSD__) || defined(__NetBSD__)
-	#define USE_KQUEUE
-	#include <sys/event.h>
-#elif defined(__linux__)
-	#define USE_POLL
-	#include <sys/poll.h>
-#endif
+/* our includes */
+#include "Response.hpp"
+#include "Request.hpp"
 
-#define RESET "\033[0m"
-#define GREEN "\033[32m"
-#define YELLOW "\033[33m"
-#define BLUE "\033[34m"
-#define RED "\033[31m"
+#include "Base.hpp"
+
+// Forbidden includes
+#include <errno.h>
 
 struct client
 {
@@ -46,7 +43,6 @@ class Server
 	public:
 		Server(int port)
 		{
-			struct sockaddr_in cli_addr;
 			_port = port;
 
 			if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -57,18 +53,18 @@ class Server
 				return;
 			}
 
-			/* Set socket reusable from Time-Wait state */
+	// Set socket reusable from Time-Wait state
 			int val = 1;
-			setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4);
+			setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // how to implement | SO_NOSIGPIPE
 
-			/* initialize server address struct */
+	// initialize server address struct
 			struct sockaddr_in serv_addr;
 			memset(&serv_addr, '0', sizeof(serv_addr));
 			serv_addr.sin_family = AF_INET;
 			serv_addr.sin_port = htons(port);
 			serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-			/* bind socket to address */
+	// bind socket to address
 			if((bind(_server_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) < 0)
 			{
 				std::cerr << RED << "Error binding socket" << std::endl;
@@ -84,7 +80,7 @@ class Server
 		void stop();
 		int get_client(int fd)
 		{
-			for (int i = 0; i < _clients.size(); i++)
+			for (size_t i = 0; i < _clients.size(); i++)
 			{
 				if (_clients[i].fd == fd)
 					return (i);
@@ -110,7 +106,6 @@ class Server
 			return (0);
 		}
 
-#ifdef USE_KQUEUE
 		void run_event_loop(int kq)
 		{
 			struct kevent ev;
@@ -157,7 +152,7 @@ class Server
 							std::cerr << RESET;
 							continue;
 						}
-						char buf[1024];
+						char buf[1024]; // probably needs to be an ifstream to not overflow with enormous requests
 						int n = read(fd, buf, 1024);
 						if (n < 0)
 						{
@@ -168,14 +163,16 @@ class Server
 						}
 						buf[n] = '\0';
 						std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
-						response::parse_request(buf, fd);
+
+						// Response newResponse(Request newRequest(buf), fd);
+						Request newRequest(buf);
+						Response newResponse("HTTP/1.1", 200, fd, newRequest.getUrl());
+						// std::cout << newResponse.constructHeader();
+						newResponse.sendResponse();
 					}
 				}
 			}
 		}
-#elif defined(USE_POLL)
-		// insert poll implementation here
-#endif
 
 		void run(){
 			if (listen(_server_fd, 5))
@@ -187,8 +184,7 @@ class Server
 			}
 			else
 				std::cout << "Listening on port " << _port << std::endl;
-#ifdef USE_KQUEUE
-			/*create a kqueue*/
+	// create a kqueue
 			int kq = kqueue();
 			if (kq == -1)
 			{
@@ -208,13 +204,10 @@ class Server
 				return;
 			}
 			run_event_loop(kq);
-#elif defined(USE_POLL)
-			// insert poll implementation here
-#endif
 		}
 	private:
-		int _port;
-		int _server_fd;
+		size_t _port;
+		size_t _server_fd;
 		std::vector <client> _clients;
 };
 

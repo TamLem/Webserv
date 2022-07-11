@@ -31,7 +31,7 @@ class Response : public Message
 		const int& getStatus(void) const;
 		const std::string& getStatusMessage(void) const;
 
-		std::string constructHeader(void);
+		std::string constructHeader(size_t size);
 
 		void sendResponse(void);
 

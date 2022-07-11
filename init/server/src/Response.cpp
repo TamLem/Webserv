@@ -72,7 +72,19 @@ const std::string& Response::getStatusMessage(void) const
 	return (this->statusMessage);
 }
 
-std::string Response::constructHeader(void)
+static void	ft_putnbr(unsigned int n, char *str, unsigned int i)
+{
+	if (n >= 10)
+	{
+		ft_putnbr(n / 10, str, i - 1);
+		ft_putnbr(n % 10, str, i);
+	}
+	else
+		str[i] = n + '0';
+	i++;
+}
+
+std::string Response::constructHeader(size_t old_size)
 {
 	std::stringstream stream;
 
@@ -81,17 +93,31 @@ std::string Response::constructHeader(void)
 	stream << this->protocol << " " << this->status << " " << this->statusMessage
 	// << "\n" <<
 	// "Date: " << responseClass.date << "\n" <<
-	// "Content-Type: " << responseClass.type << "\n" <<
-	// "Content-Length: " << responseClass.length
+	// << "Content-Type: " << responseClass.type << "\n"
+	// << CRLF
 	// << "\r\n\r\n";
-	<< "\r\n"
+	<< CRLF
 	<< "Server: localhost:8080"
 	// << "Content-Type: text/html"
-	// << "\r\n"
-	// << "Content-Length: 500000"
-	<< "\r\n\r\n";
+	// << CRLF
+	// "Content-Length: " << responseClass.length
+	<< "Content-Length: ";
 	// << this->body;
-	return (stream.str());
+	std::string head;
+	char buffer[256];
+	while (stream.good())
+	{
+		stream.getline(buffer, 256);
+		head.append(buffer);
+	}
+	size_t size = old_size;
+	size += head.length() + ft_intlen(size);
+	size += ft_intlen(size) - ft_intlen(old_size);
+	buffer[0] = '\0';
+	ft_putnbr(size, buffer, ft_intlen(size));
+	head.append(buffer);
+	head.append(CRLFTWO);
+	return (head);
 }
 
 size_t Response::ft_intlen(int n)
@@ -121,6 +147,7 @@ int Response::sendall(int sock_fd, char *buffer, int len)
 	int total;
 	int bytesleft;
 	int n;
+	// int i = 0;
 
 	total = len;
 	bytesleft = len;
@@ -152,11 +179,9 @@ void Response::sendResponse(void)
 		char *out_buffer = new char[size];
 		filebuffer->sgetn(out_buffer, size); //copy filebuffer to outbuffer
 		input.close();
-		// size += strlen("HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/vdn.microsoft.icon\nContent-Length: \n\n") + ft_intlen(size);
-		std::string response = 	this->constructHeader();
-		size += response.length() + ft_intlen(size);
-		// dprintf(fd, "HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/vdn.microsoft.icon\nContent-Length: %lu\n\n", size);
-		dprintf(this->fd, "%s", response.c_str());
+		// size += strlen("HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/vdn.microsoft.icon\nContent-Length: \n\n") + ft_intlen(size);// this now happens inside the construct header function
+		std::string response = this->constructHeader(size);
+		sendall(this->fd, (char *)response.c_str(), response.length());
 		// write(fd, out_buffer, size);
 		sendall(this->fd, out_buffer, size);
 		delete[] out_buffer;

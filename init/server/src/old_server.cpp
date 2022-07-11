@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <cstring>
 
+#include "response.hpp"
+
 #ifdef __APPLE__
 	#define PLATFORM "macOS"
 #else
@@ -32,7 +34,9 @@ int main() {
 	memset(serv_addr.sin_zero, '0', sizeof(serv_addr.sin_zero));
 
 	if((bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) < 0) {
-		std::cout << "Error binding socket" << std::endl;
+		std::cout << RED << "Error binding socket" << std::endl;
+		perror("bind");
+		std::cerr << RESET;
 		return 1;
 	}
 
@@ -55,13 +59,14 @@ int main() {
 			return 1;
 		}
 		std::cout << "Message received: " << buffer << std::endl;
-		std::string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
-		std::string body = "<html><body><h1>Hello World</h1></body></html>";
-		std::string response = header + body;
-		if (write(new_sockfd, response.c_str(), response.size()) < 0) {
-			std::cout << "Error writing to socket" << std::endl;
-			return 1;
-		}
+		// std::string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+		// std::string body = "<html><body><h1>Hello World</h1></body></html>";
+		// std::string response = header + body;
+		// if (write(new_sockfd, response.c_str(), response.size()) < 0) {
+		// 	std::cout << "Error writing to socket" << std::endl;
+		// 	return 1;
+		// }
+		response::parse_request(buffer, new_sockfd);
 		close(new_sockfd);
 	}
 	close(sockfd);

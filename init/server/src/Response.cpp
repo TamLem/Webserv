@@ -84,10 +84,33 @@ static void	ft_putnbr(unsigned int n, char *str, unsigned int i)
 	i++;
 }
 
+static void	ft_standard(char *str, int i, int n)
+{
+	if (n < 0)
+	{
+		str[0] = 45;
+		n = n * -1;
+	}
+	str[i] = '\0';
+	i--;
+	ft_putnbr(n, str, i);
+}
+
+/* turns an int into a string */
+static char	*ft_itoa(int n, size_t size)
+{
+	char	*str = new char[size + 1];
+	int		i = size;
+
+	ft_standard(str, i, n);
+	return (str);
+}
+
 std::string Response::constructHeader(size_t old_size)
 {
 	std::stringstream stream;
 
+	// std::cerr << BLUE << "old_size " << old_size << RESET << std::endl;
 	stream.clear();
 	stream.str("");
 	stream << this->protocol << " " << this->status << " " << this->statusMessage
@@ -98,25 +121,33 @@ std::string Response::constructHeader(size_t old_size)
 	// << "\r\n\r\n";
 	<< CRLF
 	<< "Server: localhost:8080"
+	<< CRLF
 	// << "Content-Type: text/html"
 	// << CRLF
 	// "Content-Length: " << responseClass.length
 	<< "Content-Length: ";
+	// << CRLFTWO;
 	// << this->body;
-	std::string head;
-	char buffer[256];
-	while (stream.good())
-	{
-		stream.getline(buffer, 256);
-		head.append(buffer);
-	}
+	std::string head = stream.str();
+	// return (head);
 	size_t size = old_size;
 	size += head.length() + ft_intlen(size);
 	size += ft_intlen(size) - ft_intlen(old_size);
-	buffer[0] = '\0';
-	ft_putnbr(size, buffer, ft_intlen(size));
+	// char *buffer = NULL;
+	// char buffer[ft_intlen(size) + 1]; // this is disgusting!!!!!!!!!!!!!
+	// for (size_t i = 0; i < ft_intlen(size) + 1; ++i)
+	// 	buffer[i] = '\0';
+	char *buffer = ft_itoa(size, ft_intlen(size));
+	// buffer[0] = '\0';
+	// buffer[ft_intlen(size) + 1] = '\0';
+	// std::cerr << "head.length(): " << head.length() << std::endl;
+	// std::cerr << "buffer.size()" << strlen(buffer) << std::endl;
 	head.append(buffer);
+	delete[] buffer;
+	// std::cerr << "head.length(): " << head.length() << std::endl;
 	head.append(CRLFTWO);
+	// std::cerr << "head.length(): " << head.length() << std::endl;
+	// std::cerr << RED << "contents of head:>>>" << head << "<<<" << RESET << std::endl;
 	return (head);
 }
 
@@ -180,6 +211,8 @@ void Response::sendResponse(void)
 		filebuffer->sgetn(out_buffer, size); //copy filebuffer to outbuffer
 		input.close();
 		// size += strlen("HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/vdn.microsoft.icon\nContent-Length: \n\n") + ft_intlen(size);// this now happens inside the construct header function
+		std::string crlftwo = CRLFTWO;
+		size += crlftwo.length(); //this and above is to add the space that CRLFTWO takes
 		std::string response = this->constructHeader(size);
 		sendall(this->fd, (char *)response.c_str(), response.length());
 		// write(fd, out_buffer, size);

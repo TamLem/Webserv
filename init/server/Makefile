@@ -24,6 +24,7 @@ CUT			=	\033[K
 #source files
 SRC_FILES	=	server.cpp
 # SRC_FILES	=	baseloop.cpp
+# SRC_FILES	=	old_server.cpp
 
 OBJ_FILES	=	$(SRC_FILES:.cpp=.o)
 

@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <sys/event.h>
+#include <csignal> // check if forbidden !!!!!!!!!!
 
 /* our includes */
 #include "Response.hpp"
@@ -54,7 +55,7 @@ class Server
 
 	// Set socket reusable from Time-Wait state
 			int val = 1;
-			setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4);
+			setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR | SO_NOSIGPIPE, &val, 4);
 
 	// initialize server address struct
 			struct sockaddr_in serv_addr;

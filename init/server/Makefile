@@ -26,7 +26,10 @@ CUT			=	\033[K
 #source files
 #		automaticly decides which Sources to use depending on the OS
 ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be different on other Macs)
-SRC_FILES	=	server.cpp #(best server version on macOS)
+SRC_FILES	=	server.cpp \
+				Message.cpp \
+				Response.cpp \
+				Request.cpp
 # SRC_FILES	=	baseloop.cpp #(old and bad server, could probablly delete this)
 else
 SRC_FILES	=	old_server.cpp #(blocking server for testing on Linux)

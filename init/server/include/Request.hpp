@@ -21,9 +21,12 @@ class Request : public Message
 		void parseHeaderFieldLine(const std::string&);
 		void parseBody(std::istringstream&);
 		void createTokens(std::vector<std::string>&, const std::string&, const unsigned int&, const std::string&);
+		void createHeaderTokens(std::vector<std::string>&, const std::string&, const unsigned int&, const std::string&);
 		void setBodyFlag(void);
+		// int _fd;
 	public:
 		Request(const std::string&);
+		// Request(const std::string&, int fd);
 		~Request(void);
 
 		// void setMethod(const std::string&);

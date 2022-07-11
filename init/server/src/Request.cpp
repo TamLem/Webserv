@@ -30,6 +30,23 @@ void Request::createTokens(std::vector<std::string>& tokens, const std::string& 
 		tokens.push_back(message.substr(last, next - last));
 		last = next + delimiter.length();
 	}
+	next = message.find("\r", last); // AE make sure this exists
+	tokens.push_back(message.substr(last, next - last));
+	if (tokens.size() != count)
+		throw InvalidNumberOfTokens();
+}
+
+void Request::createHeaderTokens(std::vector<std::string>& tokens, const std::string& message, const unsigned int& count, const std::string& delimiter)
+{
+	// std::string delimiter = " ";
+	size_t last = 0;
+	size_t next = 0;
+
+	while ((next = message.find(delimiter, last)) != std::string::npos && tokens.size() < count + 1)
+	{
+		tokens.push_back(message.substr(last, next - last));
+		last = next + delimiter.length();
+	}
 	tokens.push_back(message.substr(last));
 	if (tokens.size() != count)
 		throw InvalidNumberOfTokens();
@@ -42,6 +59,7 @@ void Request::parseStartLine(std::istringstream& stream)
 
 	std::getline(stream, line);
 	createTokens(tokens, line, 3u, " ");
+	// std::cout << "MY REQUEST PROTOCOL:" << tokens[2] << "." << std::endl;
 	if (!isValidMethod(tokens[0]))
 		throw InvalidMethod();
 	if (!isValidProtocol(tokens[2]))
@@ -55,7 +73,7 @@ void Request::parseHeaderFieldLine(const std::string& line)
 {
 	std::vector<std::string> tokens;
 
-	createTokens(tokens, line, 2, ": ");
+	createHeaderTokens(tokens, line, 2u, ": ");
 	if (this->headerFields.count(tokens[0]))
 		throw HeaderFieldDuplicate();
 	this->headerFields[tokens[0]] = tokens[1];
@@ -68,8 +86,10 @@ void Request::parseHeaderFields(std::istringstream& stream)
 		std::string line;
 		
 		std::getline(stream, line);
-		if (line.empty())
+		if (line == "\r")
+		{
 			break ;
+		}
 		parseHeaderFieldLine(line);
 	}
 }

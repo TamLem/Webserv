@@ -1,5 +1,7 @@
 #include "Message.hpp"
 
+#include <iostream>
+
 Message::Message(void)
 {
 	

@@ -3,6 +3,7 @@
 #include <string> //std::string
 #include <map> //std::map
 #include <sstream> //std::stringstream
+#include <unistd.h>
 
 void Response::createMessageMap(void)
 {
@@ -23,9 +24,10 @@ bool Response::isValidStatus(int status)
 	return (false);
 }
 
-Response::Response(std::string protocol, int status)
+Response::Response(std::string protocol, int status, int fd) : fd(fd)
 {
 	this->createMessageMap();
+	// std::cout << "MY RESPONSE PROTOCOL:" << protocol << "." << std::endl;
 	if (!isValidProtocol(protocol))
 		throw InvalidProtocol();
 	if (!isValidStatus(status))
@@ -34,6 +36,7 @@ Response::Response(std::string protocol, int status)
 	this->status = status;
 	this->statusMessage = this->messageMap[this->status];
 	this->hasBody = true;
+	// this->sendResponse();
 }
 
 Response::~Response(void)
@@ -71,9 +74,23 @@ std::string Response::constructHeader(void)
 	// "Server: " << responseClass.server << "\n" <<
 	// "Content-Type: " << responseClass.type << "\n" <<
 	// "Content-Length: " << responseClass.length
-	<< "\n\n";
+	// << "\r\n\r\n";
+	<< "\r\n";
 
 	return (stream.str());
+}
+
+void Response::sendResponse(void)
+{
+	std::string header = "Content-Type: text/html\r\n\r\n";
+	std::string body = "<html><body><h1>Hello World</h1></body></html>";
+	std::string response = 	this->constructHeader() + header + body;
+	if (write(this->fd, response.c_str(), response.size()) < 0) {
+		std::cout << "Error writing to socket" << std::endl;
+		close(this->fd);
+		// return 1;
+	}
+	close(this->fd);
 }
 
 const char* Response::InvalidStatus::what() const throw()

@@ -19,7 +19,8 @@
 #include <sys/event.h>
 
 /* our includes */
-#include "response.hpp"
+#include "Response.hpp"
+#include "Request.hpp"
 
 #define RESET "\033[0m"
 #define GREEN "\033[32m"
@@ -162,7 +163,12 @@ class Server
 						}
 						buf[n] = '\0';
 						std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
-						response::parse_request(buf, fd);
+						
+						// Response newResponse(Request newRequest(buf), fd);
+						Request newRequest(buf);
+						Response newResponse("HTTP/1.1", 200, fd);
+						// std::cout << newResponse.constructHeader();
+						newResponse.sendResponse();
 					}
 				}
 			}

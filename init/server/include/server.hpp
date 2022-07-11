@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <fcntl.h>
 #include <fstream>
+#include "response.hpp"
 
 #if defined(__FreeBSD__) || defined(__APPLE__) || defined(__OpenBSD__) || defined(__NetBSD__)
 	#define USE_KQUEUE
@@ -55,12 +56,19 @@ class Server
 				std::cerr << RESET;
 				return;
 			}
+
+			/* Set socket reusable from Time-Wait state */
+			int val = 1;
+			setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4);
+
+			/* initialize server address struct */
 			struct sockaddr_in serv_addr;
 			memset(&serv_addr, '0', sizeof(serv_addr));
 			serv_addr.sin_family = AF_INET;
 			serv_addr.sin_port = htons(port);
 			serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
+			/* bind socket to address */
 			if((bind(_server_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) < 0)
 			{
 				std::cerr << RED << "Error binding socket" << std::endl;
@@ -71,13 +79,6 @@ class Server
 		}
 		~Server()
 		{
-			int reuse_port = 1;
-			int reuse_addr = 1;
-			std::cerr << RED << setsockopt(this->_server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(reuse_addr)) \
-			<< setsockopt(this->_server_fd, SOL_SOCKET, SO_REUSEPORT, &reuse_port, sizeof(reuse_port)) << std::endl;
-			socklen_t reuse_success;
-			std::cerr << "output getsock: "<< getsockopt(this->_server_fd, SOL_SOCKET, SO_REUSEPORT, &reuse_port, &reuse_success) << std::endl << reuse_port << std::endl;
-
 			close(this->_server_fd);
 		}
 		void stop();
@@ -107,105 +108,6 @@ class Server
 				return (-1);
 			_clients.erase(_clients.begin() + i);
 			return (0);
-		}
-
-		size_t	ft_intlen(int n)
-		{
-			size_t	i;
-
-			i = 0;
-			if (n == -2147483648)
-				return (10);
-			if (n >= 0 && n <= 9)
-				return (1);
-			if (n < 0)
-			{
-				n = n * -1;
-				i++;
-			}
-			while (n > 0)
-			{
-				n = n / 10;
-				i++;
-			}
-			return (i);
-		}
-
-		void parse_request(std::string buffer, int fd)
-		{
-			if (strstr(buffer.c_str(), "GET") && strstr(buffer.c_str(), "favicon.ico"))
-			{
-				std::cout << GREEN << "@@@@@@ GET favicon.ico @@@@@" << RESET << std::endl << std::endl;
-				std::ifstream input("images/favicon.ico", std::ios::binary);
-				if (input.is_open())
-				{
-					std::filebuf *pbuf = input.rdbuf();
-					std::size_t size = pbuf->pubseekoff(0,input.end,input.in);
-					// cout << size << endl;
-					pbuf->pubseekpos(0,input.in);
-					char *out_buffer = new char[size];
-					pbuf->sgetn(out_buffer,size);
-					input.close();
-					size += strlen("HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/vdn.microsoft.icon\nContent-Length: \n\n") + ft_intlen(size);
-					dprintf(fd, "HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/vdn.microsoft.icon\nContent-Length: %lu\n\n", size);
-					write(fd, out_buffer, size);
-					delete[] out_buffer;
-				}
-				else
-					std::cerr << RED << "image favicon.ico not found" << RESET << std::endl;
-				close(fd);
-			}
-			else if (strstr(buffer.c_str(), "GET") && strstr(buffer.c_str(), "/images/large.jpg"))
-			{
-				std::cout << GREEN << "@@@@@@ GET large.img @@@@@" << RESET << std::endl << std::endl;
-				std::ifstream input("/Users/tblaase/Documents/webserv/init/server/images/large.jpg", std::ios::binary);
-				std::filebuf *pbuf = input.rdbuf();
-				std::size_t size = pbuf->pubseekoff(0,input.end,input.in);
-				pbuf->pubseekpos(0,input.in);
-				char *out_buffer = new char[size];
-				pbuf->sgetn(out_buffer,size);
-				input.close();
-				size += strlen("HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/jpg\nContent-Length: \n\n") + ft_intlen(size);
-				dprintf(fd, "HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/jpg\nContent-Length: %lu\n\n", size);
-				write(fd, out_buffer, size);
-				delete[] out_buffer;
-				close(fd);
-			}
-			else if (strstr(buffer.c_str(), "GET"))
-			{
-				std::cout << GREEN << "@@@@@@ GET index @@@@@" << RESET << std::endl << std::endl;
-				std::ifstream myfile("/Users/tblaase/Documents/webserv/init/server/pages/index.html");
-				std::string myline;
-				std::string out_buffer;
-				std::size_t size = 0;
-				if (myfile.is_open())
-				{
-					while (myfile.good())
-					{ // equivalent to myfile.good()
-						std::getline (myfile, out_buffer);
-						myline.append(out_buffer + "\n");
-					}
-					size = myline.length();
-					size += strlen("HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: text/html\nContent-Length: \n\n") + ft_intlen(size);
-					dprintf(fd, "HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: text/html\nContent-Length: %lu\n\n", size);
-					write(fd, myline.c_str(), myline.length());
-					myfile.close();
-				}
-				else
-				{
-					std::cerr << RED << "Couldn't open file" << std::endl;
-					perror(NULL);
-					std::cerr << RESET;
-					size_t size = strlen("HTTP/1.1 404 \nServer: localhost:8080\nContent-Type: image/jpg\nContent-Length: \n\n");
-					size += ft_intlen(size);
-					dprintf(fd, "HTTP/1.1 404 \nServer: localhost:8080\nContent-Type: image/jpg\nContent-Length: %lu\n\n", size);
-				}
-				close(fd);
-			}
-			else
-			{
-				std::cout << "not the correct key" << std::endl;
-			}
 		}
 
 #ifdef USE_KQUEUE
@@ -266,7 +168,7 @@ class Server
 						}
 						buf[n] = '\0';
 						std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
-						parse_request(buf, fd);
+						response::parse_request(buf, fd);
 					}
 				}
 			}

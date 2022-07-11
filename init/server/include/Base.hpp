@@ -5,3 +5,6 @@
 #define YELLOW "\033[33m"
 #define BLUE "\033[34m"
 #define RED "\033[31m"
+
+#define CRLF "\r\n"
+#define CRLFTWO "\r\n\r\n"

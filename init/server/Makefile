@@ -2,7 +2,9 @@ NAME		=	webserv
 
 CXX			=	g++
 
-CXXFLAGS	=	-std=c++98#-Wall -Werror -Wextra
+CXXFLAGS	=	-std=c++98 -Wall -Werror -Wextra
+
+UNAME		:=	$(shell uname)
 
 # CXXFLAGS	+=	-g
 
@@ -22,9 +24,13 @@ UP			=	\033[A
 CUT			=	\033[K
 
 #source files
-SRC_FILES	=	server.cpp
-# SRC_FILES	=	baseloop.cpp
-# SRC_FILES	=	old_server.cpp
+#		automaticly decides which Sources to use depending on the OS
+ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be different on other Macs)
+SRC_FILES	=	server.cpp #(best server version on macOS)
+# SRC_FILES	=	baseloop.cpp #(old and bad server, could probablly delete this)
+else
+SRC_FILES	=	old_server.cpp #(blocking server for testing on Linux)
+endif
 
 OBJ_FILES	=	$(SRC_FILES:.cpp=.o)
 

@@ -130,6 +130,8 @@ class Server
 						}
 						else
 							std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
+						int set = 1;
+						setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
 						add_client(fd, *(struct sockaddr_in *)&addr);
 						EV_SET(&ev, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 						kevent(kq, &ev, 1, NULL, 0, NULL);

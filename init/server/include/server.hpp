@@ -22,11 +22,10 @@
 #include "Response.hpp"
 #include "Request.hpp"
 
-#define RESET "\033[0m"
-#define GREEN "\033[32m"
-#define YELLOW "\033[33m"
-#define BLUE "\033[34m"
-#define RED "\033[31m"
+#include "Base.hpp"
+
+// Forbidden includes
+#include <errno.h>
 
 struct client
 {
@@ -152,7 +151,7 @@ class Server
 							std::cerr << RESET;
 							continue;
 						}
-						char buf[1024];
+						char buf[1024]; // probably needs to be an ifstream to not overflow with enormous requests
 						int n = read(fd, buf, 1024);
 						if (n < 0)
 						{
@@ -163,7 +162,7 @@ class Server
 						}
 						buf[n] = '\0';
 						std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
-						
+
 						// Response newResponse(Request newRequest(buf), fd);
 						Request newRequest(buf);
 						Response newResponse("HTTP/1.1", 200, fd, newRequest.getUrl());

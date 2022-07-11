@@ -18,7 +18,7 @@ class Response : public Message
 		int sendall(int sock_fd, char *buffer, int len);
 		int fd;
 		std::string url;
-		
+
 	public:
 		// Response(std::string, int);
 		Response(std::string, int, int, std::string);

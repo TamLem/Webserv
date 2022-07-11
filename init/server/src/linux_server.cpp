@@ -3,16 +3,17 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <cstring>
+#include <stdio.h>
 
-#include "response.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
+#include "Base.hpp"
 
-#ifdef __APPLE__
-	#define PLATFORM "macOS"
-#else
-	#define PLATFORM "Linux"
-#endif
 
-// this was the first try of a socket connection
+// Forbidden includes
+#include <errno.h>
+
+// this was the first try of a socket connection, now is only used to have a working linux compatible simple server
 
 int main() {
 
@@ -20,8 +21,6 @@ int main() {
 	struct sockaddr_in serv_addr;
 	struct sockaddr_in cli_addr;
 	const int port = 8080;
-
-	std::cout << "This webserv is running on " << PLATFORM << std::endl;
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		std::cout << "Error creating socket" << std::endl;
@@ -59,14 +58,10 @@ int main() {
 			return 1;
 		}
 		std::cout << "Message received: " << buffer << std::endl;
-		// std::string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
-		// std::string body = "<html><body><h1>Hello World</h1></body></html>";
-		// std::string response = header + body;
-		// if (write(new_sockfd, response.c_str(), response.size()) < 0) {
-		// 	std::cout << "Error writing to socket" << std::endl;
-		// 	return 1;
-		// }
-		response::parse_request(buffer, new_sockfd);
+		Request newRequest(buffer);
+		Response newResponse("HTTP/1.1", 200, new_sockfd, newRequest.getUrl());
+		// std::cout << newResponse.constructHeader();
+		newResponse.sendResponse();
 		close(new_sockfd);
 	}
 	close(sockfd);

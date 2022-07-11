@@ -24,15 +24,18 @@ UP			=	\033[A
 CUT			=	\033[K
 
 #source files
-#		automaticly decides which Sources to use depending on the OS
+#				automaticly decides which Sources to use depending on the OS
 ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be different on other Macs)
 SRC_FILES	=	server.cpp \
 				Message.cpp \
 				Response.cpp \
 				Request.cpp
-# SRC_FILES	=	baseloop.cpp #(old and bad server, could probablly delete this)
 else
-SRC_FILES	=	old_server.cpp #(blocking server for testing on Linux)
+#(blocking server for testing on Linux)
+SRC_FILES	=	linux_server.cpp \
+				Message.cpp \
+				Response.cpp \
+				Request.cpp
 endif
 
 OBJ_FILES	=	$(SRC_FILES:.cpp=.o)

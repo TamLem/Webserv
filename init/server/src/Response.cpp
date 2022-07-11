@@ -142,7 +142,7 @@ int Response::sendall(int sock_fd, char *buffer, int len)
 void Response::sendResponse(void)
 {
 	// std::cerr << RED << this->url << "." << RESET << std::endl;
-	std::ifstream input(this->url, std::ios::binary);
+	std::ifstream input(this->url.c_str(), std::ios::binary);
 	if (input.is_open())
 	{
 		std::filebuf *filebuffer = input.rdbuf();
@@ -167,11 +167,11 @@ void Response::sendResponse(void)
 		throw ERROR_404();
 		//404 response
 	}
-	
-	
+
+
 	// std::string header = "Content-Type: text/html\r\n\r\n";
 	// std::string body = "<html><body><h1>Hello World</h1></body></html>";
-	
+
 	// std::string response = 	this->constructHeader();
 	// if (write(this->fd, response.c_str(), response.size()) < 0) {
 	// 	std::cout << "Error writing to socket" << std::endl;

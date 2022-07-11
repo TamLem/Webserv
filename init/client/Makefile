@@ -1,56 +1,81 @@
-########################################################################
-####################### Makefile Template ##############################
-########################################################################
+NAME		=	webserv
 
-# Compiler settings - Can be customized.
-CC = g++
-CXXFLAGS = -std=c++98 -Wall -Wextra -Werror
-LDFLAGS = 
+CXX			=	g++
 
-# Makefile settings - Can be customized.
-APPNAME = client
-EXT = .cpp
-SRCDIR = src
-OBJDIR = output
+CXXFLAGS	=	-std=c++98#-Wall -Werror -Wextra
 
-############## Do not change anything from here downwards! #############
-SRC = $(wildcard $(SRCDIR)/*$(EXT))
-OBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)/%.o)
-DEP = $(OBJ:$(OBJDIR)/%.o=%.d)
-# UNIX-based OS variables & settings
-RM = rm -rf
-DELOBJ = $(OBJ)
-# Windows OS variables & settings
-DEL = del
-EXE = .exe
-WDELOBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)\\%.o)
+# CXXFLAGS	+=	-g
 
-########################################################################
-####################### Targets beginning here #########################
-########################################################################
+#directories
+PWD			=	$(shell pwd)
+SRC_DIR		=	src/
+OBJ_DIR		=	obj/
+INC_DIR		=	include/
 
-all: $(APPNAME)
+#controll codes
+RESET		=	\033[0m
+GREEN		=	\033[32m
+YELLOW		=	\033[33m
+BLUE		=	\033[34m
+RED			=	\033[31m
+UP			=	\033[A
+CUT			=	\033[K
 
-# Builds the app
-$(APPNAME): $(OBJ)
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+#source files
+SRC_FILES	=	client.cpp
 
-# Building rule for .o files and its .c/.cpp in combination with all .h
-$(OBJDIR)/%.o: $(SRCDIR)/%$(EXT)
-	@mkdir -p $(OBJDIR)
-	$(CC) $(CXXFLAGS) -o $@ -c $<
+OBJ_FILES	=	$(SRC_FILES:.cpp=.o)
 
-################### Cleaning rules for Unix-based OS ###################
-# Cleans complete project
-.PHONY: clean
+#paths
+SRC			=	$(addprefix $(SRC_DIR), $(SRC_FILES))
+OBJ			=	$(addprefix $(OBJ_DIR), $(OBJ_FILES))
+
+#all rule
+all: $(NAME)
+#ascii art can be found at: https://patorjk.com/software/taag/#p=display&f=Calvin%20S&t=ft%20containers
+	@printf "\n"
+	@printf "$(GREEN)┬ ┬┌─┐┌┐ ┌─┐┌─┐┬─┐┬  ┬ \n$(RESET)"
+	@printf "$(GREEN)│││├┤ ├┴┐└─┐├┤ ├┬┘└┐┌┘ \n$(RESET)"
+	@printf "$(GREEN)└┴┘└─┘└─┘└─┘└─┘┴└─ └┘  \n$(RESET)"
+	@printf "\n"
+
+#compile the executable
+$(NAME): $(OBJ)
+	@echo "$(YELLOW)Compiling [$(NAME)]...$(RESET)"
+	@$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
+	@echo "$(GREEN)Finished [$(NAME)]$(RESET)"
+
+#compile objects
+$(OBJ_DIR)%.o:$(SRC_DIR)%.cpp
+	@mkdir -p $(OBJ_DIR)
+	@echo "$(YELLOW)Compiling [$@]...$(RESET)"
+	@$(CXX) $(CXXFLAGS) -I $(INC_DIR) -o $@ -c $<
+	@printf "$(UP)$(CUT)"
+	@echo "$(GREEN)Finished [$@]$(RESET)"
+	@printf "$(UP)$(CUT)"
+
+#clean rule
 clean:
-	$(RM) $(DELOBJ)  $(APPNAME)
+	@if [ -d "$(OBJ_DIR)" ]; then \
+	rm -rf $(OBJ_DIR); \
+	echo "$(BLUE)Deleting all objects from $(PWD)...$(RESET)"; else \
+	echo "No objects to remove from $(PWD)."; \
+	fi;
 
-#################### Cleaning rules for Windows OS #####################
-# Cleans complete project
-.PHONY: cleanw
-cleanw:
-	$(DEL) $(WDELOBJ)  $(APPNAME)$(EXE)
+#fclean rule
+fclean: clean
+	@if [ -f "$(NAME)" ]; then \
+	rm -f $(NAME); \
+	echo "$(BLUE)Deleting $(NAME) from $(PWD)...$(RESET)"; else \
+	echo "No Executable to remove from $(PWD)."; \
+	fi;
 
-# re clean and create
- re: clean all
+#re rule
+re: fclean all
+
+#run rule
+run: re
+	./$(NAME)
+
+#phony
+.PHONY: all clean fclean re run

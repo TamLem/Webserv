@@ -117,7 +117,7 @@ void response::parse_request(std::string buffer, int fd)
 	{
 		std::cout << GREEN << "@@@@@@ GET large.img @@@@@" << RESET << std::endl
 				  << std::endl;
-		std::ifstream input("/Users/tlemma/Documents/Webserv/main/init/server/images/large.jpg", std::ios::binary);
+		std::ifstream input("images/large.jpg", std::ios::binary);
 		std::filebuf *pbuf = input.rdbuf();
 		std::size_t size = pbuf->pubseekoff(0, input.end, input.in);
 		pbuf->pubseekpos(0, input.in);
@@ -135,7 +135,7 @@ void response::parse_request(std::string buffer, int fd)
 	{
 		std::cout << GREEN << "@@@@@@ GET index @@@@@" << RESET << std::endl
 				  << std::endl;
-		std::ifstream myfile("/Users/tlemma/Documents/Webserv/main/init/server/pages/index.html");
+		std::ifstream myfile("pages/index.html");
 		std::string myline;
 		std::string out_buffer;
 		std::size_t size = 0;

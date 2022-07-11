@@ -49,24 +49,3 @@ class Response : public Message
 
 std::ostream& operator<<(std::ostream&, const Response&);
 
-void cgi_response(std::string buffer, int fd)
-{
-	std::string file;
-
-	std::cout << GREEN << "Executing CGI..." << std::endl;
-	file = "test.php";
-	int stdout_init = dup(STDOUT_FILENO);
-	int pid = fork();
-	if (pid == 0)
-	{
-		dup2(fd, STDOUT_FILENO);
-		if(execlp("/usr/bin/php", "php", "cgi-bin/test.php", NULL) == -1)
-		{
-			std::cout << "error executing cgi" << std::endl;
-		}
-		exit(0);
-	}
-	dup2(stdout_init, STDOUT_FILENO);
-	close(fd);
-}
-

@@ -46,7 +46,7 @@ class Server
 	public:
 		Server(int port)
 		{
-			struct sockaddr_in cli_addr;
+			// struct sockaddr_in cli_addr;
 			_port = port;
 
 			if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -84,7 +84,7 @@ class Server
 		void stop();
 		int get_client(int fd)
 		{
-			for (int i = 0; i < _clients.size(); i++)
+			for (size_t i = 0; i < _clients.size(); i++)
 			{
 				if (_clients[i].fd == fd)
 					return (i);
@@ -213,8 +213,8 @@ class Server
 #endif
 		}
 	private:
-		int _port;
-		int _server_fd;
+		size_t _port;
+		size_t _server_fd;
 		std::vector <client> _clients;
 };
 

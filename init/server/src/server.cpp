@@ -13,6 +13,7 @@ void	handle_signals(void)
 {
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
 	signal(SIGINT, handle_signal);
 }
 

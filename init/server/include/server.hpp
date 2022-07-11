@@ -55,7 +55,7 @@ class Server
 
 	// Set socket reusable from Time-Wait state
 			int val = 1;
-			setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR | SO_NOSIGPIPE, &val, 4);
+			setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // how to implement | SO_NOSIGPIPE
 
 	// initialize server address struct
 			struct sockaddr_in serv_addr;

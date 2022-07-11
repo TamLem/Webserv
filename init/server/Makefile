@@ -4,6 +4,8 @@ CXX			=	g++
 
 CXXFLAGS	=	-std=c++98 -Wall -Werror -Wextra
 
+# CXXFLAGS	+=	-g -fsanitize=address
+
 UNAME		:=	$(shell uname)
 
 # CXXFLAGS	+=	-g

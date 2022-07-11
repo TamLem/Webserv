@@ -4,8 +4,7 @@
 #include <string>
 #include <utility> //std::pair
 #include <map> //std::map
-
-#define CRLF "\n"
+#include "Base.hpp"
 
 class Message
 {

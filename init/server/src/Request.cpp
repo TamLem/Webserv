@@ -65,7 +65,10 @@ void Request::parseStartLine(std::istringstream& stream)
 	if (!isValidProtocol(tokens[2]))
 		throw InvalidProtocol();
 	this->method = tokens[0];
-	this->url = tokens[1];
+	if (tokens[1] == "/")
+		this->url = INDEX_PATH;
+	else
+		this->url = "." + tokens[1];
 	this->protocol = tokens[2];
 }
 

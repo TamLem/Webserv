@@ -6,6 +6,8 @@
 #include <vector> //std::vector
 #include "Message.hpp"
 
+#define INDEX_PATH "./pages/index.html"
+
 class Request : public Message
 {
 	private:

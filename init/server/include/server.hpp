@@ -166,7 +166,7 @@ class Server
 						
 						// Response newResponse(Request newRequest(buf), fd);
 						Request newRequest(buf);
-						Response newResponse("HTTP/1.1", 200, fd);
+						Response newResponse("HTTP/1.1", 200, fd, newRequest.getUrl());
 						// std::cout << newResponse.constructHeader();
 						newResponse.sendResponse();
 					}

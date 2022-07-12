@@ -14,7 +14,6 @@ class Response : public Message
 		std::map<int, std::string> messageMap;
 		void createMessageMap(void);
 		bool isValidStatus(int);
-		size_t ft_intlen(int n);
 		int sendall(int sock_fd, char *buffer, int len);
 		int fd;
 		std::string url;

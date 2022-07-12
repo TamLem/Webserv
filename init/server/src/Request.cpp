@@ -21,7 +21,6 @@ void Request::addMethods(void)
 
 void Request::createTokens(std::vector<std::string>& tokens, const std::string& message, const unsigned int& count, const std::string& delimiter)
 {
-	// std::string delimiter = " ";
 	size_t last = 0;
 	size_t next = 0;
 
@@ -59,7 +58,6 @@ void Request::parseStartLine(std::istringstream& stream)
 
 	std::getline(stream, line);
 	createTokens(tokens, line, 3u, " ");
-	// std::cout << "MY REQUEST PROTOCOL:" << tokens[2] << "." << std::endl;
 	if (!isValidMethod(tokens[0]))
 		throw InvalidMethod();
 	if (!isValidProtocol(tokens[2]))
@@ -147,7 +145,7 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 	out << request.getMethod() << " "
 	<< request.getUrl() << " "
 	<< request.getProtocol() << "\n";
-	for (std::map<std::string, std::string>::const_iterator it=request.headerFields.begin(); it != request.headerFields.end(); ++it)
+	for (std::map<std::string, std::string>::const_iterator it=request.getHeaderFields().begin(); it != request.getHeaderFields().end(); ++it)
 	{
 		out << it->first << ": "
 		<< it->second << "\n";

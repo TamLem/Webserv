@@ -36,7 +36,6 @@ bool Response::isValidStatus(int status)
 Response::Response(std::string protocol, int status, int fd, std::string url) : fd(fd), url(url)
 {
 	this->createMessageMap();
-	// std::cout << "MY RESPONSE PROTOCOL:" << protocol << "." << std::endl;
 	if (!isValidProtocol(protocol))
 		throw InvalidProtocol();
 	if (!isValidStatus(status))
@@ -45,9 +44,6 @@ Response::Response(std::string protocol, int status, int fd, std::string url) : 
 	this->status = status;
 	this->statusMessage = this->messageMap[this->status];
 	this->hasBody = true;
-	// this->headerFields = std::make_pair(Content-Type, text/html);
-	this->body = "<html><body><h1>Hello World!</h1></body></html>";
-	// this->sendResponse();
 }
 
 Response::~Response(void)
@@ -77,43 +73,25 @@ std::string Response::constructHeader(void)
 {
 	std::stringstream stream;
 
-	// std::cerr << BLUE << "old_size " << old_size << RESET << std::endl;
-	// stream.clear();
-	// stream.str("");
-	stream << this->protocol << " " << this->status << " " << this->statusMessage
+	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
 	// << "\n" <<
 	// "Date: " << responseClass.date << "\n" <<
 	// << "Content-Type: " << responseClass.type << "\n"
 	// << CRLF
-	<< CRLF
-	<< "Server: localhost:8080"
-	<< CRLF
+	// << CRLF;
+
+	for (std::map<std::string, std::string>::const_iterator it=this->headerFields.begin(); it != this->headerFields.end(); ++it)
+	{
+		stream << it->first << ": "
+		<< it->second << CRLF;
+	}
+
+	// stream << "Server: localhost:8080"
+	// << CRLF
 	// << "Content-Type: text/html"
 	// << CRLF
-	<< "Content-Length: ";
+	stream << "Content-Length: ";
 	return (stream.str());
-}
-
-size_t Response::ft_intlen(int n)
-{
-	size_t i;
-
-	i = 0;
-	if (n == -2147483648)
-		return (10);
-	if (n >= 0 && n <= 9)
-		return (1);
-	if (n < 0)
-	{
-		n = n * -1;
-		i++;
-	}
-	while (n > 0)
-	{
-		n = n / 10;
-		i++;
-	}
-	return (i);
 }
 
 int Response::sendall(int sock_fd, char *buffer, int len)
@@ -147,6 +125,9 @@ int Response::sendall(int sock_fd, char *buffer, int len)
 
 void Response::sendResponse(void)
 {
+	// this->headerFields["Server"] = "localhost:8080";
+	addHeaderField("Server", "localhost:8080");
+	
 	std::stringstream number_stream;
 	std::stringstream body_stream;
 	std::ifstream file(this->url.c_str(), std::ios::binary);

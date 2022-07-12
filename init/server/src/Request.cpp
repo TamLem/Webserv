@@ -145,7 +145,7 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 	out << request.getMethod() << " "
 	<< request.getUrl() << " "
 	<< request.getProtocol() << "\n";
-	for (std::map<std::string, std::string>::const_iterator it=request.getHeaderFields().begin(); it != request.getHeaderFields().end(); ++it)
+	for (std::map<std::string, std::string>::const_iterator it = request.getHeaderFields().begin(); it != request.getHeaderFields().end(); ++it)
 	{
 		out << it->first << ": "
 		<< it->second << "\n";

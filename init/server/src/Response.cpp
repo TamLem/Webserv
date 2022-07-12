@@ -74,23 +74,12 @@ std::string Response::constructHeader(void)
 	std::stringstream stream;
 
 	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
-	// << "\n" <<
-	// "Date: " << responseClass.date << "\n" <<
-	// << "Content-Type: " << responseClass.type << "\n"
-	// << CRLF
-	// << CRLF;
-
-	for (std::map<std::string, std::string>::const_iterator it=this->headerFields.begin(); it != this->headerFields.end(); ++it)
+	for (std::map<std::string, std::string>::const_iterator it = this->headerFields.begin(); it != this->headerFields.end(); ++it)
 	{
 		stream << it->first << ": "
 		<< it->second << CRLF;
 	}
-
-	// stream << "Server: localhost:8080"
-	// << CRLF
-	// << "Content-Type: text/html"
-	// << CRLF
-	stream << "Content-Length: ";
+	stream << CRLF;
 	return (stream.str());
 }
 
@@ -125,36 +114,20 @@ int Response::sendall(int sock_fd, char *buffer, int len)
 
 void Response::sendResponse(void)
 {
-	// this->headerFields["Server"] = "localhost:8080";
-	addHeaderField("Server", "localhost:8080");
-	
-	std::stringstream number_stream;
-	std::stringstream body_stream;
+	std::stringstream contentLength;
+	std::stringstream body;
 	std::ifstream file(this->url.c_str(), std::ios::binary);
 	if (file.is_open())
 	{
-		std::string header_string = this->constructHeader();
-		size_t len = header_string.length();
-		
-		body_stream  << CRLFTWO << file.rdbuf();
+		body << file.rdbuf();
 		file.close();
-		body_stream.seekg(0, std::ios::end);
-		len += body_stream.tellg();
-		// body_stream.seekg(0, std::ios::beg);
-		std::string message;
-		do
-		{
-			number_stream.clear();
-			number_stream.str("");
-			number_stream << len;
-			message = header_string + number_stream.str() + body_stream.str();
-			if (len == message.length())
-				break ;
-			len = message.length();
-		} while (true);
-
+		body.seekg(0, std::ios::end);
+		size_t len = body.tellg();
+		contentLength << len;
+		addHeaderField("Server", "localhost:8080");
+		addHeaderField("Content-Length", contentLength.str());
+		std::string message = this->constructHeader() + body.str();
 		sendall(this->fd, (char *)message.c_str(), message.length());
-		std::cerr << RED << len << RESET << std::endl;
 	}
 	else
 	{

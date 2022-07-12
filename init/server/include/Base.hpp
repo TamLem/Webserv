@@ -8,5 +8,7 @@
 #define BOLD "\033[1m"
 #define UNDERLINED "\033[4m"
 
+#define SP " "
+#define CR "\r"
 #define CRLF "\r\n"
 #define CRLFTWO "\r\n\r\n"

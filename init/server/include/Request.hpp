@@ -22,9 +22,10 @@ class Request : public Message
 		void parseHeaderFields(std::istringstream&);
 		void parseHeaderFieldLine(const std::string&);
 		void parseBody(std::istringstream&);
-		void createTokens(std::vector<std::string>&, const std::string&, const unsigned int&, const std::string&);
+		void createStartLineTokens(std::vector<std::string>&, const std::string&, const unsigned int&, const std::string&);
 		void createHeaderTokens(std::vector<std::string>&, const std::string&, const unsigned int&, const std::string&);
 		void setBodyFlag(void);
+		std::string& replaceInString(std::string&, const std::string&, const std::string&);
 		// int _fd;
 	public:
 		Request(const std::string&);
@@ -50,6 +51,11 @@ class Request : public Message
 	};
 
 	class InvalidMethod : public std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class InvalidHeaderField : public std::exception
 	{
 		const char* what() const throw();
 	};

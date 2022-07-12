@@ -1,4 +1,4 @@
-#include "server.hpp"
+#include "Server.hpp"
 
 static void handle_signal(int sig)
 {

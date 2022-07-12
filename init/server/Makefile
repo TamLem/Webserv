@@ -28,13 +28,13 @@ CUT			=	\033[K
 #source files
 #				automaticly decides which Sources to use depending on the OS
 ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be different on other Macs)
-SRC_FILES	=	server.cpp \
+SRC_FILES	=	Server.cpp \
 				Message.cpp \
 				Response.cpp \
 				Request.cpp
 else
 #(blocking server for testing on Linux)
-SRC_FILES	=	linux_server.cpp \
+SRC_FILES	=	Linux_server.cpp \
 				Message.cpp \
 				Response.cpp \
 				Request.cpp

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <unistd.h>
+#include <sys/socket.h>
 #include "Base.hpp"
 
 void cgi_response(std::string buffer, int fd)
@@ -13,6 +14,8 @@ void cgi_response(std::string buffer, int fd)
 	(void)buffer;
 	std::cout << GREEN << "Executing CGI..." << std::endl;
 	file = "test.php";
+	std::string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+	send(fd, header.c_str(), header.size(), 0);
 	int stdout_init = dup(STDOUT_FILENO);
 	int pid = fork();
 	if (pid == 0)

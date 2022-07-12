@@ -13,7 +13,7 @@ void cgi_response(std::string buffer, int fd)
 
 	(void)buffer;
 	std::cout << GREEN << "Executing CGI..." << std::endl;
-	file = "test.php";
+	file = "cgi-bin/site/index.php";
 	std::string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 	send(fd, header.c_str(), header.size(), 0);
 	int stdout_init = dup(STDOUT_FILENO);
@@ -21,7 +21,7 @@ void cgi_response(std::string buffer, int fd)
 	if (pid == 0)
 	{
 		dup2(fd, STDOUT_FILENO);
-		if(execlp("/usr/bin/php", "php", "cgi-bin/test.php", NULL) == -1)
+		if(execlp("/usr/bin/php", "php", file.c_str(), NULL) == -1)
 		{
 			std::cout << "error executing cgi" << std::endl;
 		}

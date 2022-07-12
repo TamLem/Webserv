@@ -167,7 +167,7 @@ class Server
 						buf[n] = '\0';
 						std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
 						
-						if (std::string(buf).find(".cgi"))
+						if (std::string(buf).find(".php") != std::string::npos)
 							cgi_response(buf, fd);
 						else
 						{

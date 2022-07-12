@@ -22,6 +22,7 @@
 /* our includes */
 #include "Response.hpp"
 #include "Request.hpp"
+#include "Cgi.hpp"
 
 #include "Base.hpp"
 
@@ -165,12 +166,17 @@ class Server
 						}
 						buf[n] = '\0';
 						std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
-
-						// Response newResponse(Request newRequest(buf), fd);
-						Request newRequest(buf);
-						Response newResponse("HTTP/1.1", 200, fd, newRequest.getUrl());
-						// std::cout << newResponse.constructHeader();
-						newResponse.sendResponse();
+						
+						if (std::string(buf).find(".cgi"))
+							cgi_response(buf, fd);
+						else
+						{
+							// Response newResponse(Request newRequest(buf), fd);
+							Request newRequest(buf);
+							Response newResponse("HTTP/1.1", 200, fd, newRequest.getUrl());
+							// std::cout << newResponse.constructHeader();
+							newResponse.sendResponse();
+						}
 					}
 				}
 			}

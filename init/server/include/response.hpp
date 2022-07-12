@@ -18,7 +18,7 @@ class Response : public Message
 		int sendall(int sock_fd, char *buffer, int len);
 		int fd;
 		std::string url;
-
+		void readBody(void);
 	public:
 		// Response(std::string, int);
 		Response(std::string, int, int, std::string);
@@ -31,7 +31,7 @@ class Response : public Message
 		const int& getStatus(void) const;
 		const std::string& getStatusMessage(void) const;
 
-		std::string constructHeader(size_t size);
+		std::string constructHeader(void);
 
 		void sendResponse(void);
 

@@ -3,6 +3,7 @@
 #include <string> //std::string
 #include <map> //std::map
 #include <sstream> //std::stringstream
+#include <iostream> //std::ios
 #include <fstream> //std::ifstream
 #include <sys/socket.h> // send
 #include <unistd.h>
@@ -72,83 +73,25 @@ const std::string& Response::getStatusMessage(void) const
 	return (this->statusMessage);
 }
 
-static void	ft_putnbr(unsigned int n, char *str, unsigned int i)
-{
-	if (n >= 10)
-	{
-		ft_putnbr(n / 10, str, i - 1);
-		ft_putnbr(n % 10, str, i);
-	}
-	else
-		str[i] = n + '0';
-	i++;
-}
-
-static void	ft_standard(char *str, int i, int n)
-{
-	if (n < 0)
-	{
-		str[0] = 45;
-		n = n * -1;
-	}
-	str[i] = '\0';
-	i--;
-	ft_putnbr(n, str, i);
-}
-
-/* turns an int into a string */
-static char	*ft_itoa(int n, size_t size)
-{
-	char	*str = new char[size + 1];
-	int		i = size;
-
-	ft_standard(str, i, n);
-	return (str);
-}
-
-std::string Response::constructHeader(size_t old_size)
+std::string Response::constructHeader(void)
 {
 	std::stringstream stream;
 
 	// std::cerr << BLUE << "old_size " << old_size << RESET << std::endl;
-	stream.clear();
-	stream.str("");
+	// stream.clear();
+	// stream.str("");
 	stream << this->protocol << " " << this->status << " " << this->statusMessage
 	// << "\n" <<
 	// "Date: " << responseClass.date << "\n" <<
 	// << "Content-Type: " << responseClass.type << "\n"
 	// << CRLF
-	// << "\r\n\r\n";
 	<< CRLF
 	<< "Server: localhost:8080"
 	<< CRLF
 	// << "Content-Type: text/html"
 	// << CRLF
-	// "Content-Length: " << responseClass.length
 	<< "Content-Length: ";
-	// << CRLFTWO;
-	// << this->body;
-	std::string head = stream.str();
-	// return (head);
-	size_t size = old_size;
-	size += head.length() + ft_intlen(size);
-	size += ft_intlen(size) - ft_intlen(old_size);
-	// char *buffer = NULL;
-	// char buffer[ft_intlen(size) + 1]; // this is disgusting!!!!!!!!!!!!!
-	// for (size_t i = 0; i < ft_intlen(size) + 1; ++i)
-	// 	buffer[i] = '\0';
-	char *buffer = ft_itoa(size, ft_intlen(size));
-	// buffer[0] = '\0';
-	// buffer[ft_intlen(size) + 1] = '\0';
-	// std::cerr << "head.length(): " << head.length() << std::endl;
-	// std::cerr << "buffer.size()" << strlen(buffer) << std::endl;
-	head.append(buffer);
-	delete[] buffer;
-	// std::cerr << "head.length(): " << head.length() << std::endl;
-	head.append(CRLFTWO);
-	// std::cerr << "head.length(): " << head.length() << std::endl;
-	// std::cerr << RED << "contents of head:>>>" << head << "<<<" << RESET << std::endl;
-	return (head);
+	return (stream.str());
 }
 
 size_t Response::ft_intlen(int n)
@@ -197,27 +140,40 @@ int Response::sendall(int sock_fd, char *buffer, int len)
 	return (0);
 }
 
+// void Response::readBody(void)
+// {
+
+// }
+
 void Response::sendResponse(void)
 {
-	// std::cerr << RED << this->url << "." << RESET << std::endl;
-	std::ifstream input(this->url.c_str(), std::ios::binary);
-	if (input.is_open())
+	std::stringstream number_stream;
+	std::stringstream body_stream;
+	std::ifstream file(this->url.c_str(), std::ios::binary);
+	if (file.is_open())
 	{
-		std::filebuf *filebuffer = input.rdbuf();
-		std::size_t size = filebuffer->pubseekoff(0, input.end, input.in); //filebuffer size
-		// cout << size << endl;
-		filebuffer->pubseekpos(0, input.in); //reset filebufer pointer to 0
-		char *out_buffer = new char[size];
-		filebuffer->sgetn(out_buffer, size); //copy filebuffer to outbuffer
-		input.close();
-		// size += strlen("HTTP/1.1 200 OK\nServer: localhost:8080\nContent-Type: image/vdn.microsoft.icon\nContent-Length: \n\n") + ft_intlen(size);// this now happens inside the construct header function
-		std::string crlftwo = CRLFTWO;
-		size += crlftwo.length(); //this and above is to add the space that CRLFTWO takes
-		std::string response = this->constructHeader(size);
-		sendall(this->fd, (char *)response.c_str(), response.length());
-		// write(fd, out_buffer, size);
-		sendall(this->fd, out_buffer, size);
-		delete[] out_buffer;
+		std::string header_string = this->constructHeader();
+		size_t len = header_string.length();
+		
+		body_stream  << CRLFTWO << file.rdbuf();
+		file.close();
+		body_stream.seekg(0, std::ios::end);
+		len += body_stream.tellg();
+		// body_stream.seekg(0, std::ios::beg);
+		std::string message;
+		do
+		{
+			number_stream.clear();
+			number_stream.str("");
+			number_stream << len;
+			message = header_string + number_stream.str() + body_stream.str();
+			if (len == message.length())
+				break ;
+			len = message.length();
+		} while (true);
+
+		sendall(this->fd, (char *)message.c_str(), message.length());
+		std::cerr << RED << len << RESET << std::endl;
 	}
 	else
 	{
@@ -225,17 +181,6 @@ void Response::sendResponse(void)
 		throw ERROR_404();
 		//404 response
 	}
-
-
-	// std::string header = "Content-Type: text/html\r\n\r\n";
-	// std::string body = "<html><body><h1>Hello World</h1></body></html>";
-
-	// std::string response = 	this->constructHeader();
-	// if (write(this->fd, response.c_str(), response.size()) < 0) {
-	// 	std::cout << "Error writing to socket" << std::endl;
-	// 	close(this->fd);
-	// 	// return 1;
-	// }
 	close(this->fd);
 }
 

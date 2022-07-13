@@ -6,113 +6,28 @@
 #include <ios> //ios::eof
 #include <cctype> // isalnum isprint isspace
 
-bool Request::isValidMethod(std::string method)
+Request::Request(const std::string& message)
 {
-	if (this->validMethods.count(method))
-		return (true);
-	return (false);
+	this->hasBody = false;
+	addMethods();
+	parseMessage(message);
 }
 
-void Request::addMethods(void)
+Request::~Request(void)
 {
-	this->validMethods.insert("GET");
-	this->validMethods.insert("POST");
-	this->validMethods.insert("DELETE");
+
 }
 
-void Request::createStartLineTokens(std::vector<std::string>& tokens, const std::string& startLine)
+void Request::parseMessage(const std::string& message)
 {
-	size_t last = 0;
-	size_t next = 0;
-	size_t count = 3;
-
-	if (*startLine.rbegin() != CR)
-		throw InvalidStartLine();
-	while ((next = startLine.find(SP, last)) != std::string::npos && tokens.size() < count + 1)
-	{
-		tokens.push_back(startLine.substr(last, next - last));
-		last = next + 1;
-	}
-	next = startLine.find_last_of(CR);
-	tokens.push_back(startLine.substr(last, next - last));
-	if (tokens.size() != count)
-		throw InvalidNumberOfTokens();
-}
-
-bool Request::isValidHeaderFieldName(const std::string& token) const
-{
-	std::string tchars = TCHAR;
-
-	for (size_t i = 0; i < token.length(); i++)
-	{
-		char c = token[i];
-		if (isalnum(c) == false && tchars.find(c) == std::string::npos)
-			return (false);
-	}
-	return (true);
-}
-
-bool Request::isValidHeaderFieldValue(const std::string& token) const
-{
-	for (size_t i = 0; i < token.length(); i++)
-	{
-		char c = token[i];
-		if (isprint(c) == false)
-			return (false);
-	}
-	return (true);
-}
-
-void Request::toLower(std::string& str)
-{
-	for (size_t i = 0; i < str.length(); i++)
-		str[i] = std::tolower(str[i]);
-}
-
-const std::string Request::removeLeadingAndTrailingWhilespaces(const std::string& message, size_t pos)
-{
-	pos = message.find_first_not_of(WHITESPACES, pos + 1);
-	if (pos == std::string::npos)
-		throw InvalidHeaderField();
-	size_t end = message.find_last_not_of(WHITESPACES);
-	return (message.substr(pos, end - pos + 1));
-}
-
-const std::string Request::createHeaderFieldName(const std::string& message, size_t pos)
-{
-	std::string tmp;
-	
-	tmp = message.substr(0, pos);
-	if (isValidHeaderFieldName(tmp) == false)
-		throw InvalidHeaderFieldName();
-	toLower(tmp);
-	return (tmp);
-}
-
-const std::string Request::createHeaderFieldValue(const std::string& message, size_t pos)
-{
-	std::string tmp;
-	
-	tmp = removeLeadingAndTrailingWhilespaces(message, pos);
-	if (isValidHeaderFieldValue(tmp) == false)
-		throw InvalidHeaderFieldValue();
-	return (tmp);
-}
-
-void Request::createHeaderTokens(std::vector<std::string>& tokens, const std::string& headerField)
-{
-	size_t pos = 0;
-	std::string tmp;
-
-	if (*headerField.rbegin() != CR)
-		throw InvalidHeaderField();
-	pos = headerField.find(':');
-	if (pos == std::string::npos)
-		throw InvalidHeaderField();
-	tmp = createHeaderFieldName(headerField, pos);
-	tokens.push_back(tmp);
-	tmp = createHeaderFieldValue(headerField, pos);
-	tokens.push_back(tmp);
+	if (message.empty())
+		throw EmptyMessage();
+	std::istringstream stream (message);
+	parseStartLine(stream);
+	parseHeaderFields(stream);
+	setBodyFlag();
+	if (this->hasBody == true)
+		parseBody(stream);
 }
 
 //AE check what happens for space before method and multiple spaces or 
@@ -138,15 +53,30 @@ void Request::parseStartLine(std::istringstream& stream)
 	this->protocol = protocol;
 }
 
-void Request::parseHeaderFieldLine(const std::string& line)
+void Request::createStartLineTokens(std::vector<std::string>& tokens, const std::string& startLine)
 {
-	std::vector<std::string> tokens;
+	size_t last = 0;
+	size_t next = 0;
+	size_t count = 3;
 
-	createHeaderTokens(tokens, line);
-	
-	if (this->headerFields.count(tokens[0]))
-		throw HeaderFieldDuplicate();
-	this->headerFields[tokens[0]] = tokens[1];
+	if (*startLine.rbegin() != CR)
+		throw InvalidStartLine();
+	while ((next = startLine.find(SP, last)) != std::string::npos && tokens.size() < count + 1)
+	{
+		tokens.push_back(startLine.substr(last, next - last));
+		last = next + 1;
+	}
+	next = startLine.find_last_of(CR);
+	tokens.push_back(startLine.substr(last, next - last));
+	if (tokens.size() != count)
+		throw InvalidNumberOfTokens();
+}
+
+bool Request::isValidMethod(std::string method)
+{
+	if (this->validMethods.count(method))
+		return (true);
+	return (false);
 }
 
 void Request::parseHeaderFields(std::istringstream& stream)
@@ -160,6 +90,99 @@ void Request::parseHeaderFields(std::istringstream& stream)
 			break ;
 		parseHeaderFieldLine(line);
 	}
+}
+
+void Request::parseHeaderFieldLine(const std::string& line)
+{
+	std::vector<std::string> tokens;
+
+	createHeaderTokens(tokens, line);
+	
+	if (this->headerFields.count(tokens[0]))
+		throw HeaderFieldDuplicate();
+	this->headerFields[tokens[0]] = tokens[1];
+}
+
+void Request::createHeaderTokens(std::vector<std::string>& tokens, const std::string& headerField)
+{
+	size_t pos = 0;
+	std::string tmp;
+
+	if (*headerField.rbegin() != CR)
+		throw InvalidHeaderField();
+	pos = headerField.find(':');
+	if (pos == std::string::npos)
+		throw InvalidHeaderField();
+	tmp = createHeaderFieldName(headerField, pos);
+	tokens.push_back(tmp);
+	tmp = createHeaderFieldValue(headerField, pos);
+	tokens.push_back(tmp);
+}
+
+const std::string Request::createHeaderFieldName(const std::string& message, size_t pos)
+{
+	std::string tmp;
+	
+	tmp = message.substr(0, pos);
+	if (isValidHeaderFieldName(tmp) == false)
+		throw InvalidHeaderFieldName();
+	toLower(tmp);
+	return (tmp);
+}
+
+bool Request::isValidHeaderFieldName(const std::string& token) const
+{
+	std::string tchars = TCHAR;
+
+	for (size_t i = 0; i < token.length(); i++)
+	{
+		char c = token[i];
+		if (isalnum(c) == false && tchars.find(c) == std::string::npos)
+			return (false);
+	}
+	return (true);
+}
+
+void Request::toLower(std::string& str)
+{
+	for (size_t i = 0; i < str.length(); i++)
+		str[i] = std::tolower(str[i]);
+}
+
+const std::string Request::createHeaderFieldValue(const std::string& message, size_t pos)
+{
+	std::string tmp;
+	
+	tmp = removeLeadingAndTrailingWhilespaces(message, pos);
+	if (isValidHeaderFieldValue(tmp) == false)
+		throw InvalidHeaderFieldValue();
+	return (tmp);
+}
+
+const std::string Request::removeLeadingAndTrailingWhilespaces(const std::string& message, size_t pos)
+{
+	pos = message.find_first_not_of(WHITESPACES, pos + 1);
+	if (pos == std::string::npos)
+		throw InvalidHeaderField();
+	size_t end = message.find_last_not_of(WHITESPACES);
+	return (message.substr(pos, end - pos + 1));
+}
+
+bool Request::isValidHeaderFieldValue(const std::string& token) const
+{
+	for (size_t i = 0; i < token.length(); i++)
+	{
+		char c = token[i];
+		if (isprint(c) == false)
+			return (false);
+	}
+	return (true);
+}
+
+void Request::setBodyFlag(void)
+{
+	if (this->headerFields.count("content-length") || this->headerFields.count("transfer-encoding")) //AE handle caseinsensitivity
+		this->hasBody = true;
 }
 
 void Request::parseBody(std::istringstream& stream)
@@ -177,34 +200,11 @@ void Request::parseBody(std::istringstream& stream)
 	}
 }
 
-void Request::setBodyFlag(void)
+void Request::addMethods(void)
 {
-	if (this->headerFields.count("content-length") || this->headerFields.count("transfer-encoding")) //AE handle caseinsensitivity
-		this->hasBody = true;
-}
-
-void Request::parseMessage(const std::string& message)
-{
-	if (message.empty())
-		throw EmptyMessage();
-	std::istringstream stream (message);
-	parseStartLine(stream);
-	parseHeaderFields(stream);
-	setBodyFlag();
-	if (this->hasBody == true)
-		parseBody(stream);
-}
-
-Request::Request(const std::string& message)
-{
-	this->hasBody = false;
-	addMethods();
-	parseMessage(message);
-}
-
-Request::~Request(void)
-{
-
+	this->validMethods.insert("GET");
+	this->validMethods.insert("POST");
+	this->validMethods.insert("DELETE");
 }
 
 std::ostream& operator<<(std::ostream& out, const Request& request)

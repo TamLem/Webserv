@@ -18,12 +18,18 @@ class Request : public Message
 		void addMethods(void);
 		void parseMessage(const std::string&);
 		bool isValidMethod(std::string);
+		bool isValidHeaderFieldName(const std::string&) const;
+		bool isValidHeaderFieldValue(const std::string&) const;
+		void toLower(std::string&);
+		const std::string createHeaderFieldName(const std::string& message, size_t pos);
+		const std::string createHeaderFieldValue(const std::string& message, size_t pos);
+		const std::string removeLeadingAndTrailingWhilespaces(const std::string& message, size_t pos);
 		void parseStartLine(std::istringstream&);
 		void parseHeaderFields(std::istringstream&);
 		void parseHeaderFieldLine(const std::string&);
 		void parseBody(std::istringstream&);
 		void createStartLineTokens(std::vector<std::string>&, const std::string&, const unsigned int&, const std::string&);
-		void createHeaderTokens(std::vector<std::string>&, const std::string&, const unsigned int&, const std::string&);
+		void createHeaderTokens(std::vector<std::string>& tokens, const std::string& message);
 		void setBodyFlag(void);
 		std::string& replaceInString(std::string&, const std::string&, const std::string&);
 		// int _fd;
@@ -56,6 +62,16 @@ class Request : public Message
 	};
 
 	class InvalidHeaderField : public std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class InvalidHeaderFieldName : public std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class InvalidHeaderFieldValue : public std::exception
 	{
 		const char* what() const throw();
 	};

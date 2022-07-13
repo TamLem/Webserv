@@ -4,6 +4,7 @@
 #include <vector>
 #include <sstream> //std::istringstream
 #include <ios> //ios::eof
+#include <cctype> // isalnum isprint isspace
 
 bool Request::isValidMethod(std::string method)
 {
@@ -45,20 +46,78 @@ void Request::createStartLineTokens(std::vector<std::string>& tokens, const std:
 		throw InvalidNumberOfTokens();
 }
 
-void Request::createHeaderTokens(std::vector<std::string>& tokens, const std::string& message, const unsigned int& count, const std::string& delimiter)
+bool Request::isValidHeaderFieldName(const std::string& token) const
 {
-	// std::string delimiter = " ";
-	size_t last = 0;
-	size_t next = 0;
+	std::string tchars = TCHAR;
 
-	while ((next = message.find(delimiter, last)) != std::string::npos && tokens.size() < count + 1)
+	for (size_t i = 0; i < token.length(); i++)
 	{
-		tokens.push_back(message.substr(last, next - last));
-		last = next + delimiter.length();
+		char c = token[i];
+		if (isalnum(c) == false && tchars.find(c) == std::string::npos)
+			return (false);
 	}
-	tokens.push_back(message.substr(last));
-	if (tokens.size() != count)
-		throw InvalidNumberOfTokens();
+	return (true);
+}
+
+bool Request::isValidHeaderFieldValue(const std::string& token) const
+{
+	for (size_t i = 0; i < token.length(); i++)
+	{
+		char c = token[i];
+		if (isprint(c) == false)
+			return (false);
+	}
+	return (true);
+}
+
+void Request::toLower(std::string& str)
+{
+	for (size_t i = 0; i < str.length(); i++)
+		str[i] = std::tolower(str[i]);
+}
+
+const std::string Request::removeLeadingAndTrailingWhilespaces(const std::string& message, size_t pos)
+{
+	pos = message.find_first_not_of(WHITESPACES, pos + 1);
+	if (pos == std::string::npos)
+		throw InvalidHeaderField();
+	size_t end = message.find_last_not_of(WHITESPACES);
+	return (message.substr(pos, end - pos + 1));
+}
+
+const std::string Request::createHeaderFieldName(const std::string& message, size_t pos)
+{
+	std::string tmp;
+	
+	tmp = message.substr(0, pos);
+	if (isValidHeaderFieldName(tmp) == false)
+		throw InvalidHeaderFieldName();
+	toLower(tmp);
+	return (tmp);
+}
+
+const std::string Request::createHeaderFieldValue(const std::string& message, size_t pos)
+{
+	std::string tmp;
+	
+	tmp = removeLeadingAndTrailingWhilespaces(message, pos);
+	if (isValidHeaderFieldValue(tmp) == false)
+		throw InvalidHeaderFieldValue();
+	return (tmp);
+}
+
+void Request::createHeaderTokens(std::vector<std::string>& tokens, const std::string& message)
+{
+	size_t pos = 0;
+	std::string tmp;
+
+	pos = message.find(":");
+	if (pos == std::string::npos)
+		throw InvalidHeaderField();
+	tmp = createHeaderFieldName(message, pos);
+	tokens.push_back(tmp);
+	tmp = createHeaderFieldValue(message, pos);
+	tokens.push_back(tmp);
 }
 
 //AE check what happens for space before method and multiple spaces or 
@@ -85,7 +144,7 @@ void Request::parseHeaderFieldLine(const std::string& line)
 {
 	std::vector<std::string> tokens;
 
-	createHeaderTokens(tokens, line, 2u, ": ");
+	createHeaderTokens(tokens, line);
 	
 	if (this->headerFields.count(tokens[0]))
 		throw HeaderFieldDuplicate();
@@ -99,10 +158,8 @@ void Request::parseHeaderFields(std::istringstream& stream)
 		std::string line;
 		
 		std::getline(stream, line);
-		if (line == "\r")
-		{
+		if (line == CR)
 			break ;
-		}
 		parseHeaderFieldLine(line);
 	}
 }
@@ -124,7 +181,7 @@ void Request::parseBody(std::istringstream& stream)
 
 void Request::setBodyFlag(void)
 {
-	if (this->headerFields.count("Content-Length") || this->headerFields.count("Transfer-Encoding")) //AE handle caseinsensitivity
+	if (this->headerFields.count("content-length") || this->headerFields.count("transfer-encoding")) //AE handle caseinsensitivity
 		this->hasBody = true;
 }
 
@@ -214,4 +271,14 @@ const char* Request::InvalidMethod::what() const throw()
 const char* Request::InvalidHeaderField::what() const throw()
 {
 	return ("Exception: invalid method");
+}
+
+const char* Request::InvalidHeaderFieldName::what() const throw()
+{
+	return ("Exception: detected invalid character in http message header field-name");
+}
+
+const char* Request::InvalidHeaderFieldValue::what() const throw()
+{
+	return ("Exception: detected invalid character in http message header field-value");
 }

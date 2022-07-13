@@ -12,3 +12,5 @@
 #define CR "\r"
 #define CRLF "\r\n"
 #define CRLFTWO "\r\n\r\n"
+#define WHITESPACES " \t\n\v\f\r"
+#define TCHAR "!#$%&'*+-.^_`|~"

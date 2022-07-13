@@ -21,7 +21,7 @@ static void staticTestRequest (void)
 	//https://m.cplusplus.com/articles/D9j2Nwbp/
 	header += static_cast<std::ostringstream*>( &(std::ostringstream() << body.length()) )->str();
 	header += "\r\n";
-	header += "headerfield1: value1\nheaderfield2: value2\r\n\r\n";
+	header += "headerfield1: value1\r\nheaderfield2:   value 2   \r\n\r\n";
 	std::cout << BOLD << "Exception Test:" << RESET << std::endl;
 	try
 	{
@@ -59,4 +59,4 @@ int main (void)
 	staticTestRequest();
 }
 
-//c++ -I ../inc/ ae_test.cpp Message.cpp Response.cpp Request.cpp -std=c++98 -Wall -Wextra -Werror
+//c++ -I ../include/ ae_test.cpp Message.cpp Response.cpp Request.cpp -std=c++98 -Wall -Wextra -Werror

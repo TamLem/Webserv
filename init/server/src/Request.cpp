@@ -128,13 +128,13 @@ void Request::parseStartLine(std::istringstream& stream)
 	std::string protocol = tokens[2];
 	if (!isValidMethod(method))
 		throw InvalidMethod();
-	if (!isValidProtocol(protocol))
-		throw InvalidProtocol();
 	this->method = method;
 	if (url == "/")
 		this->url = INDEX_PATH;
 	else
 		this->url = "." + url;
+	if (!isValidProtocol(protocol))
+		throw InvalidProtocol();
 	this->protocol = protocol;
 }
 

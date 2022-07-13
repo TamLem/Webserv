@@ -20,28 +20,21 @@ void Request::addMethods(void)
 	this->validMethods.insert("DELETE");
 }
 
-std::string& Request::replaceInString(std::string& str, const std::string& toFind, const std::string& toReplace)
-{
-	size_t pos = 0;
-	for (pos = str.find(toFind); pos != std::string::npos; pos = str.find(toFind, pos))
-	{
-			str.replace(pos, toFind.length(), toReplace);
-	}
-	return (str);
-}
-
-void Request::createStartLineTokens(std::vector<std::string>& tokens, const std::string& message, const unsigned int& count, const std::string& delimiter)
+void Request::createStartLineTokens(std::vector<std::string>& tokens, const std::string& startLine)
 {
 	size_t last = 0;
 	size_t next = 0;
+	size_t count = 3;
 
-	while ((next = message.find(delimiter, last)) != std::string::npos && tokens.size() < count + 1)
+	if (*startLine.rbegin() != CR)
+		throw InvalidStartLine();
+	while ((next = startLine.find(SP, last)) != std::string::npos && tokens.size() < count + 1)
 	{
-		tokens.push_back(message.substr(last, next - last));
-		last = next + delimiter.length();
+		tokens.push_back(startLine.substr(last, next - last));
+		last = next + 1;
 	}
-	next = message.find(CR, last); // AE make sure this exists
-	tokens.push_back(message.substr(last, next - last));
+	next = startLine.find_last_of(CR);
+	tokens.push_back(startLine.substr(last, next - last));
 	if (tokens.size() != count)
 		throw InvalidNumberOfTokens();
 }
@@ -106,17 +99,19 @@ const std::string Request::createHeaderFieldValue(const std::string& message, si
 	return (tmp);
 }
 
-void Request::createHeaderTokens(std::vector<std::string>& tokens, const std::string& message)
+void Request::createHeaderTokens(std::vector<std::string>& tokens, const std::string& headerField)
 {
 	size_t pos = 0;
 	std::string tmp;
 
-	pos = message.find(":");
+	if (*headerField.rbegin() != CR)
+		throw InvalidHeaderField();
+	pos = headerField.find(':');
 	if (pos == std::string::npos)
 		throw InvalidHeaderField();
-	tmp = createHeaderFieldName(message, pos);
+	tmp = createHeaderFieldName(headerField, pos);
 	tokens.push_back(tmp);
-	tmp = createHeaderFieldValue(message, pos);
+	tmp = createHeaderFieldValue(headerField, pos);
 	tokens.push_back(tmp);
 }
 
@@ -127,17 +122,20 @@ void Request::parseStartLine(std::istringstream& stream)
 	std::string line;
 
 	std::getline(stream, line);
-	createStartLineTokens(tokens, line, 3u, SP);
-	if (!isValidMethod(tokens[0]))
+	createStartLineTokens(tokens, line);
+	std::string method = tokens[0];
+	std::string url = tokens[1];
+	std::string protocol = tokens[2];
+	if (!isValidMethod(method))
 		throw InvalidMethod();
-	if (!isValidProtocol(tokens[2]))
+	if (!isValidProtocol(protocol))
 		throw InvalidProtocol();
-	this->method = tokens[0];
-	if (tokens[1] == "/")
+	this->method = method;
+	if (url == "/")
 		this->url = INDEX_PATH;
 	else
-		this->url = "." + tokens[1];
-	this->protocol = tokens[2];
+		this->url = "." + url;
+	this->protocol = protocol;
 }
 
 void Request::parseHeaderFieldLine(const std::string& line)
@@ -158,7 +156,7 @@ void Request::parseHeaderFields(std::istringstream& stream)
 		std::string line;
 		
 		std::getline(stream, line);
-		if (line == CR)
+		if (line.length() == 1 && *line.begin() == CR)
 			break ;
 		parseHeaderFieldLine(line);
 	}
@@ -270,7 +268,7 @@ const char* Request::InvalidMethod::what() const throw()
 
 const char* Request::InvalidHeaderField::what() const throw()
 {
-	return ("Exception: invalid method");
+	return ("Exception: invalid header field");
 }
 
 const char* Request::InvalidHeaderFieldName::what() const throw()

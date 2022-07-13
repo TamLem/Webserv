@@ -35,4 +35,9 @@ class Message
 	{
 		const char* what() const throw();
 	};
+
+	class InvalidStartLine : public std::exception
+	{
+		const char* what() const throw();
+	};
 };

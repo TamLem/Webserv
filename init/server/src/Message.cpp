@@ -44,6 +44,11 @@ const char* Message::HeaderFieldDuplicate::what() const throw()
 	return ("Exception: header field duplicate");
 }
 
+const char* Message::InvalidStartLine::what() const throw()
+{
+	return ("Exception: invalid start line format");
+}
+
 bool Message::isValidProtocol(std::string protocol)
 {
 	if (protocol == "HTTP/1.1")

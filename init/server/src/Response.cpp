@@ -14,19 +14,7 @@
 #define BLUE "\033[34m"
 #define RED "\033[31m"
 
-void Response::createMessageMap(void)
-{
-	//1xx informational response
-	this->messageMap[100] = "Continue";
-	//2xx success
-	this->messageMap[200] = "OK";
-	//3xx redirection
-	//4xx client errors
-	this->messageMap[404] = "Not Found";
-	//5xx server errors
-}
-
-bool Response::isValidStatus(int status)
+bool Response::isValidStatus(const int status)
 {
 	if (this->messageMap.count(status))
 		return (true);
@@ -49,14 +37,6 @@ Response::Response(std::string protocol, int status, int fd, std::string url) : 
 Response::~Response(void)
 {
 
-}
-
-std::ostream& operator<<(std::ostream& out, const Response& response)
-{
-	out << response.getProtocol() << " "
-	<< response.getStatus() << " "
-	<< response.getStatusMessage();
-	return (out);
 }
 
 const int& Response::getStatus(void) const
@@ -83,7 +63,7 @@ std::string Response::constructHeader(void)
 	return (stream.str());
 }
 
-int Response::sendall(int sock_fd, char *buffer, int len)
+int Response::sendall(const int sock_fd, char *buffer, const int len) const
 {
 	int total;
 	int bytesleft;
@@ -106,11 +86,6 @@ int Response::sendall(int sock_fd, char *buffer, int len)
 	}
 	return (0);
 }
-
-// void Response::readBody(void)
-// {
-
-// }
 
 void Response::sendResponse(void)
 {
@@ -136,6 +111,26 @@ void Response::sendResponse(void)
 		//404 response
 	}
 	close(this->fd);
+}
+
+void Response::createMessageMap(void)
+{
+	//1xx informational response
+	this->messageMap[100] = "Continue";
+	//2xx success
+	this->messageMap[200] = "OK";
+	//3xx redirection
+	//4xx client errors
+	this->messageMap[404] = "Not Found";
+	//5xx server errors
+}
+
+std::ostream& operator<<(std::ostream& out, const Response& response)
+{
+	out << response.getProtocol() << " "
+	<< response.getStatus() << " "
+	<< response.getStatusMessage();
+	return (out);
 }
 
 const char* Response::InvalidStatus::what() const throw()

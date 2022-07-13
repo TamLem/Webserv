@@ -53,7 +53,7 @@ void Request::parseStartLine(std::istringstream& stream)
 	this->protocol = protocol;
 }
 
-void Request::createStartLineTokens(std::vector<std::string>& tokens, const std::string& startLine)
+void Request::createStartLineTokens(std::vector<std::string>& tokens, const std::string& startLine) const
 {
 	size_t last = 0;
 	size_t next = 0;
@@ -72,7 +72,7 @@ void Request::createStartLineTokens(std::vector<std::string>& tokens, const std:
 		throw InvalidNumberOfTokens();
 }
 
-bool Request::isValidMethod(std::string method)
+bool Request::isValidMethod(const std::string method) const
 {
 	if (this->validMethods.count(method))
 		return (true);
@@ -119,7 +119,7 @@ void Request::createHeaderTokens(std::vector<std::string>& tokens, const std::st
 	tokens.push_back(tmp);
 }
 
-const std::string Request::createHeaderFieldName(const std::string& message, size_t pos)
+const std::string Request::createHeaderFieldName(const std::string& message, const size_t pos) const
 {
 	std::string tmp;
 	
@@ -143,13 +143,13 @@ bool Request::isValidHeaderFieldName(const std::string& token) const
 	return (true);
 }
 
-void Request::toLower(std::string& str)
+void Request::toLower(std::string& str) const
 {
 	for (size_t i = 0; i < str.length(); i++)
 		str[i] = std::tolower(str[i]);
 }
 
-const std::string Request::createHeaderFieldValue(const std::string& message, size_t pos)
+const std::string Request::createHeaderFieldValue(const std::string& message, const size_t pos)
 {
 	std::string tmp;
 	
@@ -159,7 +159,7 @@ const std::string Request::createHeaderFieldValue(const std::string& message, si
 	return (tmp);
 }
 
-const std::string Request::removeLeadingAndTrailingWhilespaces(const std::string& message, size_t pos)
+const std::string Request::removeLeadingAndTrailingWhilespaces(const std::string& message, size_t pos) const
 {
 	pos = message.find_first_not_of(WHITESPACES, pos + 1);
 	if (pos == std::string::npos)
@@ -181,7 +181,7 @@ bool Request::isValidHeaderFieldValue(const std::string& token) const
 
 void Request::setBodyFlag(void)
 {
-	if (this->headerFields.count("content-length") || this->headerFields.count("transfer-encoding")) //AE handle caseinsensitivity
+	if (this->headerFields.count("content-length") || this->headerFields.count("transfer-encoding"))
 		this->hasBody = true;
 }
 

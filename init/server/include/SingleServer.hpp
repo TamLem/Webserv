@@ -18,8 +18,11 @@ class SingleServer
 		std::string _serverName;
 		std::string _root;
 		std::string _index;
-		std::string _cgi_param;
-		std::pair<std::string, std::string> _location; // check if this is good, it is for the cgi stuff
+		std::pair<std::string, std::string> *_location;
+
+	// Private Methods
+		void setVariables(std::string server);
+		void checkVariables();
 
 	public:
 	// Constructors
@@ -31,8 +34,35 @@ class SingleServer
 	// Public Methods
 
 	// Getter
-	const std::string *getListen() const;
-	const std::string getServerName() const;
+		const std::string *getListen() const;
+		const std::string getServerName() const;
+		const std::string getRoot() const;
+		const std::string getIndex() const;
+		const std::pair<std::string, std::string>* getLocation() const;
 
+	// Exceptions
+		class NoRootException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class NoIndexException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class NoPortException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class NotAPortException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
 };
 #endif // SINGLESERVER_HPP

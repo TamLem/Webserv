@@ -4,18 +4,50 @@
 #include <unistd.h>
 #include <cstring>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Base.hpp"
 
+#include "Config.hpp"
 
 // Forbidden includes
 #include <errno.h>
 
 // this was the first try of a socket connection, now is only used to have a working linux compatible simple server
 
-int main() {
+void parseArgv(int argc, char **argv)
+{
+	if (argc <= 1 || argc > 2)
+	{
+		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename>.conf" << RESET << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	std::string sArgv = argv[1];
+	std::string ending = ".conf";
+	if ((argv[1] + sArgv.find_last_of(".")) != ending)
+	{
+		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename>.conf" << RESET << std::endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
+int main(int argc, char **argv)
+{
+
+	parseArgv(argc, argv);
+
+	Config config;
+	try
+	{
+		config.start(argv[1]);
+	}
+	catch (std::exception &e)
+	{
+			std::cerr << RED << "Exception caught in main function: " << e.what() << RESET << std::endl;
+			return (EXIT_FAILURE);
+	}
 
 	int sockfd;
 	struct sockaddr_in serv_addr;

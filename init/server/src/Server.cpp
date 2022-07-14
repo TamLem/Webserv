@@ -58,6 +58,10 @@ int main(int argc, char **argv)
 	Server test(8080); // somehow pass the listen ports to the server ??
 	test.cluster = config.getCluster();
 	// test if the data inside the cluster is accessable
+	std::cout << GREEN << test.cluster << RESET << std::endl;
 	test.run();
+
+	if (test.cluster->count("weebserv") == 1)
+		std::cout << "server weebserv found in cluster" << std::endl;
 	return (0);
 }

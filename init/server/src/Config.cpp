@@ -4,15 +4,11 @@
 // Private Methods
 void Config::_openConfigFile()
 {
-	this->_configFile.open(this->getConfigPath());
+	this->_configFile.open(this->getConfigPath().c_str());
 	if (!this->_configFile.is_open())
 	{
-		// std::cerr << RED << "Error when opening " << this->getConfigPath() << RESET << std::endl \
+		// std::cerr << RED << "Error when opening " << this->getConfigPath() << RESET << std::endl
 		// << "\tcheck for spelling errors in the name and check for read-rights of the file" << std::endl;
-		std::string error_msg = "check existance and file-rights of " + this->getConfigPath();
-		#ifndef CAUSE
-			#define CAUSE error_msg
-		#endif
 		throw Config::FileOpenException();
 	}
 }
@@ -21,7 +17,7 @@ enum configKeys
 {
 	listen,
 	root,
-	server_name,
+	serverName,
 	default_
 };
 
@@ -29,49 +25,78 @@ std::string configCompare[] =
 {
 	"listen",
 	"root",
-	"server_name"
+	"serverName"
 };
-
-void Config::_setCause(std::string cause)
-{
-	this->_cause = cause;
-}
 
 void Config::_readConfigFile()
 {
-	std::stringstream streambuffer;
-	streambuffer << this->_configFile.rdbuf();
+	std::stringstream streamBuffer;
+	streamBuffer << this->_configFile.rdbuf();
+	this->_configFile.close();
 	int nOpenBrackets = 0;
 	std::string buffer;
-	while (streambuffer.good()) // fill _cluster
+	while (streamBuffer.good()) // fill _cluster
 	{
-		std::stringstream server;
-		while (streambuffer.good()) // fill SingleServer
+		std::stringstream serverStream;
+		while (streamBuffer.good()) // fill SingleServer
 		{
-			std::getline(streambuffer, buffer);
-			server << buffer << std::endl;
-			if (buffer.find("{") != std::string::npos)
+			std::getline(streamBuffer, buffer);
+			serverStream << buffer << std::endl;
+			if (buffer.find("{") != std::string::npos && buffer.find("#") == std::string::npos)
 				++nOpenBrackets;
-			if (buffer.find("}") != std::string::npos)
+			if (buffer.find("}") != std::string::npos && buffer.find("#") == std::string::npos)
 				--nOpenBrackets;
-			if (buffer.find("}") != std::string::npos && nOpenBrackets == 0)
+			if (buffer.find("}") != std::string::npos && buffer.find("#") == std::string::npos && nOpenBrackets == 0)
 				break ;
 		}
 
-		// search for server_name
-		std::string server_name = server.str();
-		server.clear();
-		server_name = server_name.substr(server_name.find("server_name"));
-		server_name = server_name.substr(server_name.find_first_of(" ") + 1);
-		server_name = server_name.substr(0, server_name.find_first_of("\n"));
-		std::cout << BLUE << "server_name: >" << server_name << "<" << RESET << std::endl;
-		this->_cluster->insert(std::make_pair<std::string, SingleServer>(server_name, SingleServer(server.str())));
-
-		// while (server.good())
-		// {
-		// 	// fill SingleServer here
-		// }
-		buffer.clear();
+		// search for serverName
+		// std::string serverName = serverStream.str();
+		// serverStream.clear();
+		// cut out comments from server
+		std::string server;
+		bool serverFound = false;
+		while (serverStream.good()) // clear out all the comments, leading and trailing whitespaces
+		{
+			buffer.clear();
+			std::getline(serverStream, buffer);
+			if (buffer.length() == 0)
+				continue ;
+			size_t start = buffer.find_first_not_of(WHITESPACE);
+			if (start == std::string::npos)
+				continue ;
+			size_t end = buffer.find_first_of('#');
+			if (end == std::string::npos)
+			{
+				end = buffer.find_last_not_of(WHITESPACE);
+				buffer = buffer.substr(start, (end - start + 1));
+				std::cerr << BLUE << "if: >" << buffer << "<" << std::endl;
+			}
+			else
+			{
+				--end;
+				buffer = buffer.substr(start, (end - start + 1));
+				end = buffer.find_last_not_of(WHITESPACE);
+				buffer = buffer.substr(0, end + 1);
+				std::cerr << BLUE << "else: >" << buffer << "<" << std::endl;
+			}
+			if (serverFound == false && buffer.find("server {") != std::string::npos)
+				serverFound = true;
+			else if (serverFound == true && buffer.find("server {") != std::string::npos)
+				throw Config::ServerInsideServerException();
+			if (serverFound == false)
+				continue ;
+			if (buffer.length() > 0)
+			{
+				server.append(buffer);
+				server.append(";");
+			}
+		}
+		std::string serverName = server.substr(server.find("server_name"));
+		serverName = serverName.substr(serverName.find_first_of(" ") + 1);
+		serverName = serverName.substr(0, serverName.find_first_of(";"));
+		std::cout << BLUE << "serverName: >" << serverName << "<" << RESET << std::endl;
+		this->_cluster->insert(std::make_pair<std::string, SingleServer>(serverName, SingleServer(server)));
 	}
 	if (nOpenBrackets != 0)
 		throw Config::InvalidBracketsException();
@@ -107,8 +132,8 @@ void Config::_readConfigFile()
 		// 		std::cerr << RED << configCompare[root] << " found" << RESET <<std::endl;
 		// 		buffer.clear();
 		// 		break ;
-		// 	case (server_name):
-		// 		std::cerr << RED << configCompare[server_name] << " found" << RESET <<std::endl;
+		// 	case (serverName):
+		// 		std::cerr << RED << configCompare[serverName] << " found" << RESET <<std::endl;
 		// 		buffer.clear();
 		// 		break ;
 		// 	default:
@@ -153,11 +178,6 @@ const std::string Config::getConfigPath() const
 	return (this->_configPath);
 }
 
-const std::string Config::getCause() const
-{
-	return (this->_cause);
-}
-
 std::map<std::string, SingleServer> *Config::getCluster() const
 {
 	return (this->_cluster);
@@ -173,8 +193,8 @@ void Config::setConfigPath(std::string configPath)
 // Ostream overload
 // std::ostream	&operator<<(std::ostream &o, Config *config)
 // {
-// 	o << "configPath: " << config->getConfigPath() << std::endl \
-// 	<< "server:" << config->getServer() << std::endl \
+// 	o << "configPath: " << config->getConfigPath() << std::endl
+// 	<< "server:" << config->getServer() << std::endl
 // 	<< "rootPath: " << config->getRootPath() << std::endl;
 // 	return (o);
 // }
@@ -188,4 +208,9 @@ const char* Config::InvalidBracketsException::what(void) const throw()
 const char* Config::FileOpenException::what(void) const throw()
 {
 	return ("Failed to read from .conf-file");
+}
+
+const char* Config::ServerInsideServerException::what(void) const throw()
+{
+	return ("Wrong Syntax in .conf-file, server-block inside server-block found");
 }

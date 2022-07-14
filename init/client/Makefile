@@ -1,6 +1,6 @@
 NAME		=	client
 
-CXX			=	g++
+CXX			=	c++
 
 CXXFLAGS	=	-std=c++98#-Wall -Werror -Wextra
 

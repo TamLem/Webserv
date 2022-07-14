@@ -52,11 +52,12 @@ int main(int argc, char **argv)
 	}
 	catch (std::exception &e)
 	{
-			std::cerr << RED << e.what() << RESET << std::endl;
+			std::cerr << RED << "Exception caught in main function: " << e.what() << RESET << std::endl;
 			return (EXIT_FAILURE);
 	}
 	Server test(8080); // somehow pass the listen ports to the server ??
 	test.cluster = config.getCluster();
+	// test if the data inside the cluster is accessable
 	test.run();
 	return (0);
 }

@@ -18,8 +18,6 @@
 class Config
 {
 	private:
-		std::string		_cause;
-
 		std::ifstream	_configFile;
 		std::string		_configPath;
 
@@ -29,7 +27,6 @@ class Config
 	// Private Methods
 		void _openConfigFile();
 		void _readConfigFile();
-		void _setCause(std::string cause);
 
 	public:
 	// Constructors
@@ -45,7 +42,6 @@ class Config
 	// Getter
 		const std::string getConfigPath() const;
 		std::map<std::string, SingleServer> *getCluster() const;
-		const std::string getCause()const ;
 
 	// private: //maybe private for the setters adds more security
 	// Setter
@@ -60,6 +56,12 @@ class Config
 		};
 
 		class FileOpenException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class ServerInsideServerException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

@@ -4,7 +4,7 @@ CXX			=	g++
 
 CXXFLAGS	=	-std=c++98 -Wall -Werror -Wextra
 
-# CXXFLAGS	+=	-g -fsanitize=address
+CXXFLAGS	+=	-g -fsanitize=address
 
 UNAME		:=	$(shell uname)
 
@@ -31,13 +31,17 @@ ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be differe
 SRC_FILES	=	Server.cpp \
 				Message.cpp \
 				Response.cpp \
-				Request.cpp
+				Request.cpp \
+				Config.cpp \
+				SingleServer.cpp
 else
 #(blocking server for testing on Linux)
 SRC_FILES	=	Linux_server.cpp \
 				Message.cpp \
 				Response.cpp \
-				Request.cpp
+				Request.cpp \
+				Config.cpp \
+				SingleServer.cpp
 endif
 
 OBJ_FILES	=	$(SRC_FILES:.cpp=.o)
@@ -91,7 +95,7 @@ re: fclean all
 
 #run rule
 run: re
-	./$(NAME)
+	./$(NAME) config/www.conf
 
 #phony
 .PHONY: all clean fclean re run

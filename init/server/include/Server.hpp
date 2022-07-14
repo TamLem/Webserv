@@ -17,12 +17,14 @@
 #include <fcntl.h>
 #include <fstream>
 #include <sys/event.h>
+#include <map>
 #include <csignal> // check if forbidden !!!!!!!!!!
 
 /* our includes */
 #include "Response.hpp"
 #include "Request.hpp"
 #include "Cgi.hpp"
+#include "SingleServer.hpp"
 
 #include "Base.hpp"
 
@@ -166,7 +168,7 @@ class Server
 						}
 						buf[n] = '\0';
 						std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
-						
+
 						if (std::string(buf).find(".php") != std::string::npos)
 							cgi_response(buf, fd);
 						else
@@ -213,6 +215,9 @@ class Server
 			}
 			run_event_loop(kq);
 		}
+	public:
+		std::map <std::string, SingleServer>* cluster;
+
 	private:
 		size_t _port;
 		size_t _server_fd;

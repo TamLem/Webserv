@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Config.hpp"
 
 static void handle_signal(int sig)
 {
@@ -24,10 +25,38 @@ void	handle_signals(void)
 	// signal(SIGPIPE, handle_signal);
 }
 
-int main()
+void parseArgv(int argc, char **argv)
+{
+	if (argc <= 1 || argc > 2)
+	{
+		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename>.conf" << RESET << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	std::string sArgv = argv[1];
+	std::string ending = ".conf";
+	if ((argv[1] + sArgv.find_last_of(".")) != ending)
+	{
+		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename>.conf" << RESET << std::endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
+int main(int argc, char **argv)
 {
 	handle_signals();
-	Server test(8080);
+	parseArgv(argc, argv);
+	Config config;
+	try
+	{
+		config.start(argv[1]);
+	}
+	catch (std::exception &e)
+	{
+			std::cerr << RED << e.what() << RESET << std::endl;
+			return (EXIT_FAILURE);
+	}
+	Server test(8080); // somehow pass the listen ports to the server ??
+	test.cluster = config.getCluster();
 	test.run();
 	return (0);
 }

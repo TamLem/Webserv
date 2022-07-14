@@ -4,7 +4,7 @@
 SingleServer::SingleServer(std::string server)
 {
 	std::cout << "SingleServer Default Constructor called" << std::endl;
-	std::cout << "This content reached the server:>" << server << "<" << std::endl;
+	std::cout << "This content reached the server:\n>" << server << "<" << std::endl;
 }
 
 // Deconstructors

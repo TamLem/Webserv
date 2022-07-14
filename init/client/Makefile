@@ -1,4 +1,4 @@
-NAME		=	webserv
+NAME		=	client
 
 CXX			=	g++
 

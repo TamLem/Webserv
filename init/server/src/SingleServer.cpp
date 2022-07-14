@@ -1,11 +1,6 @@
 #include "SingleServer.hpp"
 
 // Constructors
-SingleServer::SingleServer()
-{
-	std::cout << "SingleServer default constructor called" << std::endl;
-}
-
 SingleServer::SingleServer(std::string server)
 {
 	std::cout << "SingleServer constructor called" << std::endl;

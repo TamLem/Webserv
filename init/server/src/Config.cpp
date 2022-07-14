@@ -110,7 +110,8 @@ void Config::_readConfigFile()
 		serverName = serverName.substr(serverName.find_first_of(" ") + 1);
 		serverName = serverName.substr(0, serverName.find_first_of("\n"));
 		std::cout << BLUE << "serverName: >" << RESET << serverName << BLUE << "<" << RESET << std::endl;
-		this->_cluster->insert(std::make_pair<std::string, SingleServer>(serverName, SingleServer(server)));
+		SingleServer serverObject(server);
+		this->_cluster->insert(std::make_pair<std::string, SingleServer>(serverName, serverObject));
 		server.clear();
 		serverName.clear();
 	}

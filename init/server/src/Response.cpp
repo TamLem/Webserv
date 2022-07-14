@@ -100,7 +100,8 @@ void Response::sendResponse(void)
 		size_t len = body.tellg();
 		contentLength << len;
 		addHeaderField("Server", "localhost:8080");
-		addHeaderField("Content-Length", contentLength.str());
+		if (headerFields.count("Transfer-Encoding") == 0)
+			addHeaderField("Content-Length", contentLength.str());
 		std::string message = this->constructHeader() + body.str();
 		sendall(this->fd, (char *)message.c_str(), message.length());
 	}

@@ -12,11 +12,10 @@ class Message
 		std::string protocol;
 		std::string body;
 		bool hasBody;
-		//some container for header fields
 		Message(const Message&);
 		Message& operator=(const Message&);
 		Message(void);
-		bool isValidProtocol(std::string);
+		bool isValidProtocol(const std::string&) const;
 		void addHeaderField(const std::string&, const std::string&);
 		std::map<std::string, std::string> headerFields;
 	public:

@@ -19,6 +19,13 @@ void Message::addHeaderField(const std::string& key, const std::string& value)
 	this->headerFields[key] = value;
 }
 
+bool Message::isValidProtocol(const std::string& protocol) const
+{
+	if (protocol == "HTTP/1.1")
+		return (true);
+	return (false);
+}
+
 const std::string& Message::getProtocol(void) const
 {
 	return (this->protocol);
@@ -47,11 +54,4 @@ const char* Message::HeaderFieldDuplicate::what() const throw()
 const char* Message::InvalidStartLine::what() const throw()
 {
 	return ("Exception: invalid start line format");
-}
-
-bool Message::isValidProtocol(std::string protocol)
-{
-	if (protocol == "HTTP/1.1")
-		return (true);
-	return (false);
 }

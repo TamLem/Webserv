@@ -196,6 +196,7 @@ const std::string Config::getConfigPath() const
 
 std::map<std::string, SingleServer> *Config::getCluster() const
 {
+	std::cout << GREEN << this->_cluster << RESET << std::endl;
 	return (this->_cluster);
 }
 

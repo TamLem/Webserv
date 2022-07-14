@@ -60,8 +60,13 @@ int main(int argc, char **argv)
 	// test if the data inside the cluster is accessable
 	std::cout << GREEN << test.cluster << RESET << std::endl;
 	test.run();
-
+	std::cout << GREEN << test.cluster << RESET << std::endl;
 	if (test.cluster->count("weebserv") == 1)
 		std::cout << "server weebserv found in cluster" << std::endl;
+	if (test.cluster->count("fckd}") == 1)
+	{
+		std::cout << "server fckd} found in cluster" << std::endl;
+		return (EXIT_FAILURE);
+	}
 	return (0);
 }

@@ -79,9 +79,12 @@ class Server
 		~Server()
 		{
 			this->cluster->clear();
+			// delete this->cluster;
 			close(this->_server_fd);
 		}
+
 		void stop();
+
 		int get_client(int fd)
 		{
 			for (size_t i = 0; i < _clients.size(); i++)

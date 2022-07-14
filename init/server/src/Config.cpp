@@ -41,12 +41,15 @@ void Config::_readConfigFile()
 		while (streamBuffer.good()) // fill SingleServer
 		{
 			std::getline(streamBuffer, buffer);
+			if (buffer.length() == 0)
+				continue ;
 			serverStream << buffer << std::endl;
-			if (buffer.find("{") != std::string::npos && buffer.find("#") == std::string::npos)
+			if (buffer.find("{") != std::string::npos && buffer.find("#") > buffer.find("{"))
 				++nOpenBrackets;
-			if (buffer.find("}") != std::string::npos && buffer.find("#") == std::string::npos)
+			if (buffer.find("}") != std::string::npos && buffer.find("#") > buffer.find("}"))
 				--nOpenBrackets;
-			if (buffer.find("}") != std::string::npos && buffer.find("#") == std::string::npos && nOpenBrackets == 0)
+			// std::cerr << RED << "buffer: >" << buffer << "<" << std::endl << RESET << "nOpenBrackets: " << nOpenBrackets << std::endl;
+			if (buffer.find("}") != std::string::npos && buffer.find("#") > buffer.find("}") && nOpenBrackets == 0)
 				break ;
 		}
 
@@ -62,6 +65,7 @@ void Config::_readConfigFile()
 			std::getline(serverStream, buffer);
 			if (buffer.length() == 0)
 				continue ;
+			std::cerr << YELLOW << "before: >" << buffer << "<" << RESET << std::endl;
 			size_t start = buffer.find_first_not_of(WHITESPACE);
 			if (start == std::string::npos)
 				continue ;
@@ -70,7 +74,7 @@ void Config::_readConfigFile()
 			{
 				end = buffer.find_last_not_of(WHITESPACE);
 				buffer = buffer.substr(start, (end - start + 1));
-				std::cerr << BLUE << "if: >" << buffer << "<" << std::endl;
+				std::cerr << BLUE << "if: >" << buffer << "<" << RESET << std::endl;
 			}
 			else
 			{
@@ -78,28 +82,38 @@ void Config::_readConfigFile()
 				buffer = buffer.substr(start, (end - start + 1));
 				end = buffer.find_last_not_of(WHITESPACE);
 				buffer = buffer.substr(0, end + 1);
-				std::cerr << BLUE << "else: >" << buffer << "<" << std::endl;
+				std::cerr << BLUE << "else: >" << buffer << "<" << RESET << std::endl;
 			}
 			if (serverFound == false && buffer.find("server {") != std::string::npos)
 				serverFound = true;
 			else if (serverFound == true && buffer.find("server {") != std::string::npos)
 				throw Config::ServerInsideServerException();
-			if (serverFound == false)
-				continue ;
+			if (serverFound == false && buffer.length() > 0)
+			{
+				throw Config::InvalidCharException();
+			}
 			if (buffer.length() > 0)
 			{
 				server.append(buffer);
-				server.append(";");
+				server.append("\n");
 			}
 		}
+		std::cerr << "serverStream not good anymore" << std::endl;
+		std::cerr << RED << "server: >" << server << "< with length of: " << server.length() << RESET << std::endl;
+		if (nOpenBrackets != 0)
+			throw Config::InvalidBracketsException();
+		if (server.length() == 0)
+			break ;// continue ;
+		if (server.find("server_name") == std::string::npos)
+			throw Config::NoServerNameException();
 		std::string serverName = server.substr(server.find("server_name"));
 		serverName = serverName.substr(serverName.find_first_of(" ") + 1);
-		serverName = serverName.substr(0, serverName.find_first_of(";"));
-		std::cout << BLUE << "serverName: >" << serverName << "<" << RESET << std::endl;
+		serverName = serverName.substr(0, serverName.find_first_of("\n"));
+		std::cout << BLUE << "serverName: >" << RESET << serverName << BLUE << "<" << RESET << std::endl;
 		this->_cluster->insert(std::make_pair<std::string, SingleServer>(serverName, SingleServer(server)));
+		server.clear();
+		serverName.clear();
 	}
-	if (nOpenBrackets != 0)
-		throw Config::InvalidBracketsException();
 	// std::map<size_t, std::string>::iterator token = this->_tokens.begin();
 	// for (; token != this->_tokens.end(); token++)
 	// {
@@ -169,6 +183,7 @@ void Config::start(std::string configPath)
 	this->setConfigPath(configPath);
 	this->_openConfigFile();
 	this->_cluster = new std::map<std::string, SingleServer>;
+	std::cout << GREEN << _cluster << RESET << std::endl;
 	this->_readConfigFile();
 }
 
@@ -213,4 +228,14 @@ const char* Config::FileOpenException::what(void) const throw()
 const char* Config::ServerInsideServerException::what(void) const throw()
 {
 	return ("Wrong Syntax in .conf-file, server-block inside server-block found");
+}
+
+const char* Config::InvalidCharException::what(void) const throw()
+{
+	return ("Invalid char found outside of a server block");
+}
+
+const char* Config::NoServerNameException::what(void) const throw()
+{
+	return ("No server_name found inside the server block");
 }

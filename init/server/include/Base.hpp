@@ -10,3 +10,5 @@
 
 #define CRLF "\r\n"
 #define CRLFTWO "\r\n\r\n"
+
+#define WHITESPACE "\n\r\t\f\v "

@@ -78,6 +78,12 @@ class Config
 			public:
 				virtual const char* what() const throw();
 		};
+
+		class WrongConfigSyntaxException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
 };
 	// Ostream Overload
 		std::ostream &operator<<(std::ostream &o, Config *config);

@@ -13,20 +13,20 @@ void Config::_openConfigFile()
 	}
 }
 
-enum configKeys
-{
-	listen,
-	root,
-	serverName,
-	default_
-};
+// enum configKeys
+// {
+// 	listen,
+// 	root,
+// 	serverName,
+// 	default_
+// };
 
-std::string configCompare[] =
-{
-	"listen",
-	"root",
-	"serverName"
-};
+// std::string configCompare[] =
+// {
+// 	"listen",
+// 	"root",
+// 	"serverName"
+// };
 
 void Config::_readConfigFile()
 {
@@ -44,10 +44,24 @@ void Config::_readConfigFile()
 			if (buffer.length() == 0)
 				continue ;
 			serverStream << buffer << std::endl;
+			// if (buffer.find("server {") != std::string::npos && buffer.substr(buffer.find("{") + 1).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("{") + 1).find("#"))
+			// {
+			// 	// std::cout << YELLOW << ">" << buffer.substr(buffer.find("{") + 1).find_first_not_of(WHITESPACE) << "<" << RESET << std::endl;
+			// 	// std::cout << YELLOW << ">" << buffer.find("#") << RESET << std::endl;
+			// 	throw Config::WrongConfigSyntaxException();
+			// }
 			if (buffer.find("{") != std::string::npos && buffer.find("#") > buffer.find("{"))
+			{
+				if (buffer.substr(buffer.find("{") + 1).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("{") + 1).find("#") || (buffer.find_first_not_of(WHITESPACE) != buffer.find("{") && buffer.find_first_not_of(WHITESPACE) != buffer.find("server {")))
+					throw Config::WrongConfigSyntaxException();
 				++nOpenBrackets;
-			if (buffer.find("}") != std::string::npos && buffer.find("#") > buffer.find("}"))
+			}
+			else if (buffer.find("}") != std::string::npos && buffer.find("#") > buffer.find("}"))
+			{
+				if (buffer.substr(buffer.find("}") + 1).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("}") + 1).find("#") || buffer.find_first_not_of(WHITESPACE) != buffer.find("}"))
+					throw Config::WrongConfigSyntaxException();
 				--nOpenBrackets;
+			}
 			// std::cerr << RED << "buffer: >" << buffer << "<" << std::endl << RESET << "nOpenBrackets: " << nOpenBrackets << std::endl;
 			if (buffer.find("}") != std::string::npos && buffer.find("#") > buffer.find("}") && nOpenBrackets == 0)
 				break ;
@@ -217,6 +231,10 @@ void Config::setConfigPath(std::string configPath)
 // }
 
 // Exceptions
+// brackets can not be opened and closed on the same line
+// no content after the opening bracket on same line, comments are ok
+// no content on closing bracket line, cmments are ok
+// incomplete brackets
 const char* Config::InvalidBracketsException::what(void) const throw()
 {
 	return ("Invalid brackets in .conf-file");
@@ -234,10 +252,15 @@ const char* Config::ServerInsideServerException::what(void) const throw()
 
 const char* Config::InvalidCharException::what(void) const throw()
 {
-	return ("Invalid char found outside of a server block");
+	return ("Invalid char found outside of a server-block");
 }
 
 const char* Config::NoServerNameException::what(void) const throw()
 {
-	return ("No server_name found inside the server block");
+	return ("No server_name found inside the server-block");
+}
+
+const char* Config::WrongConfigSyntaxException::what(void) const throw()
+{
+	return ("No content on same line as server-block-start or end allowed");
 }

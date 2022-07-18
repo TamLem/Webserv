@@ -45,35 +45,40 @@ int main(int argc, char **argv)
 {
 	handle_signals();
 	parseArgv(argc, argv);
-	Config config;
+	Config *config = new Config();
 	try
 	{
-		config.start(argv[1]);
+		config->start(argv[1]);
 	}
 	catch (std::exception &e)
 	{
 			std::cerr << RED << "Exception caught in main function: " << e.what() << RESET << std::endl;
 			return (EXIT_FAILURE);
 	}
-	Server test(8080); // somehow pass the listen ports to the server ??
-	// test.cluster = config.getCluster();
-	// std::cout << BLUE << test.cluster.size() << " elements found inside map" << RESET << std::endl;
+	Server *test = new Server(8080); // somehow pass the listen ports to the server ??
+	test->cluster = config->getCluster();
+	delete config;
+	// std::cout << BLUE << test->cluster.size() << " elements found inside map" << RESET << std::endl;
 	// test if the data inside the cluster is accessable
-	// std::string firstName = "weebserv";
-	// std::string secondName = "anotherone";
+	std::string firstName = "weebserv";
+	std::string secondName = "anotherone";
 
-	// SingleServerConfig first = test.cluster[firstName];
-	// SingleServerConfig second = test.cluster[secondName];
+	SingleServerConfig first = test->cluster[firstName];
+	SingleServerConfig second = test->cluster[secondName];
 
-	// if (test.cluster.count("weebserv") == 1)
-	// 	std::cout << "server weebserv found in cluster with address " << &test.cluster[firstName] << std::endl;
-	// else
-	// 	return (EXIT_FAILURE);
-	// if (test.cluster.count("anotherone") == 1)
-	// 	std::cout << "server anotherone found in cluster with address " << &test.cluster[secondName] << std::endl;
-	// else
-	// 	return (EXIT_FAILURE);
+	if (test->cluster.count("weebserv") == 1)
+		std::cout << "server weebserv found in cluster with address " << &test->cluster[firstName] << std::endl;
+	else
+		return (EXIT_FAILURE);
+	if (test->cluster.count("anotherone") == 1)
+		std::cout << "server anotherone found in cluster with address " << &test->cluster[secondName] << std::endl;
+	else
+		return (EXIT_FAILURE);
 	// std::cout << RED << first.getServerName() << "<->" << second.getServerName() << RESET << std::endl;
+	std::cout << first << std::endl;
+	std::cout << second << std::endl;
+	// system("leaks webserv");
 	// test.run();
+	delete test;
 	return (0);
 }

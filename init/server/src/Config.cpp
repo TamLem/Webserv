@@ -7,26 +7,11 @@ void Config::_openConfigFile()
 	this->_configFile.open(this->getConfigPath().c_str());
 	if (!this->_configFile.is_open())
 	{
-		// std::cerr << RED << "Error when opening " << this->getConfigPath() << RESET << std::endl
-		// << "\tcheck for spelling errors in the name and check for read-rights of the file" << std::endl;
+		std::cerr << RED << "Error when opening " << this->getConfigPath() << RESET << std::endl
+		<< "\tcheck for spelling errors in the name and check for read-rights of the file" << std::endl;
 		throw Config::FileOpenException();
 	}
 }
-
-// enum configKeys
-// {
-// 	listen,
-// 	root,
-// 	serverName,
-// 	default_
-// };
-
-// std::string configCompare[] =
-// {
-// 	"listen",
-// 	"root",
-// 	"serverName"
-// };
 
 void Config::_readConfigFile()
 {
@@ -128,9 +113,12 @@ void Config::_readConfigFile()
 		serverName = serverName.substr(0, serverName.find_first_of("\n"));
 		std::cout << BLUE << "serverName: >" << RESET << serverName << BLUE << "<" << RESET << std::endl;
 		// check for duplicate serverName !!!!!!!!!!!!!!!
-		// SingleServerConfig *serverObject = new SingleServerConfig(server); // needs to be allocated, maybe not!!!???????
-		this->_cluster->insert(std::make_pair<std::string, SingleServerConfig>(serverName, SingleServerConfig(server)));
-		std::cout << RED << "added server " << serverName << " to cluster" << RESET << std::endl;
+		// SingleServerConfig serverObject = *new SingleServerConfig(server); // needs to be allocated, maybe not!!!???????
+		SingleServerConfig serverObject(server); // needs to be allocated, maybe not!!!???????
+		std::cout << GREEN << "size: " << this->_cluster.size() << RESET << std::endl;
+		this->_cluster.insert(std::make_pair<std::string, SingleServerConfig>(serverName, serverObject));
+		std::cout << GREEN << "size: " << this->_cluster.size() << RESET << std::endl;
+		std::cout << GREEN << "added server " << serverName << " to cluster: " << &serverObject << RESET << std::endl;
 		server.clear();
 		serverName.clear();
 	}
@@ -146,13 +134,15 @@ Config::Config(std::string configPath)
 {
 	std::cout << "Config Constructor called" << std::endl;
 	this->start(configPath);
+	std::cout << "finished contructing th config" << std::endl;
 }
 
 // Deconstructor
 Config::~Config()
 {
-	this->_cluster->clear();
-	delete this->_cluster;
+	std ::cout << _cluster.size() << std::endl;
+	this->_cluster.clear();
+	std ::cout << _cluster.size() << std::endl;
 	std::cout << "Config Deconstructor called" << std::endl;
 }
 
@@ -161,10 +151,11 @@ void Config::start(std::string configPath)
 {
 	this->setConfigPath(configPath);
 	this->_openConfigFile();
-	// std::cout << GREEN << "allocating map now" << std::endl;
-	this->_cluster = new std::map<std::string, SingleServerConfig>;
-	// std::cout << GREEN << _cluster << RESET << std::endl;
+	std::cout << GREEN << "allocating cluster map now" << std::endl;
+	this->_cluster = std::map<std::string, SingleServerConfig>();
+	// std::cout << _cluster << RESET << std::endl;
 	this->_readConfigFile();
+	std::cout << "finished start function of config object" << std::endl;
 }
 
 // Getter
@@ -176,7 +167,7 @@ const std::string Config::getConfigPath() const
 std::map<std::string, SingleServerConfig> Config::getCluster() const
 {
 	// std::cout << GREEN << this->_cluster << RESET << std::endl;
-	return (*this->_cluster);
+	return (this->_cluster);
 }
 
 // Setter

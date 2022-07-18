@@ -21,7 +21,7 @@ class Config
 		std::ifstream	_configFile;
 		std::string		_configPath;
 
-		std::map<std::string, SingleServerConfig> *_cluster;
+		std::map<std::string, SingleServerConfig> _cluster;
 
 
 	// Private Methods

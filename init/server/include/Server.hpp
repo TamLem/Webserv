@@ -44,8 +44,14 @@ static volatile int keep_running = 1;
 class Server
 {
 	public:
+		Server()
+		{
+			std::cout << "Server default constructor called for " << this << std::endl;
+		}
+
 		Server(int port)
 		{
+			std::cout << "Server constructor called for " << this << std::endl;
 			_port = port;
 
 			if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -78,9 +84,11 @@ class Server
 		}
 		~Server()
 		{
-			// this->cluster->clear();
+			std::cout << this->cluster.size() << std::endl;
+			this->cluster.clear();
 			// delete this->cluster;
 			close(this->_server_fd);
+			std::cout << "server deconstructor called for " << this << std::endl;
 		}
 
 		void stop();

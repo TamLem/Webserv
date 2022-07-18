@@ -12,6 +12,20 @@ Message::~Message(void)
 	
 }
 
+void Message::addHeaderField(const std::string& key, const std::string& value)
+{
+	if (this->headerFields.count(key))
+		throw HeaderFieldDuplicate();
+	this->headerFields[key] = value;
+}
+
+bool Message::isValidProtocol(const std::string& protocol) const
+{
+	if (protocol == "HTTP/1.1")
+		return (true);
+	return (false);
+}
+
 const std::string& Message::getProtocol(void) const
 {
 	return (this->protocol);
@@ -20,6 +34,11 @@ const std::string& Message::getProtocol(void) const
 const std::string& Message::getBody(void) const
 {
 	return (this->body);
+}
+
+const std::map<std::string, std::string>& Message::getHeaderFields(void) const
+{
+	return (this->headerFields);
 }
 
 const char* Message::InvalidProtocol::what() const throw()
@@ -32,9 +51,7 @@ const char* Message::HeaderFieldDuplicate::what() const throw()
 	return ("Exception: header field duplicate");
 }
 
-bool Message::isValidProtocol(std::string protocol)
+const char* Message::InvalidStartLine::what() const throw()
 {
-	if (protocol == "HTTP/1.1")
-		return (true);
-	return (false);
+	return ("Exception: invalid start line format");
 }

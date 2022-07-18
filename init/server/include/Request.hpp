@@ -14,18 +14,22 @@ class Request : public Message
 		std::set<std::string> validMethods;
 		std::string method;
 		std::string url;
-		// std::string protocol;
-		void addMethods(void);
 		void parseMessage(const std::string&);
-		bool isValidMethod(std::string);
 		void parseStartLine(std::istringstream&);
+		void createStartLineTokens(std::vector<std::string>&, const std::string&) const;
+		bool isValidMethod(const std::string) const;
 		void parseHeaderFields(std::istringstream&);
 		void parseHeaderFieldLine(const std::string&);
-		void parseBody(std::istringstream&);
-		void createTokens(std::vector<std::string>&, const std::string&, const unsigned int&, const std::string&);
-		void createHeaderTokens(std::vector<std::string>&, const std::string&, const unsigned int&, const std::string&);
+		void createHeaderTokens(std::vector<std::string>& tokens, const std::string& message);
+		const std::string createHeaderFieldName(const std::string& message, const size_t pos) const;
+		bool isValidHeaderFieldName(const std::string&) const;
+		void toLower(std::string&) const;
+		const std::string createHeaderFieldValue(const std::string& message, const size_t pos);
+		const std::string removeLeadingAndTrailingWhilespaces(const std::string& message, size_t pos) const;
+		bool isValidHeaderFieldValue(const std::string&) const;
 		void setBodyFlag(void);
-		// int _fd;
+		void parseBody(std::istringstream&);
+		void addMethods(void);
 	public:
 		Request(const std::string&);
 		// Request(const std::string&, int fd);
@@ -50,6 +54,21 @@ class Request : public Message
 	};
 
 	class InvalidMethod : public std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class InvalidHeaderField : public std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class InvalidHeaderFieldName : public std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class InvalidHeaderFieldValue : public std::exception
 	{
 		const char* what() const throw();
 	};

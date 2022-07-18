@@ -14,19 +14,7 @@
 #define BLUE "\033[34m"
 #define RED "\033[31m"
 
-void Response::createMessageMap(void)
-{
-	//1xx informational response
-	this->messageMap[100] = "Continue";
-	//2xx success
-	this->messageMap[200] = "OK";
-	//3xx redirection
-	//4xx client errors
-	this->messageMap[404] = "Not Found";
-	//5xx server errors
-}
-
-bool Response::isValidStatus(int status)
+bool Response::isValidStatus(const int status)
 {
 	if (this->messageMap.count(status))
 		return (true);
@@ -36,7 +24,6 @@ bool Response::isValidStatus(int status)
 Response::Response(std::string protocol, int status, int fd, std::string url) : fd(fd), url(url)
 {
 	this->createMessageMap();
-	// std::cout << "MY RESPONSE PROTOCOL:" << protocol << "." << std::endl;
 	if (!isValidProtocol(protocol))
 		throw InvalidProtocol();
 	if (!isValidStatus(status))
@@ -45,22 +32,11 @@ Response::Response(std::string protocol, int status, int fd, std::string url) : 
 	this->status = status;
 	this->statusMessage = this->messageMap[this->status];
 	this->hasBody = true;
-	// this->headerFields = std::make_pair(Content-Type, text/html);
-	this->body = "<html><body><h1>Hello World!</h1></body></html>";
-	// this->sendResponse();
 }
 
 Response::~Response(void)
 {
 
-}
-
-std::ostream& operator<<(std::ostream& out, const Response& response)
-{
-	out << response.getProtocol() << " "
-	<< response.getStatus() << " "
-	<< response.getStatusMessage();
-	return (out);
 }
 
 const int& Response::getStatus(void) const
@@ -77,46 +53,17 @@ std::string Response::constructHeader(void)
 {
 	std::stringstream stream;
 
-	// std::cerr << BLUE << "old_size " << old_size << RESET << std::endl;
-	// stream.clear();
-	// stream.str("");
-	stream << this->protocol << " " << this->status << " " << this->statusMessage
-	// << "\n" <<
-	// "Date: " << responseClass.date << "\n" <<
-	// << "Content-Type: " << responseClass.type << "\n"
-	// << CRLF
-	<< CRLF
-	<< "Server: localhost:8080"
-	<< CRLF
-	// << "Content-Type: text/html"
-	// << CRLF
-	<< "Content-Length: ";
+	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
+	for (std::map<std::string, std::string>::const_iterator it = this->headerFields.begin(); it != this->headerFields.end(); ++it)
+	{
+		stream << it->first << ": "
+		<< it->second << CRLF;
+	}
+	stream << CRLF;
 	return (stream.str());
 }
 
-size_t Response::ft_intlen(int n)
-{
-	size_t i;
-
-	i = 0;
-	if (n == -2147483648)
-		return (10);
-	if (n >= 0 && n <= 9)
-		return (1);
-	if (n < 0)
-	{
-		n = n * -1;
-		i++;
-	}
-	while (n > 0)
-	{
-		n = n / 10;
-		i++;
-	}
-	return (i);
-}
-
-int Response::sendall(int sock_fd, char *buffer, int len)
+int Response::sendall(const int sock_fd, char *buffer, const int len) const
 {
 	int total;
 	int bytesleft;
@@ -140,40 +87,23 @@ int Response::sendall(int sock_fd, char *buffer, int len)
 	return (0);
 }
 
-// void Response::readBody(void)
-// {
-
-// }
-
 void Response::sendResponse(void)
 {
-	std::stringstream number_stream;
-	std::stringstream body_stream;
+	std::stringstream contentLength;
+	std::stringstream body;
 	std::ifstream file(this->url.c_str(), std::ios::binary);
 	if (file.is_open())
 	{
-		std::string header_string = this->constructHeader();
-		size_t len = header_string.length();
-		
-		body_stream  << CRLFTWO << file.rdbuf();
+		body << file.rdbuf();
 		file.close();
-		body_stream.seekg(0, std::ios::end);
-		len += body_stream.tellg();
-		// body_stream.seekg(0, std::ios::beg);
-		std::string message;
-		do
-		{
-			number_stream.clear();
-			number_stream.str("");
-			number_stream << len;
-			message = header_string + number_stream.str() + body_stream.str();
-			if (len == message.length())
-				break ;
-			len = message.length();
-		} while (true);
-
+		body.seekg(0, std::ios::end);
+		size_t len = body.tellg();
+		contentLength << len;
+		addHeaderField("Server", "localhost:8080");
+		if (headerFields.count("Transfer-Encoding") == 0)
+			addHeaderField("Content-Length", contentLength.str());
+		std::string message = this->constructHeader() + body.str();
 		sendall(this->fd, (char *)message.c_str(), message.length());
-		std::cerr << RED << len << RESET << std::endl;
 	}
 	else
 	{
@@ -182,6 +112,26 @@ void Response::sendResponse(void)
 		//404 response
 	}
 	close(this->fd);
+}
+
+void Response::createMessageMap(void)
+{
+	//1xx informational response
+	this->messageMap[100] = "Continue";
+	//2xx success
+	this->messageMap[200] = "OK";
+	//3xx redirection
+	//4xx client errors
+	this->messageMap[404] = "Not Found";
+	//5xx server errors
+}
+
+std::ostream& operator<<(std::ostream& out, const Response& response)
+{
+	out << response.getProtocol() << " "
+	<< response.getStatus() << " "
+	<< response.getStatusMessage();
+	return (out);
 }
 
 const char* Response::InvalidStatus::what() const throw()

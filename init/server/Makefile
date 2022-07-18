@@ -4,7 +4,7 @@ CXX			=	c++
 
 CXXFLAGS	=	-std=c++98 -Wall -Werror -Wextra
 
-CXXFLAGS	+=	-g -fsanitize=address
+CXXFLAGS	+=	-g #-fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds
 
 UNAME		:=	$(shell uname)
 

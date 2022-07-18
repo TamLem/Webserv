@@ -8,28 +8,36 @@
 #include <iostream>
 #include <utility>
 #include <sstream>
+#include <stdbool.h>
+#include <map>
+
+#include "Base.hpp"
 
 // classes
 
-class SingleServer
+class SingleServerConfig
 {
 	private:
+		bool _isLocation;
+
 		std::string *_listen;
 		std::string _serverName;
 		std::string _root;
 		std::string _index;
-		std::pair<std::string, std::string> *_location;
+		std::map<std::string, std::string *> _location;
 
 	// Private Methods
-		void setVariables(std::string server);
-		void checkVariables();
+		void _setVariables(std::string config);
+		void _evaluateKeyValue(std::string);
+		void _checkVariables();
 
 	public:
 	// Constructors
-		SingleServer(std::string server);
+		SingleServerConfig();
+		SingleServerConfig(std::string server);
 
 	// Deconstructors
-		~SingleServer();
+		~SingleServerConfig();
 
 	// Public Methods
 
@@ -38,7 +46,7 @@ class SingleServer
 		const std::string getServerName() const;
 		const std::string getRoot() const;
 		const std::string getIndex() const;
-		const std::pair<std::string, std::string>* getLocation() const;
+		const std::string *getLocation(std::string to_find) const;
 
 	// Exceptions
 		class NoRootException : public std::exception
@@ -60,6 +68,12 @@ class SingleServer
 		};
 
 		class NotAPortException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidKeyException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

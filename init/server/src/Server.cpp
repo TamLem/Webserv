@@ -25,7 +25,7 @@ void	handle_signals(void)
 	// signal(SIGPIPE, handle_signal);
 }
 
-void parseArgv(int argc, char **argv)
+void parseArgv(int argc, char **argv) // maybe change to static void function or include it into some object
 {
 	if (argc <= 1 || argc > 2)
 	{
@@ -56,17 +56,24 @@ int main(int argc, char **argv)
 			return (EXIT_FAILURE);
 	}
 	Server test(8080); // somehow pass the listen ports to the server ??
-	test.cluster = config.getCluster();
+	// test.cluster = config.getCluster();
+	// std::cout << BLUE << test.cluster.size() << " elements found inside map" << RESET << std::endl;
 	// test if the data inside the cluster is accessable
-	std::cout << GREEN << test.cluster << RESET << std::endl;
-	test.run();
-	std::cout << GREEN << test.cluster << RESET << std::endl;
-	if (test.cluster->count("weebserv") == 1)
-		std::cout << "server weebserv found in cluster" << std::endl;
-	if (test.cluster->count("fckd}") == 1)
-	{
-		std::cout << "server fckd} found in cluster" << std::endl;
-		return (EXIT_FAILURE);
-	}
+	// std::string firstName = "weebserv";
+	// std::string secondName = "anotherone";
+
+	// SingleServerConfig first = test.cluster[firstName];
+	// SingleServerConfig second = test.cluster[secondName];
+
+	// if (test.cluster.count("weebserv") == 1)
+	// 	std::cout << "server weebserv found in cluster with address " << &test.cluster[firstName] << std::endl;
+	// else
+	// 	return (EXIT_FAILURE);
+	// if (test.cluster.count("anotherone") == 1)
+	// 	std::cout << "server anotherone found in cluster with address " << &test.cluster[secondName] << std::endl;
+	// else
+	// 	return (EXIT_FAILURE);
+	// std::cout << RED << first.getServerName() << "<->" << second.getServerName() << RESET << std::endl;
+	// test.run();
 	return (0);
 }

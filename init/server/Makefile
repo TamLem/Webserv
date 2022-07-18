@@ -33,7 +33,7 @@ SRC_FILES	=	Server.cpp \
 				Response.cpp \
 				Request.cpp \
 				Config.cpp \
-				SingleServer.cpp
+				SingleServerConfig.cpp
 else
 #(blocking server for testing on Linux)
 SRC_FILES	=	Linux_server.cpp \
@@ -41,7 +41,7 @@ SRC_FILES	=	Linux_server.cpp \
 				Response.cpp \
 				Request.cpp \
 				Config.cpp \
-				SingleServer.cpp
+				SingleServerConfig.cpp
 endif
 
 OBJ_FILES	=	$(SRC_FILES:.cpp=.o)

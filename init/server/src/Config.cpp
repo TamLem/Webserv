@@ -38,7 +38,7 @@ void Config::_readConfigFile()
 	while (streamBuffer.good()) // fill _cluster
 	{
 		std::stringstream serverStream;
-		while (streamBuffer.good()) // fill SingleServer
+		while (streamBuffer.good()) // fill SingleServerConfig
 		{
 			std::getline(streamBuffer, buffer);
 			if (buffer.length() == 0)
@@ -79,7 +79,7 @@ void Config::_readConfigFile()
 			std::getline(serverStream, buffer);
 			if (buffer.length() == 0)
 				continue ;
-			std::cerr << YELLOW << "before: >" << buffer << "<" << RESET << std::endl;
+			// std::cerr << YELLOW << "before: >" << buffer << "<" << RESET << std::endl;
 			size_t start = buffer.find_first_not_of(WHITESPACE);
 			if (start == std::string::npos)
 				continue ;
@@ -88,7 +88,7 @@ void Config::_readConfigFile()
 			{
 				end = buffer.find_last_not_of(WHITESPACE);
 				buffer = buffer.substr(start, (end - start + 1));
-				std::cerr << BLUE << "if: >" << buffer << "<" << RESET << std::endl;
+				// std::cerr << BLUE << "if: >" << buffer << "<" << RESET << std::endl;
 			}
 			else
 			{
@@ -96,10 +96,13 @@ void Config::_readConfigFile()
 				buffer = buffer.substr(start, (end - start + 1));
 				end = buffer.find_last_not_of(WHITESPACE);
 				buffer = buffer.substr(0, end + 1);
-				std::cerr << BLUE << "else: >" << buffer << "<" << RESET << std::endl;
+				// std::cerr << BLUE << "else: >" << buffer << "<" << RESET << std::endl;
 			}
 			if (serverFound == false && buffer.find("server {") != std::string::npos)
+			{
 				serverFound = true;
+				std::cout << YELLOW << "server { found: >" << buffer << "<" << RESET << std::endl;
+			}
 			else if (serverFound == true && buffer.find("server {") != std::string::npos)
 				throw Config::ServerInsideServerException();
 			if (serverFound == false && buffer.length() > 0)
@@ -112,8 +115,8 @@ void Config::_readConfigFile()
 				server.append("\n");
 			}
 		}
-		std::cerr << "serverStream not good anymore" << std::endl;
-		std::cerr << RED << "server: >" << server << "< with length of: " << server.length() << RESET << std::endl;
+		// std::cerr << "serverStream not good anymore" << std::endl;
+		// std::cerr << RED << "server: >" << server << "< with length of: " << server.length() << RESET << std::endl;
 		if (nOpenBrackets != 0)
 			throw Config::InvalidBracketsException();
 		if (server.length() == 0)
@@ -124,72 +127,33 @@ void Config::_readConfigFile()
 		serverName = serverName.substr(serverName.find_first_of(" ") + 1);
 		serverName = serverName.substr(0, serverName.find_first_of("\n"));
 		std::cout << BLUE << "serverName: >" << RESET << serverName << BLUE << "<" << RESET << std::endl;
-		SingleServer serverObject(server);
-		this->_cluster->insert(std::make_pair<std::string, SingleServer>(serverName, serverObject));
+		// check for duplicate serverName !!!!!!!!!!!!!!!
+		// SingleServerConfig *serverObject = new SingleServerConfig(server); // needs to be allocated, maybe not!!!???????
+		this->_cluster->insert(std::make_pair<std::string, SingleServerConfig>(serverName, SingleServerConfig(server)));
+		std::cout << RED << "added server " << serverName << " to cluster" << RESET << std::endl;
 		server.clear();
 		serverName.clear();
 	}
-	// std::map<size_t, std::string>::iterator token = this->_tokens.begin();
-	// for (; token != this->_tokens.end(); token++)
-	// {
-		// if (token.key == "#")
-		// 	continue ;
-		// // std::remove(buffer.begin(), buffer.end(), '\t');
-		// // std::remove(buffer.begin(), buffer.end(), '\n');
-		// std::cerr << GREEN << "contentes of buffer: >" << buffer << "< has a length of: " << buffer.length() << RESET << std::endl;
-		// size_t i = 0;
-		// for (; i < default_; ++i)
-		// {
-		// 	if (buffer.compare(buffer.find_first_not_of(" \t\n"), buffer.find_first_of(" "), configCompare[i], 0, configCompare[i].length()) == 0)
-		// 	{
-		// 		std::cerr << BLUE << buffer << "<--->" << configCompare[i] << std::endl;
-		// 		break ;
-		// 	}
-		// }
-		// std::stringstream sbuffer;
-		// switch (i)
-		// {
-		// 	case (listen):
-		// 		std::cerr << RED << configCompare[listen] << " found" << RESET <<std::endl;
-		// 		sbuffer << buffer.substr(buffer.find_first_of(' ') + 1);
-		// 		size_t port;
-		// 		sbuffer >> port;
-		// 		this->setPort(port);
-		// 		buffer.clear();
-		// 		break ;
-		// 	case (root):
-		// 		std::cerr << RED << configCompare[root] << " found" << RESET <<std::endl;
-		// 		buffer.clear();
-		// 		break ;
-		// 	case (serverName):
-		// 		std::cerr << RED << configCompare[serverName] << " found" << RESET <<std::endl;
-		// 		buffer.clear();
-		// 		break ;
-		// 	default:
-		// 		std::cerr << RED << buffer << " not found in switch case" << RESET << std::endl;
-		// 		buffer.clear();
-		// 		break ;
-		// }
-		// std::cerr << YELLOW << "buffer after switch case: " << buffer << RESET << std::endl;
-	// }
 }
 
 // Constructor
 Config::Config()
 {
+	std::cout << "Config Default Constructor called" << std::endl;
 }
 
 Config::Config(std::string configPath)
 {
-	std::cout << "Config Default Constructor called" << std::endl;
+	std::cout << "Config Constructor called" << std::endl;
 	this->start(configPath);
 }
 
 // Deconstructor
 Config::~Config()
 {
-	std::cout << "Config Deconstructor called" << std::endl;
+	this->_cluster->clear();
 	delete this->_cluster;
+	std::cout << "Config Deconstructor called" << std::endl;
 }
 
 // Public Methods
@@ -197,8 +161,9 @@ void Config::start(std::string configPath)
 {
 	this->setConfigPath(configPath);
 	this->_openConfigFile();
-	this->_cluster = new std::map<std::string, SingleServer>;
-	std::cout << GREEN << _cluster << RESET << std::endl;
+	// std::cout << GREEN << "allocating map now" << std::endl;
+	this->_cluster = new std::map<std::string, SingleServerConfig>;
+	// std::cout << GREEN << _cluster << RESET << std::endl;
 	this->_readConfigFile();
 }
 
@@ -208,10 +173,10 @@ const std::string Config::getConfigPath() const
 	return (this->_configPath);
 }
 
-std::map<std::string, SingleServer> *Config::getCluster() const
+std::map<std::string, SingleServerConfig> Config::getCluster() const
 {
-	std::cout << GREEN << this->_cluster << RESET << std::endl;
-	return (this->_cluster);
+	// std::cout << GREEN << this->_cluster << RESET << std::endl;
+	return (*this->_cluster);
 }
 
 // Setter
@@ -220,15 +185,6 @@ void Config::setConfigPath(std::string configPath)
 	// some error checking
 	this->_configPath = configPath;
 }
-
-// Ostream overload
-// std::ostream	&operator<<(std::ostream &o, Config *config)
-// {
-// 	o << "configPath: " << config->getConfigPath() << std::endl
-// 	<< "server:" << config->getServer() << std::endl
-// 	<< "rootPath: " << config->getRootPath() << std::endl;
-// 	return (o);
-// }
 
 // Exceptions
 // brackets can not be opened and closed on the same line

@@ -24,7 +24,7 @@
 #include "Response.hpp"
 #include "Request.hpp"
 #include "Cgi.hpp"
-#include "SingleServer.hpp"
+#include "SingleServerConfig.hpp"
 
 #include "Base.hpp"
 
@@ -78,7 +78,7 @@ class Server
 		}
 		~Server()
 		{
-			this->cluster->clear();
+			// this->cluster->clear();
 			// delete this->cluster;
 			close(this->_server_fd);
 		}
@@ -181,7 +181,15 @@ class Server
 							Request newRequest(buf);
 							Response newResponse("HTTP/1.1", 200, fd, newRequest.getUrl());
 							// std::cout << newResponse.constructHeader();
-							newResponse.sendResponse();
+							try
+							{
+								newResponse.sendResponse();
+							}
+							catch (std::exception &e)
+							{
+								std::cerr << RED << "404 exception cought" << std::endl;
+								keep_running = false;
+							}
 						}
 					}
 				}
@@ -220,7 +228,7 @@ class Server
 			run_event_loop(kq);
 		}
 	public:
-		std::map <std::string, SingleServer>* cluster;
+		std::map <std::string, SingleServerConfig> cluster;
 
 	private:
 		size_t _port;

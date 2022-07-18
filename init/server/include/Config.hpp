@@ -11,7 +11,7 @@
 #include <map>
 #include <stdexcept>
 
-#include "SingleServer.hpp"
+#include "SingleServerConfig.hpp"
 
 // classes
 
@@ -21,7 +21,7 @@ class Config
 		std::ifstream	_configFile;
 		std::string		_configPath;
 
-		std::map<std::string, SingleServer>* _cluster;
+		std::map<std::string, SingleServerConfig> *_cluster;
 
 
 	// Private Methods
@@ -41,7 +41,7 @@ class Config
 
 	// Getter
 		const std::string getConfigPath() const;
-		std::map<std::string, SingleServer> *getCluster() const;
+		std::map<std::string, SingleServerConfig> getCluster() const;
 
 	// private: //maybe private for the setters adds more security
 	// Setter

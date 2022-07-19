@@ -1,11 +1,4 @@
-#ifndef __CGI_HPP__
-#define __CGI_HPP__
-
-#include <iostream>
-#include <string>
-#include <unistd.h>
-#include <sys/socket.h>
-#include "Base.hpp"
+#include "Server.hpp"
 
 void cgi_response(std::string buffer, int fd)
 {
@@ -42,5 +35,3 @@ void cgi_response(std::string buffer, int fd)
 	close(pipefd[0]);
 	close(fd);
 }
-
-#endif

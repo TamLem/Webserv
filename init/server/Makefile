@@ -31,13 +31,15 @@ ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be differe
 SRC_FILES	=	Server.cpp \
 				Message.cpp \
 				Response.cpp \
-				Request.cpp
+				Request.cpp   \
+				Cgi.cpp
 else
 #(blocking server for testing on Linux)
 SRC_FILES	=	Linux_server.cpp \
 				Message.cpp \
 				Response.cpp \
-				Request.cpp
+				Request.cpp   \
+				Cgi.cpp
 endif
 
 OBJ_FILES	=	$(SRC_FILES:.cpp=.o)

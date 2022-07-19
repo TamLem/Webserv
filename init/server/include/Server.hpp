@@ -22,7 +22,7 @@
 /* our includes */
 #include "Response.hpp"
 #include "Request.hpp"
-#include "Cgi.hpp"
+#include "Cgi/Cgi.hpp"
 
 #include "Base.hpp"
 

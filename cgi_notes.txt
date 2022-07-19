@@ -1,0 +1,47 @@
+SERVER RESPONSIBILITIES
+-----------------------
+	-  receives the request from the client
+	- selects a CGI script to handle the request
+	- converts the client request to a CGI request, 
+	- executes the script and 
+	- converts the CGI response into a response for the client
+
+	- The server MAY modify the request or response in order to provide some additional service, such as media type transformation or protocol reduction.
+	- The server MUST perform translations and protocol conversions on the client request data required by this specification.
+
+	Script Selection
+	-----------------
+
+	- The server determines which CGI is script to be executed based on a generic-form URI supplied by the client.
+		- >> path is cgi-program location 
+		- >> last part is the resource or sub-resource to be interpreted
+	- split of path between the script and resource is avaliable to the cgi script
+
+	Script URI
+	----------
+		script-URI = <scheme> "://" <server-name> ":" <server-port> <script-path> <extra-path> "?" <query-string>
+	
+		- The SCRIPT_NAME and PATH_INFO values, URL-encoded with ";", "=" and "?" reserved, give <script-path> and <extra-path>.
+	
+	Execution
+	---------
+		- The script is invoked in a system-defined manner. Unless specified otherwise, the file containing the script will be invoked as an executable program.
+
+		- In the event of an error condition, the server can interrupt or terminate script execution at any time and without warning.
+		- for example, in the event of a transport failure between the server and the client; so the script SHOULD be prepared to handle abnormal termination.
+
+
+THE CGI REQUEST 
+---------------
+	
+	Request Meta-Variables
+		- assed from the server to the script, and are accessed by the script in a system-defined manner.
+		- Meta-variables are identified by case-insensitive names;
+		
+	meta-variable-name =
+		"AUTH_TYPE" | "CONTENT_LENGTH" | "CONTENT_TYPE" | "GATEWAY_INTERFACE" | "PATH_INFO" | "PATH_TRANSLATED" | "QUERY_STRING" | "REMOTE_ADDR" | "REMOTE_HOST" | "REMOTE_IDENT" | "REMOTE_USER" | "REQUEST_METHOD" | "SCRIPT_NAME" | "SERVER_NAME" | "SERVER_PORT" | "SERVER_PROTOCOL" | "SERVER_SOFTWARE" | scheme | protocol-var-name | extension-var-name
+
+	protocol-var-name = ( protocol | scheme ) "_" var-name
+	scheme = alpha *( alpha | digit | "+" | "-" | "." ) 
+	var-name = token
+	extension-var-name = token

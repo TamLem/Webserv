@@ -1,6 +1,45 @@
-#include "Server.hpp"
+#include "Cgi/Cgi.hpp"
 
-void cgi_response(std::string buffer, int fd)
+void Cgi::setEnv(Request &request)
+{
+	const std::map<std::string, std::string>& reqHeaders = request.getHeaderFields();
+	string envVars[] = { "REQUEST_METHOD", "GATEWAY_INTERFACE", "PATH_INFO", "PATH_TRANSLATED", "SCRIPT_NAME", 
+		"QUERY_STRING", "SERVER_NAME", "SERVER_PORT", "SERVER_PROTOCOL", "CONTENT_TYPE", "CONTENT_LENGTH", "REMOTE_HOST", "REMOTE_ADDR", };
+
+	_env = new char*[ENV_LEN];
+	_env[ENV_LEN - 1] = nullptr; 
+	
+	int i = 0;
+	_env[i] = strdup((envVars[i] + "=" + _method).c_str()); i++;
+	_env[i] = strdup((envVars[i] + "=" + "CGI/1.1").c_str()); i++;
+	// _env[i] = strdup((envVars[i] + "=" + _method).c_str()); i++;
+	string url = request.getUrl();
+	int scriptNameStart = url.find("/cgi/") + 5;
+	int scriptNameEnd = url.find("/", scriptNameStart) - 1;
+	int queryStart = url.find("?");
+	string scriptName = url.substr(scriptNameStart, scriptNameEnd);
+	string pathInfo = url.substr(scriptNameEnd + 2, queryStart);
+	string queryString = (queryStart != (int)string::npos )? url.substr(queryStart, string::npos) : "";
+	_env[i] = strdup((envVars[i] + "=" + pathInfo).c_str()); i++;
+	_env[i] = strdup((envVars[i] + "=" + "./" + pathInfo).c_str()); i++;
+	_env[i] = strdup((envVars[i] + "=" + "./" + scriptName).c_str()); i++;
+	_env[i] = strdup((envVars[i] + "=" + queryString).c_str()); i++;
+	_env[i] = strdup((envVars[i] + "=" + "localhost").c_str()); i++;
+	_env[i] = strdup((envVars[i] + "=" + "8080").c_str()); i++;
+	_env[i] = strdup((envVars[i] + "=" + "HTTP/1.1").c_str()); i++;
+	if (_method == "POST")
+	{
+		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Content-Type")->second).c_str()); i++;
+		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Content-Length")->second).c_str()); i++;
+		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Origin")->second).c_str()); i++;
+		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Origin")->second).c_str()); i++;
+	}
+
+	while(_env[i])
+		_env[i++] = nullptr;
+}
+
+void Cgi::cgi_response(std::string buffer, int fd)
 {
 	std::string file;
 	int pipefd[2];

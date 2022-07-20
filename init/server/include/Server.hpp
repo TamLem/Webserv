@@ -35,6 +35,7 @@ struct client
 	struct sockaddr_in addr;
 };
 
+void cgi_handle(Request& request, std::string buf, int fd);
 #define MAX_EVENTS 128
 
 static volatile int keep_running = 1;
@@ -167,12 +168,12 @@ class Server
 						buf[n] = '\0';
 						std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
 						
-						if (std::string(buf).find(".php") != std::string::npos)
-							cgi_response(buf, fd);
+						Request newRequest(buf);
+						if (newRequest.getUrl().find("/cgi/") != std::string::npos)
+							cgi_handle(newRequest, buf, fd);
 						else
 						{
 							// Response newResponse(Request newRequest(buf), fd);
-							Request newRequest(buf);
 							Response newResponse("HTTP/1.1", 200, fd, newRequest.getUrl());
 							// std::cout << newResponse.constructHeader();
 							newResponse.sendResponse();
@@ -218,5 +219,15 @@ class Server
 		size_t _server_fd;
 		std::vector <client> _clients;
 };
+
+void cgi_handle(Request& request, std::string buf, int fd)
+{
+	Cgi newCgi(request);
+
+	newCgi.printEnv();
+	(void)buf;
+	(void)fd;
+	// newCgi.cgi_response(buf, fd);
+}
 
 #endif

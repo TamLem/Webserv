@@ -32,6 +32,9 @@ Response::Response(std::string protocol, int status, int fd, std::string url) : 
 	this->status = status;
 	this->statusMessage = this->messageMap[this->status];
 	this->hasBody = true;
+	this->createBody();
+	this->createHeaderFields();
+	this->sendResponse();
 }
 
 Response::~Response(void)
@@ -84,26 +87,19 @@ int Response::sendall(const int sock_fd, char *buffer, const int len) const
 		bytesleft -= n;
 		buffer += n;
 	}
+	close(this->fd);
 	return (0);
 }
 
-void Response::sendResponse(void)
+void Response::createBody(void)
 {
-	std::stringstream contentLength;
 	std::stringstream body;
 	std::ifstream file(this->url.c_str(), std::ios::binary);
 	if (file.is_open())
 	{
 		body << file.rdbuf();
 		file.close();
-		body.seekg(0, std::ios::end);
-		size_t len = body.tellg();
-		contentLength << len;
-		addHeaderField("Server", "localhost:8080");
-		if (headerFields.count("Transfer-Encoding") == 0)
-			addHeaderField("Content-Length", contentLength.str());
-		std::string message = this->constructHeader() + body.str();
-		sendall(this->fd, (char *)message.c_str(), message.length());
+		this->body = body.str();
 	}
 	else
 	{
@@ -111,7 +107,23 @@ void Response::sendResponse(void)
 		throw ERROR_404();
 		//404 response
 	}
-	close(this->fd);
+}
+
+void Response::createHeaderFields(void)
+{
+	std::stringstream contentLength;
+	addHeaderField("Server", "localhost:8080");
+	if (headerFields.count("Transfer-Encoding") == 0)
+	{
+		contentLength << this->body.length();
+		addHeaderField("Content-Length", contentLength.str());
+	}
+}
+
+void Response::sendResponse(void)
+{
+	std::string message = this->constructHeader() + this->body;
+	sendall(this->fd, (char *)message.c_str(), message.length());
 }
 
 void Response::createMessageMap(void)
@@ -121,9 +133,14 @@ void Response::createMessageMap(void)
 	//2xx success
 	this->messageMap[200] = "OK";
 	//3xx redirection
+	this->messageMap[300] = "Multiple Choices";
 	//4xx client errors
+	this->messageMap[400] = "Bad Request";
+	this->messageMap[401] = "Unauthorized";
+	this->messageMap[403] = "Forbidden";
 	this->messageMap[404] = "Not Found";
 	//5xx server errors
+	this->messageMap[500] = "Internal Server Error";
 }
 
 std::ostream& operator<<(std::ostream& out, const Response& response)

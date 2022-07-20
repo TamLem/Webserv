@@ -7,6 +7,7 @@
 #include "Message.hpp"
 
 #define INDEX_PATH "./pages/index.html"
+#define BAD_PATH "./pages/404.html"
 
 class Request : public Message
 {

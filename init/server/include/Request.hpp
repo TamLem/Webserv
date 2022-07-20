@@ -20,6 +20,7 @@ class Request : public Message
 		void parseStartLine(std::istringstream&);
 		void createStartLineTokens(std::vector<std::string>&, const std::string&) const;
 		bool isValidMethod(const std::string) const;
+		bool isValidProtocol(const std::string&) const;
 		void parseHeaderFields(std::istringstream&);
 		void parseHeaderFieldLine(const std::string&);
 		void createHeaderTokens(std::vector<std::string>& tokens, const std::string& message);
@@ -71,6 +72,11 @@ class Request : public Message
 	};
 
 	class InvalidHeaderFieldValue : public std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class InvalidProtocol : public std::exception
 	{
 		const char* what() const throw();
 	};

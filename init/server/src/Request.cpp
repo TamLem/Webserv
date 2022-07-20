@@ -79,6 +79,13 @@ bool Request::isValidMethod(const std::string method) const
 	return (false);
 }
 
+bool Request::isValidProtocol(const std::string& protocol) const
+{
+	if (protocol == PROTOCOL)
+		return (true);
+	return (false);
+}
+
 void Request::parseHeaderFields(std::istringstream& stream)
 {
 	while (stream.eof() == false)
@@ -279,4 +286,9 @@ const char* Request::InvalidHeaderFieldName::what() const throw()
 const char* Request::InvalidHeaderFieldValue::what() const throw()
 {
 	return ("Exception: detected invalid character in http message header field-value");
+}
+
+const char* Request::InvalidProtocol::what() const throw()
+{
+	return ("Exception: invalid protocol");
 }

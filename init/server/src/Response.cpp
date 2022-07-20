@@ -24,8 +24,6 @@ bool Response::isValidStatus(const int status)
 Response::Response(int status, int fd, std::string url) : fd(fd), url(url)
 {
 	this->createMessageMap();
-	// if (!isValidProtocol(protocol))
-	// 	throw InvalidProtocol();
 	if (!isValidStatus(status))
 		throw InvalidStatus();
 	this->protocol = PROTOCOL;
@@ -40,8 +38,6 @@ Response::Response(int status, int fd, std::string url) : fd(fd), url(url)
 Response::Response(int status, int fd) : fd(fd)
 {
 	this->createMessageMap();
-	// if (!isValidProtocol(protocol))
-	// 	throw InvalidProtocol();
 	if (!isValidStatus(status))
 		throw InvalidStatus();
 	this->protocol = PROTOCOL;

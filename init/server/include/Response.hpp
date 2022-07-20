@@ -5,8 +5,6 @@
 #include <iostream> //std::ostream
 #include "Message.hpp"
 
-#define PROTOCOL "HTTP/1.1"
-
 class Response : public Message
 {
 	private:

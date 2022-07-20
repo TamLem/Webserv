@@ -6,6 +6,8 @@
 #include <map> //std::map
 #include "Base.hpp"
 
+#define PROTOCOL "HTTP/1.1"
+
 class Message
 {
 	protected:
@@ -15,7 +17,6 @@ class Message
 		Message(const Message&);
 		Message& operator=(const Message&);
 		Message(void);
-		bool isValidProtocol(const std::string&) const;
 		void addHeaderField(const std::string&, const std::string&);
 		std::map<std::string, std::string> headerFields;
 	public:
@@ -23,12 +24,6 @@ class Message
 		const std::string& getProtocol(void) const;
 		const std::string& getBody(void) const;
 		const std::map<std::string, std::string>& getHeaderFields(void) const;
-
-
-	class InvalidProtocol : public std::exception
-	{
-		const char* what() const throw();
-	};
 
 	class HeaderFieldDuplicate : public std::exception
 	{

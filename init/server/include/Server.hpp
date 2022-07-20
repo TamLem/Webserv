@@ -176,6 +176,14 @@ class Server
 							{
 								Response newResponse(200, fd, newRequest.getUrl());
 							}
+							catch (Request::InvalidMethod& e)
+							{
+								Response newResponse(501, fd);
+							}
+							catch (Request::InvalidProtocol& e)
+							{
+								Response newResponse(505, fd);
+							}
 							catch (Response::ERROR_404& e)
 							{
 								Response newResponse(404, fd);

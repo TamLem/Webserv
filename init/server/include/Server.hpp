@@ -171,23 +171,19 @@ class Server
 							cgi_response(buf, fd);
 						else
 						{
-							// Response newResponse(Request newRequest(buf), fd);
 							Request newRequest(buf);
 							try
 							{
-								Response newResponse("HTTP/1.1", 200, fd, newRequest.getUrl());
+								Response newResponse(200, fd, newRequest.getUrl());
 							}
 							catch (Response::ERROR_404& e)
 							{
-								// Response newResponse("HTTP/1.1", 404, fd);
-								Response newResponse("HTTP/1.1", 404, fd, DEFAULT_URI);
+								Response newResponse(404, fd);
 							}
 							catch (std::exception& e)
 							{
-								Response newResponse("HTTP/1.1", 500, fd, DEFAULT_URI);
+								Response newResponse(500, fd);
 							}
-							// std::cout << newResponse.constructHeader();
-							// newResponse.sendResponse();
 						}
 					}
 				}

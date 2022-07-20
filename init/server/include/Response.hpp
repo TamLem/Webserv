@@ -5,7 +5,7 @@
 #include <iostream> //std::ostream
 #include "Message.hpp"
 
-#define DEFAULT_URI "default"
+#define PROTOCOL "HTTP/1.1"
 
 class Response : public Message
 {
@@ -22,7 +22,8 @@ class Response : public Message
 		void createBody(void);
 		void createErrorBody(void);
 	public:
-		Response(std::string, int, int, std::string);
+		Response(int, int, std::string);
+		Response(int, int);
 		~Response(void);
 
 		// void setProtocol(const std::string&);

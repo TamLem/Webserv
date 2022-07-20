@@ -31,6 +31,7 @@ void Config::_checkBrackets(std::string all)
 		// std::cerr << ">" << YELLOW << buffer << RESET << "< got written into serverStream" << std::endl;
 		if (buffer.find("server {") != std::string::npos && buffer.find("#") > buffer.find("server {"))
 		{
+			std::cout << BLUE << "opened server brackets with >" << buffer << "<" << RESET << std::endl;
 			if (buffer.substr(buffer.find("server {") + 8).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("server {") + 8).find_first_of("#") || (buffer.find_first_not_of(WHITESPACE) != buffer.find("server {")))
 			{
 				// std::cerr << "1>" << RED << buffer << RESET << "<" << std::endl;
@@ -38,45 +39,60 @@ void Config::_checkBrackets(std::string all)
 			}
 			else if (openServer == true)
 			{
-				// std::cerr << "1>" << RED << buffer << RESET << "<" << std::endl;
+				std::cerr << "1>" << RED << buffer << RESET << "<" << std::endl;
 				throw Config::ServerInsideServerException();
 			}
 			else
 				openServer = true;
 		}
-		else if (buffer.find("location") != std::string::npos && buffer.find("#") > buffer.find("location"))
+		else if (buffer.find("location ") != std::string::npos && buffer.find("#") > buffer.find("location "))
 		{
-			parse thiss shitty line correctly by splitting it
-			if (buffer.substr(buffer.find("location") + 8).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("location") + 8).find_first_of("#") || (buffer.find_first_not_of(WHITESPACE) != buffer.find("location")))
+			std::cout << BLUE << "opened location brackets with >" << buffer << "<" << RESET << std::endl;
+			if (buffer.find(" {") == std::string::npos || buffer.find(" {") > buffer.find("#"))
 			{
-				// std::cerr << "2>" << RED << buffer << RESET << "<" << std::endl;
-				throw Config::WrongConfigSyntaxException();
+				std::cout << RED << buffer << std::endl;
+				throw Config::WrongListenBlockException();
 			}
 			else if (openServer == false || openLocation == true)
+			{
+				std::cout << RED << buffer << std::endl;
 				throw Config::WrongListenBlockException();
+			}
 			else
 				openLocation = true;
 		}
 		else if (buffer.find("}") != std::string::npos && buffer.find("#") > buffer.find("}"))
 		{
+			std::cerr << GREEN << "found this to close a bracket >" << buffer << "<" << RESET << std::endl;
 			if (buffer.substr(buffer.find("}") + 1).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("}") + 1).find_first_of("#") || buffer.find_first_not_of(WHITESPACE) != buffer.find("}"))
 			{
 				// std::cerr << "3>" << RED << buffer << RESET << "<" << std::endl;
 				throw Config::WrongConfigSyntaxException();
 			}
 			else if (openLocation)
+			{
+				std::cout << YELLOW << "closed location brackets with >" << buffer << "<" << RESET << std::endl;
 				openLocation = false;
+			}
 			else
 			{
+				std::cout << YELLOW << "closed server brackets with >" << buffer << "<" << RESET << std::endl;
 				openServer = false;
 				this->_parseServerBlock(serverStream.str());
+				serverStream.clear();
+				serverStream.str(std::string());
 			}
 		}
 	}
 	if (openLocation || openServer)
+	{
 		throw Config::InvalidBracketsException();
-	else if (buffer.find("#") == std::string::npos || buffer.find_first_not_of(WHITESPACE) < buffer.find_first_of("#"))
+	}
+	else if (buffer.length() > 0 && (buffer.find("#") == std::string::npos || buffer.find_first_not_of(WHITESPACE) < buffer.find_first_of("#")))
+	{
+		std::cout << BLUE << ">" << buffer << "<" << RESET << std::endl;
 		throw Config::ContentOutsideServerBlockException();
+	}
 }
 
 void Config::_parseServerBlock(std::string serverBlock)
@@ -86,6 +102,8 @@ void Config::_parseServerBlock(std::string serverBlock)
 	std::stringstream serverStream;
 	serverStream << serverBlock;
 	bool serverFound = false;
+
+	std::cout << "this was passed into the _parseServerBlock\n>" << serverBlock << "<" << std::endl;
 
 	while (serverStream.good()) // clear out all the comments, leading and trailing whitespaces
 	{
@@ -119,7 +137,7 @@ void Config::_parseServerBlock(std::string serverBlock)
 		}
 		else if (serverFound == true && buffer.find("server {") != std::string::npos) // with new_ implementation not needed, check though !!!!!!!
 		{
-			// std::cerr << "2>" << RED << buffer << RESET << "<" << std::endl;
+			std::cerr << "2>" << RED << buffer << RESET << "<" << std::endl;
 			throw Config::ServerInsideServerException();
 		}
 		if (serverFound == false && buffer.length() > 0) // might never be triggered, check this!!!!!!
@@ -139,7 +157,7 @@ void Config::_parseServerBlock(std::string serverBlock)
 
 void Config::_createConfigStruct(std::string server)
 {
-	std::cerr << "This was passed into _createConfigStruct:\n>" << server << "<" << std::endl;
+	// std::cerr << "This was passed into _createConfigStruct:\n>" << server << "<" << std::endl;
 
 	if (server.find("server_name") == std::string::npos)
 		throw Config::NoServerNameException();
@@ -154,17 +172,17 @@ void Config::_createConfigStruct(std::string server)
 	}
 	ConfigStruct confStruct = this->_initConfigStruct();
 	// confStruct = new ConfigStruct();
-	// SingleServerConfig *serverObject = new SingleServerConfig(server, confStruct);
-	SingleServerConfig temp(server, confStruct); // check the confStruct for correct values!!!!!!!!!!
+	// SingleServerConfig *SingleServerObject = new SingleServerConfig(server, confStruct);
+	SingleServerConfig temp(server, &confStruct); // check the confStruct for correct values!!!!!!!!!!
 	this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
-	// delete serverObject;
+	// delete SingleServerObject;
 	// std::cout << GREEN << "size: " << this->_cluster.size() << RESET << std::endl;
 	// std::cout << GREEN << "added server " << serverName << " to cluster" << RESET << std::endl;
 }
 
 ConfigStruct Config::_initConfigStruct() // think about using defines in the Base.hpp or Config.hpp to set the default value so they are easy to change!!!!!
 {
-	ConfigStruct confStruct = ConfigStruct();
+	ConfigStruct confStruct;
 	confStruct.serverName = "";
 	confStruct.listen = std::vector<std::string>();
 	confStruct.root = "";
@@ -184,10 +202,11 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 
 void Config::_freeConfigStruct()
 {
-	this->_conf.listen.clear();
-	this->_conf.cgi.clear();
-	this->_conf.location.clear();
-	this->_conf.errorPage.clear();
+	// this->_conf.listen.clear();
+	// this->_conf.cgi.clear();
+	// this->_conf.location.clear();
+	// this->_conf.errorPage.clear();
+
 }
 
 void Config::_readConfigFile()
@@ -587,7 +606,7 @@ const char* Config::DuplicateServerNameException::what(void) const throw()
 
 const char* Config::WrongListenBlockException::what(void) const throw()
 {
-	return ("wrong listen-block found inside .conf-file");
+	return ("↑↑↑ wrong listen-block found inside .conf-file, see above");
 }
 
 const char* Config::ContentOutsideServerBlockException::what(void) const throw()

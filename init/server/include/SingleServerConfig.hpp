@@ -20,7 +20,7 @@
 class SingleServerConfig
 {
 	private:
-		ConfigStruct _conf;
+		ConfigStruct *_conf;
 		// std::vector<std::string> _listen;
 		// std::string _root;
 		// std::string _serverName;
@@ -47,7 +47,7 @@ class SingleServerConfig
 	public:
 	// Constructors
 		SingleServerConfig();
-		SingleServerConfig(std::string server, ConfigStruct conf);
+		SingleServerConfig(std::string server, ConfigStruct *conf);
 
 	// Deconstructors
 		~SingleServerConfig();

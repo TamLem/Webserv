@@ -7,7 +7,7 @@ SingleServerConfig::SingleServerConfig()
 {
 	std::cout << GREEN << "SingleServerConfig default constructor called for " << this << RESET << std::endl;
 }
-SingleServerConfig::SingleServerConfig(std::string config, ConfigStruct conf): _conf(conf)
+SingleServerConfig::SingleServerConfig(std::string config, ConfigStruct *conf): _conf(conf)
 {
 	std::cout << GREEN << "SingleServerConfig constructor called for " << this << RESET << std::endl;
 	// std::cout << "This content reached the server:\n>" << config << "<" << std::endl;
@@ -71,6 +71,7 @@ void SingleServerConfig::_setVariables(std::string config)
 	buffer.clear();
 	while (std::getline(configStream, buffer) && configStream.good() && buffer != "}")
 	{
+		!!!!!!!!!!!!!!!!!
 		// std::cout << BLUE << buffer << "<-- reached the evaluateKeyValue function" << RESET << std::endl;
 		// std::stringstream locationBlock;
 		// if (buffer.find("location") != std::string::npos)
@@ -118,55 +119,55 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 	case (listen):
 	{
 		// std::cout << "value listen: >" << YELLOW << value << RESET << "<" << std::endl;
-		this->_conf.listen.push_back(value);
+		this->_conf->listen.push_back(value);
 		break ;
 	}
 
 	case (root):
 	{
-		this->_conf.root = value;
+		this->_conf->root = value;
 		break ;
 	}
 
 	case (server_name):
 	{
-		this->_conf.serverName = value;
+		this->_conf->serverName = value;
 		break;
 	}
 
 	case (autoindex):
 	{
-		this->_conf.autoIndex = (value.compare("true") == 0);
+		this->_conf->autoIndex = (value.compare("true") == 0);
 		break ;
 	}
 
 	case (index_page):
 	{
-		this->_conf.indexPage = value;
+		this->_conf->indexPage = value;
 		break ;
 	}
 
 	case (chunked_transfer):
 	{
-		this->_conf.chunkedTransfer = (value.compare("true") == 0);
+		this->_conf->chunkedTransfer = (value.compare("true") == 0);
 		break ;
 	}
 
 	case (client_body_buffer_size):
 	{
-		this->_conf.clientBodyBufferSize = atoi(value.c_str()); // check if forbidden!!!!!!!!
+		this->_conf->clientBodyBufferSize = atoi(value.c_str()); // check if forbidden!!!!!!!!
 		break ;
 	}
 
 	case (client_max_body_size):
 	{
-		this->_conf.clientMaxBodySize = atoi(value.c_str()); //check if forbidden !!!!!!!!!!!
+		this->_conf->clientMaxBodySize = atoi(value.c_str()); //check if forbidden !!!!!!!!!!!
 		break ;
 	}
 
 	case (cgi):
 	{
-		// this->_conf.cgi.push_back(value); // this value needs to be checked again!!!!!!! it is wrong
+		// this->_conf->cgi.push_back(value); // this value needs to be checked again!!!!!!! it is wrong
 		// std::cout << "value cgi: >" << YELLOW << value << RESET << "<" << std::endl;
 		this->_handleCgi(value);
 		break ;
@@ -174,7 +175,7 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (cgi_bin):
 	{
-		this->_conf.cgiBin = value;
+		this->_conf->cgiBin = value;
 		break ;
 	}
 
@@ -187,20 +188,20 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		// buffer.getAllowed = true;
 		// buffer.postAllowed = true;
 		// buffer.indexPage = value;
-		// this->_conf.location.insert(std::make_pair<std::string, LocationStruct>(first_arg, buffer)); // this is also still wrong
+		// this->_conf->location.insert(std::make_pair<std::string, LocationStruct>(first_arg, buffer)); // this is also still wrong
 		this->_handleLocation(value);
 		break ;
 	}
 
 	case (error_page):
 	{
-		this->_conf.errorPage.push_back(value); // still wrong!!!!!!!!!!
+		this->_conf->errorPage.push_back(value); // still wrong!!!!!!!!!!
 		break ;
 	}
 
 	case (log_level):
 	{
-		this->_conf.showLog = (value.compare("true") == 0);
+		this->_conf->showLog = (value.compare("true") == 0);
 		break ;
 	}
 

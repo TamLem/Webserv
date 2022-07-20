@@ -39,9 +39,6 @@ int main(int argc, char **argv)
 {
 	keeprunning = false;
 	parseArgv(argc, argv);
-
-	std::cout << "THIS IS THE FILE" << std::endl;
-
 	Config *config = new Config();
 	try
 	{
@@ -50,6 +47,7 @@ int main(int argc, char **argv)
 	catch (std::exception &e)
 	{
 			std::cerr << RED << "Exception caught in main function: " << e.what() << RESET << std::endl;
+			delete config;
 			return (EXIT_FAILURE);
 	}
 	int sockfd;

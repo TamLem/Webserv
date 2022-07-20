@@ -53,32 +53,29 @@ int main(int argc, char **argv)
 	catch (std::exception &e)
 	{
 			std::cerr << RED << "Exception caught in main function: " << e.what() << RESET << std::endl;
+			delete config;
 			return (EXIT_FAILURE);
 	}
-	Server *test = new Server(8080); // somehow pass the listen ports to the server ??
-	test->cluster = config->getCluster();
-	delete config;
+	Server *test = new Server(8080/*, &config*/); // somehow pass the listen ports to the server ??
 	// std::cout << BLUE << test->cluster.size() << " elements found inside map" << RESET << std::endl;
 	// test if the data inside the cluster is accessable
 	std::string firstName = "weebserv";
 	std::string secondName = "anotherone";
 
-	SingleServerConfig first = test->cluster[firstName];
-	SingleServerConfig second = test->cluster[secondName];
-
-	if (test->cluster.count("weebserv") == 1)
-		std::cout << "server weebserv found in cluster with address " << &test->cluster[firstName] << std::endl;
-	else
-		return (EXIT_FAILURE);
-	if (test->cluster.count("anotherone") == 1)
-		std::cout << "server anotherone found in cluster with address " << &test->cluster[secondName] << std::endl;
-	else
-		return (EXIT_FAILURE);
+	// SingleServerConfig first = test->cluster[firstName];
+	// SingleServerConfig second = test->cluster[secondName];
+	std::cout << "### attempting to print contents of the configStructs" << std::endl;
+	config->applyConfig(firstName);
+	std::cout << config << std::endl;
+	config->applyConfig(secondName);
+	std::cout << config << std::endl;
 	// std::cout << RED << first.getServerName() << "<->" << second.getServerName() << RESET << std::endl;
-	std::cout << first << std::endl;
-	std::cout << second << std::endl;
 	// system("leaks webserv");
-	// test.run();
+	test->run();
+	delete config;
 	delete test;
+	config = NULL;
+	test = NULL;
+	// system("leaks webserv");
 	return (0);
 }

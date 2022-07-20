@@ -84,9 +84,6 @@ class Server
 		}
 		~Server()
 		{
-			std::cout << this->cluster.size() << std::endl;
-			this->cluster.clear();
-			// delete this->cluster;
 			close(this->_server_fd);
 			std::cout << "server deconstructor called for " << this << std::endl;
 		}
@@ -235,9 +232,6 @@ class Server
 			}
 			run_event_loop(kq);
 		}
-	public:
-		std::map <std::string, SingleServerConfig> cluster;
-
 	private:
 		size_t _port;
 		size_t _server_fd;

@@ -184,7 +184,7 @@ class Server
 							}
 							catch (std::exception& e)
 							{
-								Response newResponse("HTTP/1.1", 500, fd, newRequest.getUrl());
+								Response newResponse("HTTP/1.1", 500, fd, INTERNAL_PATH);
 							}
 							// std::cout << newResponse.constructHeader();
 							// newResponse.sendResponse();

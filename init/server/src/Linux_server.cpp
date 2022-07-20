@@ -40,6 +40,8 @@ int main(int argc, char **argv)
 	keeprunning = false;
 	parseArgv(argc, argv);
 
+	std::cout << "THIS IS THE FILE" << std::endl;
+
 	Config *config = new Config();
 	try
 	{
@@ -50,29 +52,6 @@ int main(int argc, char **argv)
 			std::cerr << RED << "Exception caught in main function: " << e.what() << RESET << std::endl;
 			return (EXIT_FAILURE);
 	}
-	delete config;
-
-	// std::map<std::string, SingleServerConfig> test = config.getCluster();
-	// std::string firstName = "weebserv";
-	// std::string secondName = "anotherone";
-
-	// SingleServerConfig first = test[firstName];
-	// SingleServerConfig second = test[secondName];
-
-	// if (test.count("weebserv") == 1)
-	// 	std::cout << "server weebserv found in cluster with address " << &test[firstName] << std::endl;
-	// else
-	// 	return (EXIT_FAILURE);
-	// if (test.count("anotherone") == 1)
-	// 	std::cout << "server anotherone found in cluster with address " << &test[secondName] << std::endl;
-	// else
-	// 	return (EXIT_FAILURE);
-	// // std::cout << RED << first.getServerName() << "<->" << second.getServerName() << RESET << std::endl;
-	// std::cout << first << std::endl;
-	// std::cout << second << std::endl;
-	// test.clear();
-	// return (EXIT_SUCCESS); // REMOVE THIS ATER DONE TESTING!!!!!!!!!!!!!
-
 	int sockfd;
 	struct sockaddr_in serv_addr;
 	struct sockaddr_in cli_addr;
@@ -127,6 +106,7 @@ int main(int argc, char **argv)
 		close(new_sockfd);
 	}
 	close(sockfd);
-
+	delete config;
+	config = NULL;
 	return 0;
 }

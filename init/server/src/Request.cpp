@@ -25,6 +25,8 @@ void Request::parseMessage(const std::string& message)
 	std::istringstream stream (message);
 	parseStartLine(stream);
 	parseHeaderFields(stream);
+	if (this->headerFields.count("host") != 1)
+		throw NoHost();
 	setBodyFlag();
 	if (this->hasBody == true)
 		parseBody(stream);
@@ -75,6 +77,13 @@ void Request::createStartLineTokens(std::vector<std::string>& tokens, const std:
 bool Request::isValidMethod(const std::string method) const
 {
 	if (this->validMethods.count(method))
+		return (true);
+	return (false);
+}
+
+bool Request::isValidProtocol(const std::string& protocol) const
+{
+	if (protocol == PROTOCOL)
 		return (true);
 	return (false);
 }
@@ -271,6 +280,11 @@ const char* Request::InvalidHeaderField::what() const throw()
 	return ("Exception: invalid header field");
 }
 
+const char* Request::NoHost::what() const throw()
+{
+	return ("Exception: no host");
+}
+
 const char* Request::InvalidHeaderFieldName::what() const throw()
 {
 	return ("Exception: detected invalid character in http message header field-name");
@@ -279,4 +293,9 @@ const char* Request::InvalidHeaderFieldName::what() const throw()
 const char* Request::InvalidHeaderFieldValue::what() const throw()
 {
 	return ("Exception: detected invalid character in http message header field-value");
+}
+
+const char* Request::InvalidProtocol::what() const throw()
+{
+	return ("Exception: invalid protocol");
 }

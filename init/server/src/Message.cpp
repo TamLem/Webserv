@@ -19,13 +19,6 @@ void Message::addHeaderField(const std::string& key, const std::string& value)
 	this->headerFields[key] = value;
 }
 
-bool Message::isValidProtocol(const std::string& protocol) const
-{
-	if (protocol == "HTTP/1.1")
-		return (true);
-	return (false);
-}
-
 const std::string& Message::getProtocol(void) const
 {
 	return (this->protocol);
@@ -39,11 +32,6 @@ const std::string& Message::getBody(void) const
 const std::map<std::string, std::string>& Message::getHeaderFields(void) const
 {
 	return (this->headerFields);
-}
-
-const char* Message::InvalidProtocol::what() const throw()
-{
-	return ("Exception: invalid protocol");
 }
 
 const char* Message::HeaderFieldDuplicate::what() const throw()

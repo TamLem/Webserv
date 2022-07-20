@@ -7,6 +7,8 @@
 #include "Message.hpp"
 
 #define INDEX_PATH "./pages/index.html"
+#define BAD_PATH "./pages/404.html"
+#define INTERNAL_PATH "./pages/500.html"
 
 class Request : public Message
 {
@@ -18,6 +20,7 @@ class Request : public Message
 		void parseStartLine(std::istringstream&);
 		void createStartLineTokens(std::vector<std::string>&, const std::string&) const;
 		bool isValidMethod(const std::string) const;
+		bool isValidProtocol(const std::string&) const;
 		void parseHeaderFields(std::istringstream&);
 		void parseHeaderFieldLine(const std::string&);
 		void createHeaderTokens(std::vector<std::string>& tokens, const std::string& message);
@@ -43,12 +46,12 @@ class Request : public Message
 		const std::string& getUrl(void) const;
 		// const std::string& getProtocol(void) const;
 
-	class InvalidNumberOfTokens : public std::exception
+	class InvalidNumberOfTokens : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};
 
-	class EmptyMessage : public std::exception
+	class EmptyMessage : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};
@@ -58,17 +61,27 @@ class Request : public Message
 		const char* what() const throw();
 	};
 
-	class InvalidHeaderField : public std::exception
+	class InvalidHeaderField : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};
 
-	class InvalidHeaderFieldName : public std::exception
+	class NoHost : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};
 
-	class InvalidHeaderFieldValue : public std::exception
+	class InvalidHeaderFieldName : public Message::BadRequest
+	{
+		const char* what() const throw();
+	};
+
+	class InvalidHeaderFieldValue : public Message::BadRequest
+	{
+		const char* what() const throw();
+	};
+
+	class InvalidProtocol : public std::exception
 	{
 		const char* what() const throw();
 	};

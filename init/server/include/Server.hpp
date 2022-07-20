@@ -173,10 +173,31 @@ class Server
 							cgi_handle(newRequest, buf, fd);
 						else
 						{
-							// Response newResponse(Request newRequest(buf), fd);
-							Response newResponse("HTTP/1.1", 200, fd, newRequest.getUrl());
-							// std::cout << newResponse.constructHeader();
-							newResponse.sendResponse();
+							try
+							{
+								Request newRequest(buf);
+								Response newResponse(200, fd, newRequest.getUrl());
+							}
+							catch (Request::InvalidMethod& e)
+							{
+								Response newResponse(501, fd);
+							}
+							catch (Request::InvalidProtocol& e)
+							{
+								Response newResponse(505, fd);
+							}
+							catch (Message::BadRequest& e)
+							{
+								Response newResponse(400, fd);
+							}
+							catch (Response::ERROR_404& e)
+							{
+								Response newResponse(404, fd);
+							}
+							catch (std::exception& e)
+							{
+								Response newResponse(500, fd);
+							}
 						}
 					}
 				}

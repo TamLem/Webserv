@@ -23,11 +23,22 @@ class Cgi
 	private:
 		char** _env;
 		string _method;
+		string _scriptName;
+		string _pathInfo;
+		string _queryString;
 	public:
 		Cgi(Request &request)
 		{
 			_env = nullptr;
 			_method = request.getMethod();
+
+			string url = request.getUrl();
+			int scriptNameStart = url.find("/cgi/") + 5;
+			int scriptNameEnd = url.find("/", scriptNameStart);
+			int queryStart = url.find("?");
+			_scriptName = url.substr(scriptNameStart, scriptNameEnd - scriptNameStart);
+			_pathInfo = url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd + 1);
+			_queryString = (queryStart != (int)string::npos )? url.substr(queryStart, string::npos) : "";
 			setEnv(request);
 
 			// "Accept");

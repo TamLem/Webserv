@@ -180,11 +180,11 @@ class Server
 							catch (Response::ERROR_404& e)
 							{
 								// Response newResponse("HTTP/1.1", 404, fd);
-								Response newResponse("HTTP/1.1", 404, fd, BAD_PATH);
+								Response newResponse("HTTP/1.1", 404, fd, DEFAULT_URI);
 							}
 							catch (std::exception& e)
 							{
-								Response newResponse("HTTP/1.1", 500, fd, INTERNAL_PATH);
+								Response newResponse("HTTP/1.1", 500, fd, DEFAULT_URI);
 							}
 							// std::cout << newResponse.constructHeader();
 							// newResponse.sendResponse();

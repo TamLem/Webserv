@@ -32,7 +32,10 @@ Response::Response(std::string protocol, int status, int fd, std::string url) : 
 	this->status = status;
 	this->statusMessage = this->messageMap[this->status];
 	this->hasBody = true;
-	this->createBody();
+	if (this->url == DEFAULT_URI)
+		this->createErrorBody();
+	else
+		this->createBody();
 	this->createHeaderFields();
 	this->sendResponse();
 }
@@ -89,6 +92,26 @@ int Response::sendall(const int sock_fd, char *buffer, const int len) const
 	}
 	close(this->fd);
 	return (0);
+}
+
+void Response::createErrorBody(void)
+{
+	std::stringstream body;
+	body <<
+	"<html>\n\
+	<head>\n\
+	<title>Error " << this->status << "</title>\n\
+	</head>\n\
+	<body bgcolor=\"000000\">\n\
+	<center>\n\
+	<h1 style=\"color:white\">Error " << this->status << "</h1>\n\
+	<p style=\"color:white\">" << this->statusMessage << "!\n\
+	<br><br>\n\
+	<img src=\"images/error.jpg\" align=\"TOP\">\n\
+	</center>\n\
+	</body>\n\
+	</html>";
+	this->body = body.str();
 }
 
 void Response::createBody(void)

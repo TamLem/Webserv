@@ -5,6 +5,8 @@
 #include <iostream> //std::ostream
 #include "Message.hpp"
 
+#define DEFAULT_URI "default"
+
 class Response : public Message
 {
 	private:
@@ -18,6 +20,7 @@ class Response : public Message
 		int sendall(const int sock_fd, char *buffer, const int len) const;
 		void createHeaderFields(void);
 		void createBody(void);
+		void createErrorBody(void);
 	public:
 		Response(std::string, int, int, std::string);
 		~Response(void);

@@ -248,7 +248,7 @@ void cgi_handle(Request& request, std::string buf, int fd)
 	newCgi.printEnv();
 	(void)buf;
 	(void)fd;
-	// newCgi.cgi_response(buf, fd);
+	newCgi.cgi_response(buf, fd);
 }
 
 #endif

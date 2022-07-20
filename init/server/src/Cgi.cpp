@@ -13,7 +13,7 @@ void Cgi::setEnv(Request &request)
 	_env[i] = strdup((envVars[i] + "=" + _method).c_str()); i++;
 	_env[i] = strdup((envVars[i] + "=" + "CGI/1.1").c_str()); i++;
 	_env[i] = strdup((envVars[i] + "=" + _pathInfo).c_str()); i++;
-	_env[i] = strdup((envVars[i] + "=" + "./" + _pathInfo).c_str()); i++;
+	_env[i] = _pathInfo.empty() ? strdup((envVars[i] + "=" + "").c_str()) : strdup((envVars[i] + "=" + "./" + _pathInfo).c_str()); i++;
 	_env[i] = strdup((envVars[i] + "=" + "./" + _scriptName).c_str()); i++;
 	_env[i] = strdup((envVars[i] + "=" + _queryString).c_str()); i++;
 	_env[i] = strdup((envVars[i] + "=" + "localhost").c_str()); i++;
@@ -46,8 +46,9 @@ void Cgi::cgi_response(std::string buffer, int fd)
 	int pid = fork();
 	if (pid == 0)
 	{
-		chdir("cgi-bin/site");
-		if(execlp("/usr/bin/php", "php", file.c_str(), NULL) == -1)
+		// if(execlp("/usr/bin/php", "php", file.c_str(), NULL) == -1)
+		chdir("cgi-bin");
+		if (execve(_scriptName.c_str() , NULL, _env) == -1)
 		{
 			std::cout << "error executing cgi" << std::endl;
 		}

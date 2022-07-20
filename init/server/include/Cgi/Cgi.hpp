@@ -35,10 +35,12 @@ class Cgi
 			string url = request.getUrl();
 			int scriptNameStart = url.find("/cgi/") + 5;
 			int scriptNameEnd = url.find("/", scriptNameStart);
+			if (scriptNameEnd == (int)string::npos)
+				scriptNameEnd = url.find("?", scriptNameStart);
 			int queryStart = url.find("?");
 			_scriptName = url.substr(scriptNameStart, scriptNameEnd - scriptNameStart);
-			_pathInfo = url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd + 1);
-			_queryString = (queryStart != (int)string::npos )? url.substr(queryStart, string::npos) : "";
+			_pathInfo = (scriptNameEnd != (int)string::npos ) ? url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";
+			_queryString = (queryStart != (int)string::npos )? url.substr(queryStart + 1, string::npos) : "";
 			setEnv(request);
 
 			// "Accept");
@@ -67,7 +69,7 @@ class Cgi
 		}
 
 	void setEnv(Request &request);
-	static void cgi_response(std::string buffer, int fd);
+	void cgi_response(std::string buffer, int fd);
 };
 
 

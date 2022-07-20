@@ -25,12 +25,17 @@ class Message
 		const std::string& getBody(void) const;
 		const std::map<std::string, std::string>& getHeaderFields(void) const;
 
-	class HeaderFieldDuplicate : public std::exception
+	class BadRequest : public std::exception
+	{
+		virtual const char* what() const throw() = 0;
+	};
+
+	class HeaderFieldDuplicate : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};
 
-	class InvalidStartLine : public std::exception
+	class InvalidStartLine : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};

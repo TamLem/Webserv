@@ -25,6 +25,8 @@ void Request::parseMessage(const std::string& message)
 	std::istringstream stream (message);
 	parseStartLine(stream);
 	parseHeaderFields(stream);
+	if (this->headerFields.count("host") != 1)
+		throw NoHost();
 	setBodyFlag();
 	if (this->hasBody == true)
 		parseBody(stream);
@@ -276,6 +278,11 @@ const char* Request::InvalidMethod::what() const throw()
 const char* Request::InvalidHeaderField::what() const throw()
 {
 	return ("Exception: invalid header field");
+}
+
+const char* Request::NoHost::what() const throw()
+{
+	return ("Exception: no host");
 }
 
 const char* Request::InvalidHeaderFieldName::what() const throw()

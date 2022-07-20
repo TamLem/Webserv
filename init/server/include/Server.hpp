@@ -171,9 +171,9 @@ class Server
 							cgi_response(buf, fd);
 						else
 						{
-							Request newRequest(buf);
 							try
 							{
+								Request newRequest(buf);
 								Response newResponse(200, fd, newRequest.getUrl());
 							}
 							catch (Request::InvalidMethod& e)
@@ -183,6 +183,10 @@ class Server
 							catch (Request::InvalidProtocol& e)
 							{
 								Response newResponse(505, fd);
+							}
+							catch (Message::BadRequest& e)
+							{
+								Response newResponse(400, fd);
 							}
 							catch (Response::ERROR_404& e)
 							{

@@ -46,12 +46,12 @@ class Request : public Message
 		const std::string& getUrl(void) const;
 		// const std::string& getProtocol(void) const;
 
-	class InvalidNumberOfTokens : public std::exception
+	class InvalidNumberOfTokens : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};
 
-	class EmptyMessage : public std::exception
+	class EmptyMessage : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};
@@ -61,17 +61,22 @@ class Request : public Message
 		const char* what() const throw();
 	};
 
-	class InvalidHeaderField : public std::exception
+	class InvalidHeaderField : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};
 
-	class InvalidHeaderFieldName : public std::exception
+	class NoHost : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};
 
-	class InvalidHeaderFieldValue : public std::exception
+	class InvalidHeaderFieldName : public Message::BadRequest
+	{
+		const char* what() const throw();
+	};
+
+	class InvalidHeaderFieldValue : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};

@@ -6,8 +6,8 @@ void Config::_openConfigFile()
 	this->_configFile.open(this->_configPath.c_str());
 	if (!this->_configFile.is_open())
 	{
-		std::cerr << RED << "Error when opening " << this->_configPath << RESET << std::endl
-		<< "\tcheck for spelling errors in the name and check for read-rights of the file" << std::endl;
+		// std::cerr << RED << "Error when opening " << this->_configPath << RESET << std::endl;
+		// << "check for spelling errors in the name and check for read-rights of the file" << std::endl;
 		throw Config::FileOpenException();
 	}
 }
@@ -214,118 +214,8 @@ void Config::_readConfigFile()
 	std::stringstream streamBuffer;
 	streamBuffer << this->_configFile.rdbuf();
 	this->_configFile.close();
-	// std::stringstream serverStream;
-	// int nOpenBrackets = 0;
 	std::string buffer = streamBuffer.str();
-	// while (streamBuffer.good()) // fill _cluster
-	// {
-		// std::getline(streamBuffer, buffer);
-		// if (buffer.length() == 0)
-		// 	continue ;
-		this->_checkBrackets(buffer);
-		// std::stringstream serverStream;
-		// while (streamBuffer.good()) // fill SingleServerConfig
-		// {
-		// 	serverStream << buffer << std::endl;
-		// 	// if (buffer.find("server {") != std::string::npos && buffer.substr(buffer.find("{") + 1).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("{") + 1).find("#"))
-		// 	// {
-		// 	// 	// std::cout << YELLOW << ">" << buffer.substr(buffer.find("{") + 1).find_first_not_of(WHITESPACE) << "<" << RESET << std::endl;
-		// 	// 	// std::cout << YELLOW << ">" << buffer.find("#") << RESET << std::endl;
-		// 	// 	throw Config::WrongConfigSyntaxException();
-		// 	// }
-		// 	if (buffer.find("{") != std::string::npos && buffer.find("#") > buffer.find("{"))
-		// 	{
-		// 		if (buffer.substr(buffer.find("{") + 1).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("{") + 1).find("#") || (buffer.find_first_not_of(WHITESPACE) != buffer.find("{") && buffer.find_first_not_of(WHITESPACE) != buffer.find("server {")))
-		// 			throw Config::WrongConfigSyntaxException();
-		// 		++nOpenBrackets;
-		// 	}
-		// 	else if (buffer.find("}") != std::string::npos && buffer.find("#") > buffer.find("}"))
-		// 	{
-		// 		if (buffer.substr(buffer.find("}") + 1).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("}") + 1).find("#") || buffer.find_first_not_of(WHITESPACE) != buffer.find("}"))
-		// 			throw Config::WrongConfigSyntaxException();
-		// 		--nOpenBrackets;
-		// 	}
-		// 	// std::cerr << RED << "buffer: >" << buffer << "<" << std::endl << RESET << "nOpenBrackets: " << nOpenBrackets << std::endl;
-		// 	if (buffer.find("}") != std::string::npos && buffer.find("#") > buffer.find("}") && nOpenBrackets == 0)
-		// 		break ;
-		// }
-
-		// search for serverName
-		// std::string serverName = serverStream.str();
-		// serverStream.clear();
-		// cut out comments from server
-		// std::string server;
-		// bool serverFound = false;
-		// while (serverStream.good()) // clear out all the comments, leading and trailing whitespaces
-		// {
-		// 	buffer.clear();
-		// 	std::getline(serverStream, buffer);
-		// 	if (buffer.length() == 0)
-		// 		continue ;
-		// 	// std::cerr << YELLOW << "before: >" << buffer << "<" << RESET << std::endl;
-		// 	size_t start = buffer.find_first_not_of(WHITESPACE);
-		// 	if (start == std::string::npos)
-		// 		continue ;
-		// 	size_t end = buffer.find_first_of('#');
-		// 	if (end == std::string::npos)
-		// 	{
-		// 		end = buffer.find_last_not_of(WHITESPACE);
-		// 		buffer = buffer.substr(start, (end - start + 1));
-		// 		// std::cerr << BLUE << "if: >" << buffer << "<" << RESET << std::endl;
-		// 	}
-		// 	else
-		// 	{
-		// 		--end;
-		// 		buffer = buffer.substr(start, (end - start + 1));
-		// 		end = buffer.find_last_not_of(WHITESPACE);
-		// 		buffer = buffer.substr(0, end + 1);
-		// 		// std::cerr << BLUE << "else: >" << buffer << "<" << RESET << std::endl;
-		// 	}
-		// 	if (serverFound == false && buffer.find("server {") != std::string::npos)
-		// 	{
-		// 		serverFound = true;
-		// 		// std::cout << YELLOW << "server { found: >" << buffer << "<" << RESET << std::endl;
-		// 	}
-		// 	else if (serverFound == true && buffer.find("server {") != std::string::npos)
-		// 		throw Config::ServerInsideServerException();
-		// 	if (serverFound == false && buffer.length() > 0)
-		// 	{
-		// 		throw Config::InvalidCharException();
-		// 	}
-		// 	if (buffer.length() > 0)
-		// 	{
-		// 		server.append(buffer);
-		// 		server.append("\n");
-		// 	}
-		// }
-		// std::cerr << "serverStream not good anymore" << std::endl;
-		// std::cerr << RED << "server: >" << server << "< with length of: " << server.length() << RESET << std::endl;
-		// if (nOpenBrackets != 0)
-		// 	throw Config::InvalidBracketsException();
-		// if (server.length() == 0)
-		// 	break ;// continue ;
-		// if (server.find("server_name") == std::string::npos)
-		// 	throw Config::NoServerNameException();
-		// std::string serverName = server.substr(server.find("server_name"));
-		// serverName = serverName.substr(serverName.find_first_of(" ") + 1);
-		// serverName = serverName.substr(0, serverName.find_first_of("\n"));
-		// // std::cout << BLUE << "serverName: >" << RESET << serverName << BLUE << "<" << RESET << std::endl;
-		// if (this->_cluster.count(serverName) == 1)// check for duplicate serverName !!!!!!!!!!!!!!!
-		// {
-		// 	std::cerr << RED << serverName << std::endl;
-		// 	throw Config::DuplicateServerNameException();
-		// }
-		// ConfigStruct *confStruct = NULL;
-		// confStruct = new ConfigStruct();
-		// SingleServerConfig *serverObject = new SingleServerConfig(server, confStruct);
-		// this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
-		// delete serverObject;
-
-		// // std::cout << GREEN << "size: " << this->_cluster.size() << RESET << std::endl;
-		// std::cout << GREEN << "added server " << serverName << " to cluster: " << confStruct << RESET << std::endl;
-		// server.clear();
-		// serverName.clear();
-	// }
+	this->_checkBrackets(buffer);
 }
 
 // Constructor

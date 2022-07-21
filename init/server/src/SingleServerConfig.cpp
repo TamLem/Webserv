@@ -26,14 +26,13 @@ enum
 	autoindex,
 	index_page,
 	chunked_transfer,
-	client_body_in_single_buffer, // check if needed, not implemented !!!!!!!
 	client_body_buffer_size,
 	client_max_body_size,
-	cgi,
+	// cgi, //only needed if we do bonus
 	cgi_bin,
 	location,
 	error_page,
-	log_level,
+	show_log,
 	not_found
 };
 
@@ -45,14 +44,13 @@ std::string configVariables[]=
 	"autoindex",
 	"index_page",
 	"chunked_transfer",
-	"client_body_in_single_buffer", // check if needed
 	"client_body_buffer_size",
 	"client_max_body_size",
-	"cgi",
+	// "cgi", // only needed if we do bonus
 	"cgi_bin",
 	"location",
 	"error_page", // can be i.e. value 404 /404.html || value 500 502 503 504 /50x.html
-	"log_level"
+	"show_log"
 };
 
 // Private Methods
@@ -223,11 +221,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		break ;
 	}
 
-	case (cgi):
-	{
-		this->_handleCgi(keyValue);
-		break ;
-	}
+	// case (cgi): // only needed if we do bonus, else will be standard, ask tam!!!!!!!!!!
+	// {
+	// 	this->_handleCgi(keyValue);
+	// 	break ;
+	// }
 
 	case (cgi_bin):
 	{
@@ -253,7 +251,7 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		break ;
 	}
 
-	case (log_level):
+	case (show_log):
 	{
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
@@ -288,31 +286,148 @@ void SingleServerConfig::_checkListen(std::string value)
 		std::cout << RED << port << RESET << std::endl;
 		throw SingleServerConfig::InvalidPortException();
 	}
-	std::cout << BLUE << "in _checkListen: >" << YELLOW << value << BLUE << "<" RESET << std::endl;
+	// std::cout << BLUE << "in _checkListen: >" << YELLOW << value << BLUE << "<" RESET << std::endl;
 }
 
 void SingleServerConfig::_handleCgi(std::string line)
 {
-	std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
+	(void)line;
+	// std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
 }
 
 void SingleServerConfig::_handleLocation(std::string block)
 {
-	std::cout << BLUE << "in _handleLocation: >" << YELLOW << block << BLUE << "<" RESET << std::endl;
+	(void)block;
+	// std::cout << BLUE << "in _handleLocation: >" << YELLOW << block << BLUE << "<" RESET << std::endl;
+}
+
+std::string validErrorCodes[] =
+{
+	"100",
+	"101",
+	"102",
+	"103",
+	"200",
+	"201",
+	"202",
+	"203",
+	"204",
+	"205",
+	"206",
+	"207",
+	"208",
+	"226",
+	"300",
+	"301",
+	"302",
+	"303",
+	"304",
+	"305",
+	"306",
+	"307",
+	"308",
+	"400",
+	"401",
+	"402",
+	"403",
+	"404",
+	"405",
+	"406",
+	"407",
+	"408",
+	"409",
+	"410",
+	"411",
+	"412",
+	"413",
+	"414",
+	"415",
+	"416",
+	"417",
+	"418",
+	"421",
+	"422",
+	"423",
+	"424",
+	"425",
+	"426",
+	"428",
+	"429",
+	"431",
+	"451",
+	"500",
+	"501",
+	"502",
+	"503",
+	"504",
+	"505",
+	"506",
+	"507",
+	"508",
+	"510",
+	"511",
+	""
+};
+
+static bool _isValidErrorCode(std::string errorCode)
+{
+	std::cout << errorCode << " handed to check if it a valid errorCode" << std::endl;
+	for (size_t i = 0; i < 64; ++i)
+	{
+		if (validErrorCodes[i] == errorCode)
+			return (true);
+	}
+	return (false);
 }
 
 void SingleServerConfig::_handleErrorPage(std::string line)
 {
+	if (line.substr(0, line.find_first_of(WHITESPACE)) != "error_page")
+	{
+		std::cout << RED << line.substr(0, line.find_first_of(WHITESPACE)) << RESET << std::endl;
+		throw SingleServerConfig::InvalidKeyException();
+	}
+	else
+	{
+		std::string key = line.substr(line.find_first_of(WHITESPACE) + 1);
+		std::string value = key.substr(key.find_first_of(WHITESPACE) + 1);
+		// std::cout << GREEN << ">" << value << "<" << RESET << std::endl;
+		key = key.substr(0, key.find_first_of(WHITESPACE));
+		// std::cout << "error key >" << BLUE << key << RESET << "< error value >" << YELLOW << value << RESET << std::endl;
+		if (value.find_first_of(WHITESPACE) != std::string::npos)
+		{
+			std::cout << RED << line << RESET << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		else if (key.length() != 3 || _isValidErrorCode(key) == false)
+		{
+			std::cout << RED << key << RESET << std::endl;
+			throw SingleServerConfig::NotAnErrorCodeException();
+		}
+		else if (this->_conf->errorPage.count(key) == 1)
+		{
+			std::cout << RED << key << RESET << std::endl;
+			throw SingleServerConfig::DuplicateErrorPageException();
+		}
+		else
+		{
+			this->_conf->errorPage.insert(std::make_pair<std::string, std::string>(key, value));
+		}
+	}
 	std::cout << BLUE << "in _handleErrorPage: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
 }
 
 size_t SingleServerConfig::_strToSizeT(std::string str)
 {
-	std::cout << "str send to _strToSizeT >" << str << "<" << std::endl;
+	// std::cout << "str send to _strToSizeT >" << str << "<" << std::endl;
 
 	size_t out = 0;
 	std::stringstream buffer;
-	buffer << SIZE_T_MAX;
+	#ifdef __APPLE__
+		buffer << SIZE_T_MAX;
+	#else
+		buffer << "18446744073709551615";
+	#endif
 	std::string sizeTMax = buffer.str();
 	if (str.find("-") != std::string::npos && str.find_first_of(DECIMAL) != std::string::npos && str.find("-") == str.find_first_of(DECIMAL) - 1)
 	{
@@ -367,7 +482,7 @@ const char* SingleServerConfig::InvalidKeyException::what(void) const throw()
 
 const char* SingleServerConfig::SizeTOverflowException::what(void) const throw()
 {
-	return ("↑↑↑ this number is too big, stay below 18446744073709551616");
+	return ("↑↑↑ this number is too big, stay <=18446744073709551615");
 }
 
 const char* SingleServerConfig::NegativeDecimalsNotAllowedException::what(void) const throw()
@@ -388,4 +503,14 @@ const char* SingleServerConfig::InvalidWhitespaceException::what(void) const thr
 const char* SingleServerConfig::InvalidValueTypeException::what(void) const throw()
 {
 	return ("↑↑↑ this does not fit the required argument type");
+}
+
+const char* SingleServerConfig::NotAnErrorCodeException::what(void) const throw()
+{
+	return ("↑↑↑ this is not a valid error code");
+}
+
+const char* SingleServerConfig::DuplicateErrorPageException::what(void) const throw()
+{
+	return ("↑↑↑ this error code was already defined before, only once per server allowed");
 }

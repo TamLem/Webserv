@@ -61,7 +61,7 @@ class Config
 		const std::vector<std::string> getCgi() const;
 		const std::string getCgiBin() const;
 		const std::map<std::string, LocationStruct> getLocation() const;
-		const std::vector<std::string> getErrorPage() const; // rethink this type !!!!! maybe map is better, but then more pasing needs to be done
+		const std::map<std::string, std::string> getErrorPage() const; // rethink this type !!!!! maybe map is better, but then more pasing needs to be done
 		bool getShowLog() const;
 
 	// Getters for printing (consverts every value to string)

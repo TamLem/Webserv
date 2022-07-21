@@ -108,7 +108,12 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 	{
 	case (listen):
 	{
-		value = keyValue.substr(keyValue.find_last_of(WHITESPACE) + 1);
+		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
 		this->_checkListen(value);
 		this->_conf->listen.push_back(value);
 		break ;
@@ -116,50 +121,105 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (root):
 	{
-		value = keyValue.substr(keyValue.find_last_of(WHITESPACE) + 1);
+		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
 		this->_conf->root = value;
 		break ;
 	}
 
 	case (server_name):
 	{
-		value = keyValue.substr(keyValue.find_last_of(WHITESPACE) + 1);
+		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
 		this->_conf->serverName = value;
 		break;
 	}
 
 	case (autoindex):
 	{
-		value = keyValue.substr(keyValue.find_last_of(WHITESPACE) + 1);
+		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+		if (value != "true" && value != "false")
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidValueTypeException();
+		}
 		this->_conf->autoIndex = (value.compare("true") == 0);
 		break ;
 	}
 
 	case (index_page):
 	{
-		value = keyValue.substr(keyValue.find_last_of(WHITESPACE) + 1);
+		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
 		this->_conf->indexPage = value;
 		break ;
 	}
 
 	case (chunked_transfer):
 	{
-		value = keyValue.substr(keyValue.find_last_of(WHITESPACE) + 1);
+		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+		if (value != "true" && value != "false")
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidValueTypeException();
+		}
 		this->_conf->chunkedTransfer = (value.compare("true") == 0);
 		break ;
 	}
 
 	case (client_body_buffer_size):
 	{
-		value = keyValue.substr(keyValue.find_last_of(WHITESPACE) + 1);
-		this->_conf->clientBodyBufferSize = this->_atosizet(value.c_str());
+		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+		if (value.find_first_not_of(DECIMAL) != std::string::npos)
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidValueTypeException();
+		}
+		this->_conf->clientBodyBufferSize = this->_strToSizeT(value.c_str());
 		break ;
 	}
 
 	case (client_max_body_size):
 	{
-		value = keyValue.substr(keyValue.find_last_of(WHITESPACE) + 1);
-		this->_conf->clientMaxBodySize = this->_atosizet(value.c_str());
+		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+		if (value.find_first_not_of(DECIMAL) != std::string::npos)
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidValueTypeException();
+		}
+		this->_conf->clientMaxBodySize = this->_strToSizeT(value.c_str());
 		break ;
 	}
 
@@ -171,7 +231,12 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (cgi_bin):
 	{
-		value = keyValue.substr(keyValue.find_last_of(WHITESPACE) + 1);
+		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
 		this->_conf->cgiBin = value;
 		break ;
 	}
@@ -190,7 +255,17 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (log_level):
 	{
-		value = keyValue.substr(keyValue.find_last_of(WHITESPACE) + 1);
+		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+		if (value != "true" && value != "false")
+		{
+			std::cout << RED << keyValue << std::endl;
+			throw SingleServerConfig::InvalidValueTypeException();
+		}
 		this->_conf->showLog = (value.compare("true") == 0);
 		break ;
 	}
@@ -207,7 +282,7 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 void SingleServerConfig::_checkListen(std::string value)
 {
-	size_t port = this->_atosizet(value);
+	size_t port = this->_strToSizeT(value);
 	if (port > USHRT_MAX)
 	{
 		std::cout << RED << port << RESET << std::endl;
@@ -231,11 +306,14 @@ void SingleServerConfig::_handleErrorPage(std::string line)
 	std::cout << BLUE << "in _handleErrorPage: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
 }
 
-size_t SingleServerConfig::_atosizet(std::string str)
+size_t SingleServerConfig::_strToSizeT(std::string str)
 {
+	std::cout << "str send to _strToSizeT >" << str << "<" << std::endl;
+
 	size_t out = 0;
-	std::stringstream sizeTMax;
-	sizeTMax << SIZE_T_MAX;
+	std::stringstream buffer;
+	buffer << SIZE_T_MAX;
+	std::string sizeTMax = buffer.str();
 	if (str.find("-") != std::string::npos && str.find_first_of(DECIMAL) != std::string::npos && str.find("-") == str.find_first_of(DECIMAL) - 1)
 	{
 		std::cout << str << std::endl;
@@ -244,10 +322,11 @@ size_t SingleServerConfig::_atosizet(std::string str)
 	else if (str.find_first_of(DECIMAL) != std::string::npos)
 	{
 		std::string number = str.substr(str.find_first_of(DECIMAL));
-		number = number.substr(0, number.find_first_not_of(DECIMAL));
-		if (sizeTMax.str().compare(number) > 0)
+		if (number.find_first_not_of(WHITESPACE) != std::string::npos)
+			number = number.substr(0, number.find_first_not_of(DECIMAL));
+		if (str.length() >= sizeTMax.length() && sizeTMax.compare(number) > 0)
 		{
-			std::cout << RED << number << RESET << std::endl;
+			std::cout << RED << ">" << number << RESET << std::endl;
 			throw SingleServerConfig::SizeTOverflowException();
 		}
 		else
@@ -278,12 +357,12 @@ const char* SingleServerConfig::NoPortException::what(void) const throw()
 
 const char* SingleServerConfig::NotAPortException::what(void) const throw()
 {
-	return ("↑↑↑ invalid port in .conf file found, see above");
+	return ("↑↑↑ invalid port in .conf file found");
 }
 
 const char* SingleServerConfig::InvalidKeyException::what(void) const throw()
 {
-	return ("↑↑↑ invalid key for the .conf file found, see above");
+	return ("↑↑↑ invalid key for the .conf file found");
 }
 
 const char* SingleServerConfig::SizeTOverflowException::what(void) const throw()
@@ -299,4 +378,14 @@ const char* SingleServerConfig::NegativeDecimalsNotAllowedException::what(void) 
 const char* SingleServerConfig::InvalidPortException::what(void) const throw()
 {
 	return ("↑↑↑ this is an invalid value for a port");
+}
+
+const char* SingleServerConfig::InvalidWhitespaceException::what(void) const throw()
+{
+	return ("↑↑↑ invalid whitespace found");
+}
+
+const char* SingleServerConfig::InvalidValueTypeException::what(void) const throw()
+{
+	return ("↑↑↑ this does not fit the required argument type");
 }

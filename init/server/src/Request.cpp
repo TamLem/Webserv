@@ -32,7 +32,7 @@ void Request::parseMessage(const std::string& message)
 		parseBody(stream);
 }
 
-//AE check what happens for space before method and multiple spaces or 
+//AE check what happens for space before method and multiple spaces or
 void Request::parseStartLine(std::istringstream& stream)
 {
 	std::vector<std::string> tokens;
@@ -93,7 +93,7 @@ void Request::parseHeaderFields(std::istringstream& stream)
 	while (stream.eof() == false)
 	{
 		std::string line;
-		
+
 		std::getline(stream, line);
 		if (line.length() == 1 && *line.begin() == CR)
 			break ;
@@ -106,7 +106,7 @@ void Request::parseHeaderFieldLine(const std::string& line)
 	std::vector<std::string> tokens;
 
 	createHeaderTokens(tokens, line);
-	
+
 	if (this->headerFields.count(tokens[0]))
 		throw HeaderFieldDuplicate();
 	this->headerFields[tokens[0]] = tokens[1];
@@ -131,7 +131,7 @@ void Request::createHeaderTokens(std::vector<std::string>& tokens, const std::st
 const std::string Request::createHeaderFieldName(const std::string& message, const size_t pos) const
 {
 	std::string tmp;
-	
+
 	tmp = message.substr(0, pos);
 	if (isValidHeaderFieldName(tmp) == false)
 		throw InvalidHeaderFieldName();
@@ -161,7 +161,7 @@ void Request::toLower(std::string& str) const
 const std::string Request::createHeaderFieldValue(const std::string& message, const size_t pos)
 {
 	std::string tmp;
-	
+
 	tmp = removeLeadingAndTrailingWhilespaces(message, pos);
 	if (isValidHeaderFieldValue(tmp) == false)
 		throw InvalidHeaderFieldValue();
@@ -170,10 +170,10 @@ const std::string Request::createHeaderFieldValue(const std::string& message, co
 
 const std::string Request::removeLeadingAndTrailingWhilespaces(const std::string& message, size_t pos) const
 {
-	pos = message.find_first_not_of(WHITESPACES, pos + 1);
+	pos = message.find_first_not_of(WHITESPACE, pos + 1);
 	if (pos == std::string::npos)
 		throw InvalidHeaderField();
-	size_t end = message.find_last_not_of(WHITESPACES);
+	size_t end = message.find_last_not_of(WHITESPACE);
 	return (message.substr(pos, end - pos + 1));
 }
 
@@ -197,12 +197,12 @@ void Request::setBodyFlag(void)
 void Request::parseBody(std::istringstream& stream)
 {
 	int length = 0;
-	
+
 	while (stream.eof() == false)
 	// while (length < this->headerFields["Content-Length"]) AE length check, how to ptotect agains invalid chars?
 	{
 		std::string line;
-		
+
 		std::getline(stream, line);
 		length += line.length();
 		this->body += line;

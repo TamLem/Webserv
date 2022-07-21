@@ -39,10 +39,12 @@ class SingleServerConfig
 		void _setVariables(std::string config);
 		void _parseKeyValue(std::string);
 
-		void _handleListen(std::string line);
+		void _checkListen(std::string line);
 		void _handleCgi(std::string line);
 		void _handleLocation(std::string line);
 		void _handleErrorPage(std::string line);
+
+		size_t _atosizet(std::string str);
 
 	public:
 	// Constructors
@@ -82,6 +84,24 @@ class SingleServerConfig
 		};
 
 		class InvalidKeyException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class SizeTOverflowException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class NegativeDecimalsNotAllowedException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidPortException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

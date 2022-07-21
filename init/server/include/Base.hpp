@@ -4,22 +4,56 @@
 #include <vector>
 #include <map>
 #include <string>
-// #include <iostream>
+#include <iostream>
 #include <stdbool.h>
+
 /* put here includes and defines that are needed for the whole project only */
+// Colors and Printing
+#ifndef RESET
+	#define RESET "\033[0m"
+#endif
 
-#define RESET "\033[0m"
-#define GREEN "\033[32m"
-#define YELLOW "\033[33m"
-#define BLUE "\033[34m"
-#define RED "\033[31m"
-#define BOLD "\033[1m"
-#define UNDERLINED "\033[4m"
+#ifndef GREEN
+	#define GREEN "\033[32m"
+#endif
 
-#define CRLF "\r\n"
-#define CRLFTWO "\r\n\r\n"
+#ifndef YELLOW
+	#define YELLOW "\033[33m"
+#endif
 
-#define WHITESPACE "\n\r\t\f\v "
+#ifndef BLUE
+	#define BLUE "\033[34m"
+#endif
+
+#ifndef RED
+	#define RED "\033[31m"
+#endif
+
+#ifndef BOLD
+	#define BOLD "\033[1m"
+#endif
+
+#ifndef UNDERLINED
+	#define UNDERLINED "\033[4m"
+#endif
+
+
+// other defines
+#ifndef CRLF
+	#define CRLF "\r\n"
+#endif
+
+#ifndef CRLFTWO
+	#define CRLFTWO "\r\n\r\n"
+#endif
+
+#ifndef WHITESPACE
+	#define WHITESPACE "\n\r\t\f\v "
+#endif
+
+#ifndef DECIMAL
+	#define DECIMAL "0123456789"
+#endif
 
 // LocationStruct
 struct LocationStruct

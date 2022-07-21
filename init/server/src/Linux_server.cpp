@@ -11,6 +11,7 @@
 #include "Base.hpp"
 
 #include "Config.hpp"
+#include "Cgi.hpp"
 
 // Forbidden includes
 #include <errno.h>
@@ -46,7 +47,7 @@ int main(int argc, char **argv)
 	}
 	catch (std::exception &e)
 	{
-			std::cerr << RED << "Exception caught in main function: " << e.what() << RESET << std::endl;
+			std::cerr << RED << e.what() << RESET << std::endl;
 			delete config;
 			return (EXIT_FAILURE);
 	}
@@ -97,13 +98,45 @@ int main(int argc, char **argv)
 			return 1;
 		}
 		std::cout << "Message received: " << buffer << std::endl;
-		Request newRequest(buffer);
-		Response newResponse("HTTP/1.1", 200, new_sockfd, newRequest.getUrl());
-		// std::cout << newResponse.constructHeader();
-		newResponse.sendResponse();
+		if (std::string(buffer).find(".php") != std::string::npos)
+							cgi_response(buffer, sockfd);
+						else
+						{
+							try
+							{
+								Request newRequest(buffer);
+								Response newResponse(200, sockfd, newRequest.getUrl());
+							}
+							catch (Request::InvalidMethod& e)
+							{
+								Response newResponse(501, sockfd);
+							}
+							catch (Request::InvalidProtocol& e)
+							{
+								Response newResponse(505, sockfd);
+							}
+							catch (Message::BadRequest& e)
+							{
+								Response newResponse(400, sockfd);
+							}
+							catch (Response::ERROR_404& e)
+							{
+								Response newResponse(404, sockfd);
+							}
+							catch (std::exception& e)
+							{
+								Response newResponse(500, sockfd);
+							}
+						}
 		close(new_sockfd);
 	}
 	close(sockfd);
+	std::string firstName = "weebserv";
+	std::string secondName = "anotherone";
+	config->applyConfig(firstName);
+	std::cout << config << std::endl;
+	config->applyConfig(secondName);
+	std::cout << config << std::endl;
 	delete config;
 	config = NULL;
 	return 0;

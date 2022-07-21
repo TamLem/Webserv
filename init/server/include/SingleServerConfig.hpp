@@ -16,7 +16,6 @@
 #include "Config.hpp"
 
 // classes
-
 class SingleServerConfig
 {
 	private:
@@ -44,7 +43,7 @@ class SingleServerConfig
 		void _handleLocation(std::string line);
 		void _handleErrorPage(std::string line);
 
-		size_t _atosizet(std::string str);
+		size_t _strToSizeT(std::string str);
 
 	public:
 	// Constructors
@@ -102,6 +101,18 @@ class SingleServerConfig
 		};
 
 		class InvalidPortException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidWhitespaceException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidValueTypeException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

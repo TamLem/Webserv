@@ -15,7 +15,8 @@ class Request : public Message
 	private:
 		std::set<std::string> validMethods;
 		std::string method;
-		std::string url;
+		std::string url; // AE remove
+		std::string uri;
 		std::string query;
 		std::string fragment;
 		void parseMessage(const std::string&);
@@ -42,11 +43,11 @@ class Request : public Message
 		~Request(void);
 
 		// void setMethod(const std::string&);
-		// void setUrl(const std::string&);
 		// void setProtocol(const std::string&);
 
 		const std::string& getMethod(void) const;
 		const std::string& getUrl(void) const;
+		const std::string& getUri(void) const;
 		const std::string& getQuery(void) const;
 		const std::string& getFragment(void) const;
 		// const std::string& getProtocol(void) const;

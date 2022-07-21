@@ -12,7 +12,7 @@ class Response : public Message
 		std::string statusMessage;
 		std::map<int, std::string> messageMap;
 		int fd;
-		std::string url;
+		std::string uri;
 		void createMessageMap(void);
 		bool isValidStatus(const int);
 		int sendall(const int sock_fd, char *buffer, const int len) const;

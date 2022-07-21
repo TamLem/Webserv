@@ -175,9 +175,18 @@ class Server
 							{
 								Request newRequest(buf);
 								if (newRequest.getMethod() == "POST")
+								{
+									// std::cerr << RED << newRequest.getBody() << RESET << std::endl;
+									std::ofstream outFile;
+									outFile.open("./uploads/" + newRequest.getBody());
+									if (outFile.is_open() == false)
+										throw std::exception();
+									outFile << newRequest.getBody() << "'s content.";
+									outFile.close();
 									Response newResponse(200, fd, "./pages/post_test.html");
+								}
 								else
-									Response newResponse(200, fd, newRequest.getUrl());
+									Response newResponse(200, fd, newRequest.getUri());
 							}
 							catch (Request::InvalidMethod& e)
 							{

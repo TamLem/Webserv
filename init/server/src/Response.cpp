@@ -21,7 +21,7 @@ bool Response::isValidStatus(const int status)
 	return (false);
 }
 
-Response::Response(int status, int fd, std::string url) : fd(fd), url(url)
+Response::Response(int status, int fd, std::string uri) : fd(fd), uri(uri)
 {
 	this->createMessageMap();
 	if (!isValidStatus(status))
@@ -110,6 +110,7 @@ void Response::createErrorBody(void)
 	"<html>\n\
 	<head>\n\
 	<title>Error " << this->status << "</title>\n\
+	<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"images/favicon.ico\">\n\
 	</head>\n\
 	<body bgcolor=\"000000\">\n\
 	<center>\n\
@@ -126,7 +127,7 @@ void Response::createErrorBody(void)
 void Response::createBody(void)
 {
 	std::stringstream body;
-	std::ifstream file(this->url.c_str(), std::ios::binary);
+	std::ifstream file(this->uri.c_str(), std::ios::binary);
 	if (file.is_open())
 	{
 		body << file.rdbuf();

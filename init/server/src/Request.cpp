@@ -41,17 +41,17 @@ void Request::parseStartLine(std::istringstream& stream)
 	std::getline(stream, line);
 	createStartLineTokens(tokens, line);
 	std::string method = tokens[0];
-	// std::string url = tokens[1];
+	this->url = tokens[1]; // AE remove later
 	breakUpUri(tokens[1]);
 	std::string protocol = tokens[2];
 	if (!isValidMethod(method))
 		throw InvalidMethod();
 	this->method = method;
-	if (this->url == "/")
-		this->url = INDEX_PATH;
+	if (this->uri == "/")
+		this->uri = INDEX_PATH;
 	else
-		this->url = "." + this->url;
-	// std::cerr << RED << "uri: " << this->url << "\nquery: " << this->query << "\nfragment: " << this->fragment << RESET << std::endl;
+		this->uri = "." + this->uri;
+	// std::cerr << RED << "uri: " << this->uri << "\nquery: " << this->query << "\nfragment: " << this->fragment << RESET << std::endl;
 	if (!isValidProtocol(protocol))
 		throw InvalidProtocol();
 	this->protocol = protocol;
@@ -83,7 +83,7 @@ void Request::breakUpUri(const std::string& token)
 	std::string tmp;
 
 	pos = token.find_first_of("?#");
-	this->url = token.substr(0, pos);
+	this->uri = token.substr(0, pos);
 	if (pos == std::string::npos)
 		return ;
 	else if (token[pos] == '?')
@@ -245,7 +245,7 @@ void Request::addMethods(void)
 std::ostream& operator<<(std::ostream& out, const Request& request)
 {
 	out << request.getMethod() << " "
-	<< request.getUrl() << " "
+	<< request.getUri() << " "
 	<< request.getProtocol() << "\n";
 	for (std::map<std::string, std::string>::const_iterator it = request.getHeaderFields().begin(); it != request.getHeaderFields().end(); ++it)
 	{
@@ -261,11 +261,6 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 // 	this->method = method;
 // }
 
-// void Request::setUrl(const std::string& url)
-// {
-// 	this->url = url;
-// }
-
 // void Request::setProtocol(const std::string& protocol)
 // {
 // 	this->protocol = protocol;
@@ -279,6 +274,11 @@ const std::string& Request::getMethod(void) const
 const std::string& Request::getUrl(void) const
 {
 	return (this->url);
+}
+
+const std::string& Request::getUri(void) const
+{
+	return (this->uri);
 }
 
 const std::string& Request::getQuery(void) const

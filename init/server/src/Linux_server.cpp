@@ -59,7 +59,7 @@ int main() {
 		}
 		std::cout << "Message received: " << buffer << std::endl;
 		Request newRequest(buffer);
-		Response newResponse("HTTP/1.1", 200, new_sockfd, newRequest.getUrl());
+		Response newResponse("HTTP/1.1", 200, new_sockfd, newRequest.getUri());
 		// std::cout << newResponse.constructHeader();
 		newResponse.sendResponse();
 		close(new_sockfd);

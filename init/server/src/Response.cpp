@@ -117,7 +117,7 @@ void Response::createErrorBody(void)
 	<h1 style=\"color:white\">Error " << this->status << "</h1>\n\
 	<p style=\"color:white\">" << this->statusMessage << "!\n\
 	<br><br>\n\
-	<img src=\"images/error.jpg\" align=\"TOP\">\n\
+	<img src=\"/images/error.jpg\" align=\"TOP\">\n\
 	</center>\n\
 	</body>\n\
 	</html>";

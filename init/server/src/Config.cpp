@@ -31,7 +31,7 @@ void Config::_checkBrackets(std::string all)
 		// std::cerr << ">" << YELLOW << buffer << RESET << "< got written into serverStream" << std::endl;
 		if (buffer.find("server {") != std::string::npos && buffer.find("#") > buffer.find("server {"))
 		{
-			std::cout << BLUE << "opened server brackets with >" << buffer << "<" << RESET << std::endl;
+			// std::cout << BLUE << "opened server brackets with >" << buffer << "<" << RESET << std::endl;
 			if (buffer.substr(buffer.find("server {") + 8).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("server {") + 8).find_first_of("#") || (buffer.find_first_not_of(WHITESPACE) != buffer.find("server {")))
 			{
 				// std::cerr << "1>" << RED << buffer << RESET << "<" << std::endl;
@@ -39,7 +39,7 @@ void Config::_checkBrackets(std::string all)
 			}
 			else if (openServer == true)
 			{
-				std::cerr << "1>" << RED << buffer << RESET << "<" << std::endl;
+				// std::cerr << "1>" << RED << buffer << RESET << "<" << std::endl;
 				throw Config::ServerInsideServerException();
 			}
 			else
@@ -47,7 +47,7 @@ void Config::_checkBrackets(std::string all)
 		}
 		else if (buffer.find("location ") != std::string::npos && buffer.find("#") > buffer.find("location "))
 		{
-			std::cout << BLUE << "opened location brackets with >" << buffer << "<" << RESET << std::endl;
+			// std::cout << BLUE << "opened location brackets with >" << buffer << "<" << RESET << std::endl;
 			if (buffer.find(" {") == std::string::npos || buffer.find(" {") > buffer.find("#"))
 			{
 				std::cout << RED << buffer << std::endl;
@@ -63,7 +63,7 @@ void Config::_checkBrackets(std::string all)
 		}
 		else if (buffer.find("}") != std::string::npos && buffer.find("#") > buffer.find("}"))
 		{
-			std::cerr << GREEN << "found this to close a bracket >" << buffer << "<" << RESET << std::endl;
+			// std::cerr << GREEN << "found this to close a bracket >" << buffer << "<" << RESET << std::endl;
 			if (buffer.substr(buffer.find("}") + 1).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("}") + 1).find_first_of("#") || buffer.find_first_not_of(WHITESPACE) != buffer.find("}"))
 			{
 				// std::cerr << "3>" << RED << buffer << RESET << "<" << std::endl;
@@ -71,12 +71,12 @@ void Config::_checkBrackets(std::string all)
 			}
 			else if (openLocation)
 			{
-				std::cout << YELLOW << "closed location brackets with >" << buffer << "<" << RESET << std::endl;
+				// std::cout << YELLOW << "closed location brackets with >" << buffer << "<" << RESET << std::endl;
 				openLocation = false;
 			}
 			else
 			{
-				std::cout << YELLOW << "closed server brackets with >" << buffer << "<" << RESET << std::endl;
+				// std::cout << YELLOW << "closed server brackets with >" << buffer << "<" << RESET << std::endl;
 				openServer = false;
 				this->_parseServerBlock(serverStream.str());
 				serverStream.clear();
@@ -103,7 +103,7 @@ void Config::_parseServerBlock(std::string serverBlock)
 	serverStream << serverBlock;
 	bool serverFound = false;
 
-	std::cout << "this was passed into the _parseServerBlock\n>" << serverBlock << "<" << std::endl;
+	// std::cout << "this was passed into the _parseServerBlock\n>" << serverBlock << "<" << std::endl;
 
 	while (serverStream.good()) // clear out all the comments, leading and trailing whitespaces
 	{
@@ -137,7 +137,7 @@ void Config::_parseServerBlock(std::string serverBlock)
 		}
 		else if (serverFound == true && buffer.find("server {") != std::string::npos) // with new_ implementation not needed, check though !!!!!!!
 		{
-			std::cerr << "2>" << RED << buffer << RESET << "<" << std::endl;
+			// std::cerr << "2>" << RED << buffer << RESET << "<" << std::endl;
 			throw Config::ServerInsideServerException();
 		}
 		if (serverFound == false && buffer.length() > 0) // might never be triggered, check this!!!!!!

@@ -1,6 +1,47 @@
 #include "Server.hpp"
 #include "Config.hpp"
 
+void Server::handle_static_request(const std::string& buffer, int fd)
+{
+	try
+	{
+		Request newRequest(buffer);
+		if (newRequest.getMethod() == "POST")
+		{
+			// std::cerr << RED << newRequest.getBody() << RESET << std::endl;
+			std::ofstream outFile;
+			outFile.open("./uploads/" + newRequest.getBody());
+			if (outFile.is_open() == false)
+				throw std::exception();
+			outFile << newRequest.getBody() << "'s content.";
+			outFile.close();
+			Response newResponse(200, fd, "./pages/post_test.html");
+		}
+		else
+			Response newResponse(200, fd, newRequest.getUri());
+	}
+	catch (Request::InvalidMethod& e)
+	{
+		Response newResponse(501, fd);
+	}
+	catch (Request::InvalidProtocol& e)
+	{
+		Response newResponse(505, fd);
+	}
+	catch (Message::BadRequest& e)
+	{
+		Response newResponse(400, fd);
+	}
+	catch (Response::ERROR_404& e)
+	{
+		Response newResponse(404, fd);
+	}
+	catch (std::exception& e)
+	{
+		Response newResponse(500, fd);
+	}
+}
+
 static void handle_signal(int sig)
 {
 	if (sig == SIGINT)

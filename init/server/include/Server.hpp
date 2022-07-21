@@ -181,45 +181,7 @@ class Server
 						if (std::string(buf).find(".php") != std::string::npos)
 							cgi_response(buf, fd);
 						else
-						{
-							try
-							{
-								Request newRequest(buf);
-								if (newRequest.getMethod() == "POST")
-								{
-									// std::cerr << RED << newRequest.getBody() << RESET << std::endl;
-									std::ofstream outFile;
-									outFile.open("./uploads/" + newRequest.getBody());
-									if (outFile.is_open() == false)
-										throw std::exception();
-									outFile << newRequest.getBody() << "'s content.";
-									outFile.close();
-									Response newResponse(200, fd, "./pages/post_test.html");
-								}
-								else
-									Response newResponse(200, fd, newRequest.getUri());
-							}
-							catch (Request::InvalidMethod& e)
-							{
-								Response newResponse(501, fd);
-							}
-							catch (Request::InvalidProtocol& e)
-							{
-								Response newResponse(505, fd);
-							}
-							catch (Message::BadRequest& e)
-							{
-								Response newResponse(400, fd);
-							}
-							catch (Response::ERROR_404& e)
-							{
-								Response newResponse(404, fd);
-							}
-							catch (std::exception& e)
-							{
-								Response newResponse(500, fd);
-							}
-						}
+							handle_static_request(buf, fd);
 					}
 				}
 			}
@@ -256,6 +218,8 @@ class Server
 			}
 			run_event_loop(kq);
 		}
+
+		void handle_static_request(const std::string&, int);
 	private:
 		size_t _port;
 		size_t _server_fd;

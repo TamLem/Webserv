@@ -22,6 +22,9 @@
 #define CRLFTWO "\r\n\r\n"
 #define WHITESPACE "\n\r\t\f\v "
 #define DECIMAL "0123456789"
+#define SP ' '
+#define CR '\r'
+#define TCHAR "!#$%&'*+-.^_`|~"
 
 // LocationStruct
 struct LocationStruct
@@ -53,6 +56,5 @@ struct ConfigStruct
 	bool									showLog;
 	bool									chunkedTransfer;
 };
-
 
 #endif // BASE_HPP

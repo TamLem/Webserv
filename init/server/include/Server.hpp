@@ -182,18 +182,30 @@ class Server
 							cgi_response(buf, fd);
 						else
 						{
-							// Response newResponse(Request newRequest(buf), fd);
-							Request newRequest(buf);
-							Response newResponse("HTTP/1.1", 200, fd, newRequest.getUrl());
-							// std::cout << newResponse.constructHeader();
 							try
 							{
-								newResponse.sendResponse();
+								Request newRequest(buf);
+								Response newResponse(200, fd, newRequest.getUrl());
 							}
-							catch (std::exception &e)
+							catch (Request::InvalidMethod& e)
 							{
-								std::cerr << RED << "404 exception cought" << std::endl;
-								keep_running = false;
+								Response newResponse(501, fd);
+							}
+							catch (Request::InvalidProtocol& e)
+							{
+								Response newResponse(505, fd);
+							}
+							catch (Message::BadRequest& e)
+							{
+								Response newResponse(400, fd);
+							}
+							catch (Response::ERROR_404& e)
+							{
+								Response newResponse(404, fd);
+							}
+							catch (std::exception& e)
+							{
+								Response newResponse(500, fd);
 							}
 						}
 					}

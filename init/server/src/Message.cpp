@@ -34,19 +34,12 @@ const std::map<std::string, std::string>& Message::getHeaderFields(void) const
 	return (this->headerFields);
 }
 
-const char* Message::InvalidProtocol::what() const throw()
-{
-	return ("Exception: invalid protocol");
-}
-
 const char* Message::HeaderFieldDuplicate::what() const throw()
 {
 	return ("Exception: header field duplicate");
 }
 
-bool Message::isValidProtocol(std::string protocol)
+const char* Message::InvalidStartLine::what() const throw()
 {
-	if (protocol == "HTTP/1.1")
-		return (true);
-	return (false);
+	return ("Exception: invalid start line format");
 }

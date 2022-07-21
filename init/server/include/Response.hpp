@@ -8,19 +8,20 @@
 class Response : public Message
 {
 	private:
-		// std::string protocol;
 		int status;
 		std::string statusMessage;
 		std::map<int, std::string> messageMap;
-		void createMessageMap(void);
-		bool isValidStatus(int);
-		int sendall(int sock_fd, char *buffer, int len);
 		int fd;
 		std::string url;
-		void readBody(void);
+		void createMessageMap(void);
+		bool isValidStatus(const int);
+		int sendall(const int sock_fd, char *buffer, const int len) const;
+		void createHeaderFields(void);
+		void createBody(void);
+		void createErrorBody(void);
 	public:
-		// Response(std::string, int);
-		Response(std::string, int, int, std::string);
+		Response(int, int, std::string);
+		Response(int, int);
 		~Response(void);
 
 		// void setProtocol(const std::string&);
@@ -39,7 +40,7 @@ class Response : public Message
 		const char* what() const throw();
 	};
 
-		class ERROR_404 : public std::exception
+	class ERROR_404 : public std::exception
 	{
 		const char* what() const throw();
 	};

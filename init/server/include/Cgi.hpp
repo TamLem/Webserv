@@ -10,24 +10,36 @@
 void cgi_response(std::string buffer, int fd)
 {
 	std::string file;
+	int pipefd[2];
 
 	(void)buffer;
 	std::cout << GREEN << "Executing CGI..." << std::endl;
-	file = "cgi-bin/site/index.php";
-	std::string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
-	send(fd, header.c_str(), header.size(), 0);
+	file = "index.php";
 	int stdout_init = dup(STDOUT_FILENO);
+	pipe(pipefd);
+	dup2(pipefd[1], STDOUT_FILENO);
+	close(pipefd[1]);
 	int pid = fork();
 	if (pid == 0)
 	{
-		dup2(fd, STDOUT_FILENO);
+		chdir("cgi-bin/site");
 		if(execlp("/usr/bin/php", "php", file.c_str(), NULL) == -1)
 		{
 			std::cout << "error executing cgi" << std::endl;
 		}
 		exit(0);
 	}
+	wait(NULL);
 	dup2(stdout_init, STDOUT_FILENO);
+	std::string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+	send(fd, header.c_str(), header.size(), 0);
+	char buf[1024];
+	int n;
+	while((n = read(pipefd[0], buf, 1024)))
+	{
+		send(fd, buf, n, 0);
+	}
+	close(pipefd[0]);
 	close(fd);
 }
 

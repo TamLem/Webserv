@@ -4,19 +4,52 @@
 #include <unistd.h>
 #include <cstring>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Base.hpp"
 
+#include "Config.hpp"
 
 // Forbidden includes
 #include <errno.h>
 
 // this was the first try of a socket connection, now is only used to have a working linux compatible simple server
 
-int main() {
+void parseArgv(int argc, char **argv)
+{
+	if (argc <= 1 || argc > 2)
+	{
+		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename>.conf" << RESET << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	std::string sArgv = argv[1];
+	std::string ending = ".conf";
+	if ((argv[1] + sArgv.find_last_of(".")) != ending)
+	{
+		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename>.conf" << RESET << std::endl;
+		exit(EXIT_FAILURE);
+	}
+}
 
+static bool keeprunning;
+
+int main(int argc, char **argv)
+{
+	keeprunning = false;
+	parseArgv(argc, argv);
+	Config *config = new Config();
+	try
+	{
+		config->start(argv[1]);
+	}
+	catch (std::exception &e)
+	{
+			std::cerr << RED << "Exception caught in main function: " << e.what() << RESET << std::endl;
+			delete config;
+			return (EXIT_FAILURE);
+	}
 	int sockfd;
 	struct sockaddr_in serv_addr;
 	struct sockaddr_in cli_addr;
@@ -26,6 +59,10 @@ int main() {
 		std::cout << "Error creating socket" << std::endl;
 		return 1;
 	}
+
+// Set socket reusable from Time-Wait state
+	int val = 1;
+	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &val, 4);
 
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(port);
@@ -38,6 +75,8 @@ int main() {
 		std::cerr << RESET;
 		return 1;
 	}
+	else
+		std::cout << "Server listening on port " << port << std::endl;
 
 	if (listen(sockfd, 5) < 0) {
 		std::cout << "Error listening on socket" << std::endl;
@@ -45,7 +84,7 @@ int main() {
 	}
 
 	int new_sockfd;
-	while(true) {
+	while(keeprunning) {
 		socklen_t clilen = sizeof(cli_addr);
 		if ((new_sockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen)) < 0) {
 			std::cout << "Error accepting connection" << std::endl;
@@ -65,6 +104,7 @@ int main() {
 		close(new_sockfd);
 	}
 	close(sockfd);
-
+	delete config;
+	config = NULL;
 	return 0;
 }

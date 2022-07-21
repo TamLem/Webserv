@@ -82,27 +82,22 @@ void Request::breakUpUri(const std::string& token)
 	size_t last = 0;
 	std::string tmp;
 
-	// if (*headerField.rbegin() != CR)
-	// 	throw InvalidHeaderField();
 	pos = token.find_first_of("?#");
 	this->url = token.substr(0, pos);
-	pos = token.find('?');
-	if (pos != std::string::npos)
+	if (pos == std::string::npos)
+		return ;
+	else if (token[pos] == '?')
 	{
 		tmp = token.substr(pos);
-		// std::cerr << RED << "HERE!tmp: " << tmp << RESET << std::endl;
 		last = pos;
 	}
 	pos = token.find('#', last);
 	if (pos != std::string::npos)
 	{
 		this->fragment = token.substr(pos, token.length() - pos + 1);
-		// std::cerr << RED << "HERE!frag: " << this->fragment << RESET << std::endl;
 		tmp = tmp.substr(0, tmp.length() - this->fragment.length());
 	}
 	this->query = tmp;
-	// if (pos == std::string::npos)
-	// 	throw InvalidHeaderField();
 }
 
 bool Request::isValidMethod(const std::string method) const

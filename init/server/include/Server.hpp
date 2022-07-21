@@ -174,7 +174,10 @@ class Server
 							try
 							{
 								Request newRequest(buf);
-								Response newResponse(200, fd, newRequest.getUrl());
+								if (newRequest.getMethod() == "POST")
+									Response newResponse(200, fd, "./pages/post_test.html");
+								else
+									Response newResponse(200, fd, newRequest.getUrl());
 							}
 							catch (Request::InvalidMethod& e)
 							{

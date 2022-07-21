@@ -17,12 +17,14 @@
 #include <fcntl.h>
 #include <fstream>
 #include <sys/event.h>
+#include <map>
 #include <csignal> // check if forbidden !!!!!!!!!!
 
 /* our includes */
 #include "Response.hpp"
 #include "Request.hpp"
 #include "Cgi.hpp"
+#include "SingleServerConfig.hpp"
 
 #include "Base.hpp"
 
@@ -42,8 +44,14 @@ static volatile int keep_running = 1;
 class Server
 {
 	public:
+		Server()
+		{
+			std::cout << "Server default constructor called for " << this << std::endl;
+		}
+
 		Server(int port)
 		{
+			std::cout << "Server constructor called for " << this << std::endl;
 			_port = port;
 
 			if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -60,7 +68,7 @@ class Server
 
 	// initialize server address struct
 			struct sockaddr_in serv_addr;
-			memset(&serv_addr, '0', sizeof(serv_addr));
+			memset(&serv_addr, '0', sizeof(serv_addr)); // is memset allowed? !!!!!!!!!!!!!!!!!!!!
 			serv_addr.sin_family = AF_INET;
 			serv_addr.sin_port = htons(port);
 			serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -77,8 +85,11 @@ class Server
 		~Server()
 		{
 			close(this->_server_fd);
+			std::cout << "server deconstructor called for " << this << std::endl;
 		}
+
 		void stop();
+
 		int get_client(int fd)
 		{
 			for (size_t i = 0; i < _clients.size(); i++)
@@ -166,7 +177,7 @@ class Server
 						}
 						buf[n] = '\0';
 						std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
-						
+
 						if (std::string(buf).find(".php") != std::string::npos)
 							cgi_response(buf, fd);
 						else

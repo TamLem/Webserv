@@ -16,9 +16,12 @@ class Request : public Message
 		std::set<std::string> validMethods;
 		std::string method;
 		std::string url;
+		std::string query;
+		std::string fragment;
 		void parseMessage(const std::string&);
 		void parseStartLine(std::istringstream&);
 		void createStartLineTokens(std::vector<std::string>&, const std::string&) const;
+		void breakUpUri(const std::string&);
 		bool isValidMethod(const std::string) const;
 		bool isValidProtocol(const std::string&) const;
 		void parseHeaderFields(std::istringstream&);
@@ -44,6 +47,8 @@ class Request : public Message
 
 		const std::string& getMethod(void) const;
 		const std::string& getUrl(void) const;
+		const std::string& getQuery(void) const;
+		const std::string& getFragment(void) const;
 		// const std::string& getProtocol(void) const;
 
 	class InvalidNumberOfTokens : public Message::BadRequest

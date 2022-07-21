@@ -41,15 +41,17 @@ void Request::parseStartLine(std::istringstream& stream)
 	std::getline(stream, line);
 	createStartLineTokens(tokens, line);
 	std::string method = tokens[0];
-	std::string url = tokens[1];
+	// std::string url = tokens[1];
+	breakUpUri(tokens[1]);
 	std::string protocol = tokens[2];
 	if (!isValidMethod(method))
 		throw InvalidMethod();
 	this->method = method;
-	if (url == "/")
+	if (this->url == "/")
 		this->url = INDEX_PATH;
 	else
-		this->url = "." + url;
+		this->url = "." + this->url;
+	std::cerr << RED << "uri: " << this->url << "\nquery: " << this->query << "\nfragment: " << this->fragment << RESET << std::endl;
 	if (!isValidProtocol(protocol))
 		throw InvalidProtocol();
 	this->protocol = protocol;
@@ -72,6 +74,35 @@ void Request::createStartLineTokens(std::vector<std::string>& tokens, const std:
 	tokens.push_back(startLine.substr(last, next - last));
 	if (tokens.size() != count)
 		throw InvalidNumberOfTokens();
+}
+
+void Request::breakUpUri(const std::string& token)
+{
+	size_t pos = 0;
+	size_t last = 0;
+	std::string tmp;
+
+	// if (*headerField.rbegin() != CR)
+	// 	throw InvalidHeaderField();
+	pos = token.find_first_of("?#");
+	this->url = token.substr(0, pos);
+	pos = token.find('?');
+	if (pos != std::string::npos)
+	{
+		tmp = token.substr(pos);
+		// std::cerr << RED << "HERE!tmp: " << tmp << RESET << std::endl;
+		last = pos;
+	}
+	pos = token.find('#', last);
+	if (pos != std::string::npos)
+	{
+		this->fragment = token.substr(pos, token.length() - pos + 1);
+		// std::cerr << RED << "HERE!frag: " << this->fragment << RESET << std::endl;
+		tmp = tmp.substr(0, tmp.length() - this->fragment.length());
+	}
+	this->query = tmp;
+	// if (pos == std::string::npos)
+	// 	throw InvalidHeaderField();
 }
 
 bool Request::isValidMethod(const std::string method) const
@@ -253,6 +284,16 @@ const std::string& Request::getMethod(void) const
 const std::string& Request::getUrl(void) const
 {
 	return (this->url);
+}
+
+const std::string& Request::getQuery(void) const
+{
+	return (this->query);
+}
+
+const std::string& Request::getFragment(void) const
+{
+	return (this->fragment);
 }
 
 // const std::string& Request::getProtocol(void) const

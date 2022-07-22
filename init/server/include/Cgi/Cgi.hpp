@@ -15,6 +15,8 @@
 using std::string;
 using std::map;
 using std::vector;
+using std::cout;
+using std::endl;
 
 #define ENV_LEN 14
 

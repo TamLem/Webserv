@@ -62,6 +62,7 @@ void Cgi::cgi_response(std::string buffer, int fd)
 	int n;
 	while((n = read(pipefd[0], buf, 1024)))
 	{
+		cout << "cgi output: " << buf << endl;
 		send(fd, buf, n, 0);
 	}
 	close(pipefd[0]);

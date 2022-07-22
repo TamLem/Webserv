@@ -161,7 +161,7 @@ void Server::run_event_loop(int kq)
 					std::cerr << RESET;
 					continue;
 				}
-				buf[n] = '\0';
+				buf[n - 1] = '\0';
 				std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
 
 				handle_static_request(buf, fd);

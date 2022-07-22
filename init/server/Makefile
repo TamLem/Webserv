@@ -95,7 +95,7 @@ fclean: clean
 re: fclean all
 
 #run rule
-run: re
+run: all
 	./$(NAME) config/www.conf
 
 #phony

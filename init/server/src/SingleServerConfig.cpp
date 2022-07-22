@@ -137,6 +137,8 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 			throw SingleServerConfig::InvalidWhitespaceException();
 		}
 		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+		if (value == "default")
+			throw SingleServerConfig::DefaultNotAllowedException();
 		this->_conf->serverName = value;
 		break;
 	}
@@ -513,4 +515,9 @@ const char* SingleServerConfig::NotAnErrorCodeException::what(void) const throw(
 const char* SingleServerConfig::DuplicateErrorPageException::what(void) const throw()
 {
 	return ("↑↑↑ this error code was already defined before, only once per server allowed");
+}
+
+const char* SingleServerConfig::DefaultNotAllowedException::what(void) const throw()
+{
+	return ("server name <default> not allowed");
 }

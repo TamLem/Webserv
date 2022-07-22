@@ -220,6 +220,9 @@ class Server
 		}
 
 		void handle_static_request(const std::string&, int);
+		void handleGET(int, int, const std::string&);
+		void handlePOST(int, int, const Request&);
+		void handleERROR(int, int);
 	private:
 		size_t _port;
 		size_t _server_fd;

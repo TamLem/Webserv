@@ -1,44 +1,57 @@
 #include "Server.hpp"
 #include "Config.hpp"
 
+void Server::handleGET(int status, int fd, const std::string& uri)
+{
+	Response newResponse(status, fd, uri);
+}
+
+void Server::handlePOST(int status, int fd, const Request& newRequest)
+{
+	// std::cerr << RED << newRequest.getBody() << RESET << std::endl;
+	std::ofstream outFile;
+	outFile.open("./uploads/" + newRequest.getBody());
+	if (outFile.is_open() == false)
+		throw std::exception();
+	outFile << newRequest.getBody() << "'s content.";
+	outFile.close();
+	Response newResponse(status, fd, "./pages/post_test.html");
+}
+
+void Server::handleERROR(int status, int fd)
+{
+	Response newResponse(status, fd);
+}
+
 void Server::handle_static_request(const std::string& buffer, int fd)
 {
 	try
 	{
 		Request newRequest(buffer);
 		if (newRequest.getMethod() == "POST")
-		{
-			// std::cerr << RED << newRequest.getBody() << RESET << std::endl;
-			std::ofstream outFile;
-			outFile.open("./uploads/" + newRequest.getBody());
-			if (outFile.is_open() == false)
-				throw std::exception();
-			outFile << newRequest.getBody() << "'s content.";
-			outFile.close();
-			Response newResponse(200, fd, "./pages/post_test.html");
-		}
+			handlePOST(200, fd, newRequest);
 		else
-			Response newResponse(200, fd, newRequest.getUri());
+			handleGET(200, fd, newRequest.getUri());
 	}
 	catch (Request::InvalidMethod& e)
 	{
-		Response newResponse(501, fd);
+		handleERROR(501, fd);
 	}
 	catch (Request::InvalidProtocol& e)
 	{
-		Response newResponse(505, fd);
-	}
-	catch (Message::BadRequest& e)
-	{
-		Response newResponse(400, fd);
+		handleERROR(505, fd);
 	}
 	catch (Response::ERROR_404& e)
 	{
-		Response newResponse(404, fd);
+		handleERROR(404, fd);
+	}
+	catch (Message::BadRequest& e)
+	{
+		handleERROR(400, fd);
 	}
 	catch (std::exception& e)
 	{
-		Response newResponse(500, fd);
+		handleERROR(500, fd);
 	}
 }
 

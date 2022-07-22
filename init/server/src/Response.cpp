@@ -21,32 +21,39 @@ bool Response::isValidStatus(const int status)
 	return (false);
 }
 
-Response::Response(int status, int fd, std::string uri) : fd(fd), uri(uri)
+Response::Response(int status, int fd, const std::string& uri)// : status(status), fd(fd), uri(uri)
 {
 	this->createMessageMap();
-	if (!isValidStatus(status))
-		throw InvalidStatus();
-	this->protocol = PROTOCOL;
-	this->status = status;
-	this->statusMessage = this->messageMap[this->status];
-	this->hasBody = true;
+
+	this->init(status, fd, uri);
+
 	this->createBody();
 	this->createHeaderFields();
 	this->sendResponse();
 }
 
-Response::Response(int status, int fd) : fd(fd)
+Response::Response(int status, int fd)// : status(status), fd(fd)
 {
 	this->createMessageMap();
-	if (!isValidStatus(status))
-		throw InvalidStatus();
-	this->protocol = PROTOCOL;
-	this->status = status;
-	this->statusMessage = this->messageMap[this->status];
-	this->hasBody = true;
+
+	std::string placeholder = "";
+	this->init(status, fd, placeholder);
+
 	this->createErrorBody();
 	this->createHeaderFields();
 	this->sendResponse();
+}
+
+void Response::init(int status, int fd, const std::string& uri)
+{
+	this->status = status;
+	if (!isValidStatus(status))
+		throw InvalidStatus();
+	this->fd = fd;
+	this->uri = uri;
+	this->protocol = PROTOCOL;
+	this->statusMessage = this->messageMap[this->status];
+	this->hasBody = true;
 }
 
 Response::~Response(void)

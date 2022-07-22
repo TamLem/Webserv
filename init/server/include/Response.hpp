@@ -14,13 +14,14 @@ class Response : public Message
 		int fd;
 		std::string uri;
 		void createMessageMap(void);
+		void init(int, int, const std::string&);
 		bool isValidStatus(const int);
 		int sendall(const int sock_fd, char *buffer, const int len) const;
 		void createHeaderFields(void);
 		void createBody(void);
 		void createErrorBody(void);
 	public:
-		Response(int, int, std::string);
+		Response(int, int, const std::string&);
 		Response(int, int);
 		~Response(void);
 
@@ -40,7 +41,7 @@ class Response : public Message
 		const char* what() const throw();
 	};
 
-	class ERROR_404 : public std::exception
+	class ERROR_404 : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};

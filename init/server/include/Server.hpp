@@ -64,14 +64,17 @@ class Server
 		void handlePOST(int, int, const Request&);
 		void handleERROR(int, int);
 	private:
-		Server();
 		size_t _port;
+		PortStruct _ports;
 		size_t _server_fd;
 		std::vector <client> _clients;
 		Response Response;
 		Config* _config;
+
+		Server();
 		static void handle_signal(int sig);
 		void handle_signals(void);
+		void _initPorts();
 };
 
 #endif

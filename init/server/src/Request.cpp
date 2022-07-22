@@ -32,7 +32,7 @@ void Request::parseMessage(const std::string& message)
 		parseBody(stream);
 }
 
-//AE check what happens for space before method and multiple spaces or 
+//AE check what happens for space before method and multiple spaces or
 void Request::parseStartLine(std::istringstream& stream)
 {
 	std::vector<std::string> tokens;
@@ -41,15 +41,17 @@ void Request::parseStartLine(std::istringstream& stream)
 	std::getline(stream, line);
 	createStartLineTokens(tokens, line);
 	std::string method = tokens[0];
-	std::string url = tokens[1];
+	this->url = tokens[1]; // AE remove later
+	breakUpUri(tokens[1]);
 	std::string protocol = tokens[2];
 	if (!isValidMethod(method))
 		throw InvalidMethod();
 	this->method = method;
-	if (url == "/")
-		this->url = INDEX_PATH;
+	if (this->uri == "/")
+		this->uri = INDEX_PATH;
 	else
-		this->url = "." + url;
+		this->uri = "." + this->uri;
+	// std::cerr << RED << "uri: " << this->uri << "\nquery: " << this->query << "\nfragment: " << this->fragment << RESET << std::endl;
 	if (!isValidProtocol(protocol))
 		throw InvalidProtocol();
 	this->protocol = protocol;
@@ -74,6 +76,30 @@ void Request::createStartLineTokens(std::vector<std::string>& tokens, const std:
 		throw InvalidNumberOfTokens();
 }
 
+void Request::breakUpUri(const std::string& token)
+{
+	size_t pos = 0;
+	size_t last = 0;
+	std::string tmp;
+
+	pos = token.find_first_of("?#");
+	this->uri = token.substr(0, pos);
+	if (pos == std::string::npos)
+		return ;
+	else if (token[pos] == '?')
+	{
+		tmp = token.substr(pos);
+		last = pos;
+	}
+	pos = token.find('#', last);
+	if (pos != std::string::npos)
+	{
+		this->fragment = token.substr(pos, token.length() - pos + 1);
+		tmp = tmp.substr(0, tmp.length() - this->fragment.length());
+	}
+	this->query = tmp;
+}
+
 bool Request::isValidMethod(const std::string method) const
 {
 	if (this->validMethods.count(method))
@@ -93,7 +119,7 @@ void Request::parseHeaderFields(std::istringstream& stream)
 	while (stream.eof() == false)
 	{
 		std::string line;
-		
+
 		std::getline(stream, line);
 		if (line.length() == 1 && *line.begin() == CR)
 			break ;
@@ -106,7 +132,7 @@ void Request::parseHeaderFieldLine(const std::string& line)
 	std::vector<std::string> tokens;
 
 	createHeaderTokens(tokens, line);
-	
+
 	if (this->headerFields.count(tokens[0]))
 		throw HeaderFieldDuplicate();
 	this->headerFields[tokens[0]] = tokens[1];
@@ -131,7 +157,7 @@ void Request::createHeaderTokens(std::vector<std::string>& tokens, const std::st
 const std::string Request::createHeaderFieldName(const std::string& message, const size_t pos) const
 {
 	std::string tmp;
-	
+
 	tmp = message.substr(0, pos);
 	if (isValidHeaderFieldName(tmp) == false)
 		throw InvalidHeaderFieldName();
@@ -161,7 +187,7 @@ void Request::toLower(std::string& str) const
 const std::string Request::createHeaderFieldValue(const std::string& message, const size_t pos)
 {
 	std::string tmp;
-	
+
 	tmp = removeLeadingAndTrailingWhilespaces(message, pos);
 	if (isValidHeaderFieldValue(tmp) == false)
 		throw InvalidHeaderFieldValue();
@@ -170,10 +196,10 @@ const std::string Request::createHeaderFieldValue(const std::string& message, co
 
 const std::string Request::removeLeadingAndTrailingWhilespaces(const std::string& message, size_t pos) const
 {
-	pos = message.find_first_not_of(WHITESPACES, pos + 1);
+	pos = message.find_first_not_of(WHITESPACE, pos + 1);
 	if (pos == std::string::npos)
 		throw InvalidHeaderField();
-	size_t end = message.find_last_not_of(WHITESPACES);
+	size_t end = message.find_last_not_of(WHITESPACE);
 	return (message.substr(pos, end - pos + 1));
 }
 
@@ -197,12 +223,12 @@ void Request::setBodyFlag(void)
 void Request::parseBody(std::istringstream& stream)
 {
 	int length = 0;
-	
+
 	while (stream.eof() == false)
 	// while (length < this->headerFields["Content-Length"]) AE length check, how to ptotect agains invalid chars?
 	{
 		std::string line;
-		
+
 		std::getline(stream, line);
 		length += line.length();
 		this->body += line;
@@ -219,7 +245,7 @@ void Request::addMethods(void)
 std::ostream& operator<<(std::ostream& out, const Request& request)
 {
 	out << request.getMethod() << " "
-	<< request.getUrl() << " "
+	<< request.getUri() << " "
 	<< request.getProtocol() << "\n";
 	for (std::map<std::string, std::string>::const_iterator it = request.getHeaderFields().begin(); it != request.getHeaderFields().end(); ++it)
 	{
@@ -235,11 +261,6 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 // 	this->method = method;
 // }
 
-// void Request::setUrl(const std::string& url)
-// {
-// 	this->url = url;
-// }
-
 // void Request::setProtocol(const std::string& protocol)
 // {
 // 	this->protocol = protocol;
@@ -253,6 +274,21 @@ const std::string& Request::getMethod(void) const
 const std::string& Request::getUrl(void) const
 {
 	return (this->url);
+}
+
+const std::string& Request::getUri(void) const
+{
+	return (this->uri);
+}
+
+const std::string& Request::getQuery(void) const
+{
+	return (this->query);
+}
+
+const std::string& Request::getFragment(void) const
+{
+	return (this->fragment);
 }
 
 // const std::string& Request::getProtocol(void) const

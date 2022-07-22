@@ -15,10 +15,14 @@ class Request : public Message
 	private:
 		std::set<std::string> validMethods;
 		std::string method;
-		std::string url;
+		std::string url; // AE remove
+		std::string uri;
+		std::string query;
+		std::string fragment;
 		void parseMessage(const std::string&);
 		void parseStartLine(std::istringstream&);
 		void createStartLineTokens(std::vector<std::string>&, const std::string&) const;
+		void breakUpUri(const std::string&);
 		bool isValidMethod(const std::string) const;
 		bool isValidProtocol(const std::string&) const;
 		void parseHeaderFields(std::istringstream&);
@@ -39,11 +43,13 @@ class Request : public Message
 		~Request(void);
 
 		// void setMethod(const std::string&);
-		// void setUrl(const std::string&);
 		// void setProtocol(const std::string&);
 
 		const std::string& getMethod(void) const;
 		const std::string& getUrl(void) const;
+		const std::string& getUri(void) const;
+		const std::string& getQuery(void) const;
+		const std::string& getFragment(void) const;
 		// const std::string& getProtocol(void) const;
 
 	class InvalidNumberOfTokens : public Message::BadRequest

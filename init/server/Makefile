@@ -1,10 +1,10 @@
 NAME		=	webserv
 
-CXX			=	g++
+CXX			=	c++
 
 CXXFLAGS	=	-std=c++98 -Wall -Werror -Wextra
 
-# CXXFLAGS	+=	-g -fsanitize=address
+CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds
 
 UNAME		:=	$(shell uname)
 
@@ -28,18 +28,23 @@ CUT			=	\033[K
 #source files
 #				automaticly decides which Sources to use depending on the OS
 ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be different on other Macs)
-SRC_FILES	=	Server.cpp \
+SRC_FILES	=	main.cpp \
+				Server.cpp \
 				Message.cpp \
 				Response.cpp \
-				Request.cpp   \
-				Cgi.cpp
+				Cgi.cpp		\
+				Request.cpp \
+				Config.cpp \
+				SingleServerConfig.cpp
 else
 #(blocking server for testing on Linux)
 SRC_FILES	=	Linux_server.cpp \
 				Message.cpp \
 				Response.cpp \
-				Request.cpp   \
-				Cgi.cpp
+				Cgi.cpp		\
+				Request.cpp \
+				Config.cpp \
+				SingleServerConfig.cpp
 endif
 
 OBJ_FILES	=	$(SRC_FILES:.cpp=.o)
@@ -93,7 +98,7 @@ re: fclean all
 
 #run rule
 run: re
-	./$(NAME)
+	./$(NAME) config/www.conf
 
 #phony
 .PHONY: all clean fclean re run

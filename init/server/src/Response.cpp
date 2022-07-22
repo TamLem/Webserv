@@ -21,32 +21,41 @@ bool Response::isValidStatus(const int status)
 	return (false);
 }
 
-Response::Response(int status, int fd, std::string url) : fd(fd), url(url)
+Response::Response(void)// : status(status), fd(fd), uri(uri)
 {
 	this->createMessageMap();
-	if (!isValidStatus(status))
-		throw InvalidStatus();
-	this->protocol = PROTOCOL;
-	this->status = status;
-	this->statusMessage = this->messageMap[this->status];
-	this->hasBody = true;
-	this->createBody();
-	this->createHeaderFields();
-	this->sendResponse();
+
+	// this->init(status, fd, uri);
+
+	// this->createBody();
+	// this->createHeaderFields();
+	// this->sendResponse();
 }
 
-Response::Response(int status, int fd) : fd(fd)
+// Response::Response(int status, int fd)// : status(status), fd(fd)
+// {
+// 	this->createMessageMap();
+
+// 	// std::string placeholder = "";
+// 	// this->init(status, fd, placeholder);
+
+// 	// this->createErrorBody();
+// 	// this->createHeaderFields();
+// 	// this->sendResponse();
+// }
+
+void Response::init(int status, int fd, const std::string& uri)
 {
-	this->createMessageMap();
+	this->headerFields.clear();
+
+	this->status = status;
 	if (!isValidStatus(status))
 		throw InvalidStatus();
+	this->fd = fd;
+	this->uri = uri;
 	this->protocol = PROTOCOL;
-	this->status = status;
 	this->statusMessage = this->messageMap[this->status];
 	this->hasBody = true;
-	this->createErrorBody();
-	this->createHeaderFields();
-	this->sendResponse();
 }
 
 Response::~Response(void)
@@ -110,13 +119,14 @@ void Response::createErrorBody(void)
 	"<html>\n\
 	<head>\n\
 	<title>Error " << this->status << "</title>\n\
+	<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"images/favicon.ico\">\n\
 	</head>\n\
 	<body bgcolor=\"000000\">\n\
 	<center>\n\
 	<h1 style=\"color:white\">Error " << this->status << "</h1>\n\
 	<p style=\"color:white\">" << this->statusMessage << "!\n\
 	<br><br>\n\
-	<img src=\"images/error.jpg\" align=\"TOP\">\n\
+	<img src=\"/images/error.jpg\" align=\"TOP\">\n\
 	</center>\n\
 	</body>\n\
 	</html>";
@@ -126,7 +136,7 @@ void Response::createErrorBody(void)
 void Response::createBody(void)
 {
 	std::stringstream body;
-	std::ifstream file(this->url.c_str(), std::ios::binary);
+	std::ifstream file(this->uri.c_str(), std::ios::binary);
 	if (file.is_open())
 	{
 		body << file.rdbuf();

@@ -12,16 +12,14 @@ class Response : public Message
 		std::string statusMessage;
 		std::map<int, std::string> messageMap;
 		int fd;
-		std::string url;
+		std::string uri;
 		void createMessageMap(void);
 		bool isValidStatus(const int);
 		int sendall(const int sock_fd, char *buffer, const int len) const;
-		void createHeaderFields(void);
-		void createBody(void);
-		void createErrorBody(void);
 	public:
-		Response(int, int, std::string);
-		Response(int, int);
+		Response(void);
+		// Response(int, int, const std::string&);
+		// Response(int, int);
 		~Response(void);
 
 		// void setProtocol(const std::string&);
@@ -33,6 +31,10 @@ class Response : public Message
 
 		std::string constructHeader(void);
 
+		void init(int, int, const std::string&);
+		void createHeaderFields(void);
+		void createBody(void);
+		void createErrorBody(void);
 		void sendResponse(void);
 
 	class InvalidStatus : public std::exception
@@ -40,7 +42,7 @@ class Response : public Message
 		const char* what() const throw();
 	};
 
-	class ERROR_404 : public std::exception
+	class ERROR_404 : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};

@@ -184,7 +184,7 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 {
 	ConfigStruct confStruct;
 	confStruct.serverName = "";
-	confStruct.listen = std::vector<std::string>();
+	confStruct.listen = std::map<std::string, ushort>();
 	confStruct.root = "";
 	confStruct.autoIndex = false;
 	confStruct.indexPage = "index.html";
@@ -269,7 +269,7 @@ ConfigStruct Config::getConfigStruct(std::string serverName)
 	return (this->_conf);
 }
 
-const std::vector<std::string> Config::getListen() const
+const std::map<std::string, ushort> Config::getListen() const
 {
 	return (this->_conf.listen);
 }
@@ -309,10 +309,10 @@ size_t Config::getClientMaxBodySize() const
 	return (this->_conf.clientMaxBodySize);
 }
 
-const std::vector<std::string> Config::getCgi() const
-{
-	return (this->_conf.cgi);
-}
+// const std::vector<std::string> Config::getCgi() const
+// {
+// 	return (this->_conf.cgi);
+// }
 
 const std::string Config::getCgiBin() const
 {
@@ -337,14 +337,11 @@ bool Config::getShowLog() const
 // Getters for printing
 const std::string Config::strGetListen() const
 {
-	std::string print = "";
-	size_t size = this->_conf.listen.size();
-	for (size_t i = 0; i < size; ++i)
-	{
-		print.append(this->_conf.listen[i]);
-		print.append(" ");
-	}
-	return (print);
+	std::stringstream print;
+	std::map<std::string, ushort>::const_iterator it = this->_conf.listen.begin();
+	for (; it != this->_conf.listen.end(); ++it)
+		print << "\t\t" << it->second << std::endl;
+	return (print.str());
 }
 
 const std::string Config::strGetRoot() const
@@ -399,17 +396,17 @@ const std::string Config::strGetClientMaxBodySize() const
 	return (print.str());
 }
 
-const std::string Config::strGetCgi() const
-{
-	std::string print = "";
-	size_t size = this->_conf.cgi.size();
-	for (size_t i = 0; i < size; ++i)
-	{
-		print.append(this->_conf.cgi[i]);
-		print.append(" ");
-	}
-	return (print);
-}
+// const std::string Config::strGetCgi() const
+// {
+// 	std::string print = "";
+// 	size_t size = this->_conf.cgi.size();
+// 	for (size_t i = 0; i < size; ++i)
+// 	{
+// 		print.append(this->_conf.cgi[i]);
+// 		print.append(" ");
+// 	}
+// 	return (print);
+// }
 
 const std::string Config::strGetCgiBin() const
 {
@@ -420,7 +417,10 @@ const std::string Config::strGetCgiBin() const
 const std::string Config::strGetLocation() const
 {
 	std::stringstream print;
-	print << "placeholder";
+	std::map<std::string, LocationStruct>::const_iterator it = this->_conf.location.begin();
+	for (; it != this->_conf.location.end(); ++it)
+		print << "\t\t" << it->first << " " << "placeholder for LocationStruct" << std::endl;
+	print << "/placeholer\n\t\t\troot place/hold/placeholder\n\t\t\tmethod GET POST DELETE\n\t\t\tautoindex true";
 	return (print.str());
 }
 
@@ -516,7 +516,7 @@ const char* Config::ContentOutsideServerBlockException::what(void) const throw()
 std::ostream	&operator<<(std::ostream &o, Config *a) // set the correct struct by giving the appropriate serverName to the setPrintFunction
 {
 	o << a->strGetServerName() << " {" << std::endl << \
-	"\tlisten " << a->strGetListen() << std::endl << \
+	"\tlisten\n" << a->strGetListen() << \
 	"\troot " << a->strGetRoot() << std::endl << \
 	"\tserver_name " << a->strGetServerName() << std::endl << \
 	"\tautoindex " << a->strGetAutoIndex() << std::endl << \
@@ -524,7 +524,7 @@ std::ostream	&operator<<(std::ostream &o, Config *a) // set the correct struct b
 	"\tchunked_transfer " << a->strGetChunkedTransfer() << std::endl << \
 	"\tclient_body_buffer_size " << a->strGetClientBodyBufferSize() << std::endl << \
 	"\tclient_max_body_size " << a->strGetClientMaxBodySize() << std::endl << \
-	"\tcgi " << a->strGetCgi() << std::endl << \
+	/*"\tcgi " << a->strGetCgi() << std::endl << \*/
 	"\tcgi_bin " << a->strGetCgiBin() << std::endl << \
 	"\tlocation " << a->strGetLocation() << std::endl << \
 	"\terror_page\n" << a->strGetErrorPage() << \

@@ -112,8 +112,12 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 			throw SingleServerConfig::InvalidWhitespaceException();
 		}
 		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
-		this->_checkListen(value);
-		this->_conf->listen.push_back(value);
+		ushort port = this->_checkListen(value);
+		// this->_conf->listen.insert(port);
+		if (this->_conf->listen.count(value) == 0)
+		{
+			this->_conf->listen.insert(std::make_pair<std::string, ushort>(value, port));
+		}
 		break ;
 	}
 
@@ -280,22 +284,24 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 	// std::cout << YELLOW << "key:\t>" << key << "<" << std::endl << BLUE << "value:\t>" << value << "<" << RESET << std::endl;
 }
 
-void SingleServerConfig::_checkListen(std::string value)
+ushort SingleServerConfig::_checkListen(std::string value)
 {
-	size_t port = this->_strToSizeT(value);
-	if (port > USHRT_MAX)
+	size_t buffer = this->_strToSizeT(value);
+	if (buffer > USHRT_MAX)
 	{
-		std::cout << RED << port << RESET << std::endl;
+		std::cout << RED << buffer << RESET << std::endl;
 		throw SingleServerConfig::InvalidPortException();
 	}
+	ushort port = buffer;
+	return (port);
 	// std::cout << BLUE << "in _checkListen: >" << YELLOW << value << BLUE << "<" RESET << std::endl;
 }
 
-void SingleServerConfig::_handleCgi(std::string line)
-{
-	(void)line;
-	// std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
-}
+// void SingleServerConfig::_handleCgi(std::string line)
+// {
+// 	(void)line;
+// 	// std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
+// }
 
 void SingleServerConfig::_handleLocation(std::string block)
 {

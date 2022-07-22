@@ -3,7 +3,11 @@
 
 void Server::handleGET(int status, int fd, const std::string& uri)
 {
-	Response newResponse(status, fd, uri);
+	// Response newResponse;
+	newResponse.init(status, fd, uri);
+	newResponse.createBody();
+	newResponse.createHeaderFields();
+	newResponse.sendResponse();
 }
 
 void Server::handlePOST(int status, int fd, const Request& newRequest)
@@ -15,12 +19,20 @@ void Server::handlePOST(int status, int fd, const Request& newRequest)
 		throw std::exception();
 	outFile << newRequest.getBody() << "'s content.";
 	outFile.close();
-	Response newResponse(status, fd, "./pages/post_test.html");
+	// Response newResponse;
+	newResponse.init(status, fd, "./pages/post_test.html");
+	newResponse.createBody();
+	newResponse.createHeaderFields();
+	newResponse.sendResponse();
 }
 
 void Server::handleERROR(int status, int fd)
 {
-	Response newResponse(status, fd);
+	// Response newResponse;
+	newResponse.init(status, fd, ""); //AE make overload instead of passing ""
+	newResponse.createErrorBody();
+	newResponse.createHeaderFields();
+	newResponse.sendResponse();
 }
 
 void Server::handle_static_request(const std::string& buffer, int fd)

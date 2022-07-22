@@ -14,15 +14,12 @@ class Response : public Message
 		int fd;
 		std::string uri;
 		void createMessageMap(void);
-		void init(int, int, const std::string&);
 		bool isValidStatus(const int);
 		int sendall(const int sock_fd, char *buffer, const int len) const;
-		void createHeaderFields(void);
-		void createBody(void);
-		void createErrorBody(void);
 	public:
-		Response(int, int, const std::string&);
-		Response(int, int);
+		Response(void);
+		// Response(int, int, const std::string&);
+		// Response(int, int);
 		~Response(void);
 
 		// void setProtocol(const std::string&);
@@ -34,6 +31,10 @@ class Response : public Message
 
 		std::string constructHeader(void);
 
+		void init(int, int, const std::string&);
+		void createHeaderFields(void);
+		void createBody(void);
+		void createErrorBody(void);
 		void sendResponse(void);
 
 	class InvalidStatus : public std::exception

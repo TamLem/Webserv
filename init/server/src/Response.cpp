@@ -21,31 +21,33 @@ bool Response::isValidStatus(const int status)
 	return (false);
 }
 
-Response::Response(int status, int fd, const std::string& uri)// : status(status), fd(fd), uri(uri)
+Response::Response(void)// : status(status), fd(fd), uri(uri)
 {
 	this->createMessageMap();
 
-	this->init(status, fd, uri);
+	// this->init(status, fd, uri);
 
-	this->createBody();
-	this->createHeaderFields();
-	this->sendResponse();
+	// this->createBody();
+	// this->createHeaderFields();
+	// this->sendResponse();
 }
 
-Response::Response(int status, int fd)// : status(status), fd(fd)
-{
-	this->createMessageMap();
+// Response::Response(int status, int fd)// : status(status), fd(fd)
+// {
+// 	this->createMessageMap();
 
-	std::string placeholder = "";
-	this->init(status, fd, placeholder);
+// 	// std::string placeholder = "";
+// 	// this->init(status, fd, placeholder);
 
-	this->createErrorBody();
-	this->createHeaderFields();
-	this->sendResponse();
-}
+// 	// this->createErrorBody();
+// 	// this->createHeaderFields();
+// 	// this->sendResponse();
+// }
 
 void Response::init(int status, int fd, const std::string& uri)
 {
+	this->headerFields.clear();
+
 	this->status = status;
 	if (!isValidStatus(status))
 		throw InvalidStatus();

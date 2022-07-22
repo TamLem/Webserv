@@ -3,36 +3,32 @@
 
 void Server::handleGET(int status, int fd, const std::string& uri)
 {
-	// Response newResponse;
-	newResponse.init(status, fd, uri);
-	newResponse.createBody();
-	newResponse.createHeaderFields();
-	newResponse.sendResponse();
+	Response.init(status, fd, uri);
+	Response.createBody();
+	Response.createHeaderFields();
+	Response.sendResponse();
 }
 
 void Server::handlePOST(int status, int fd, const Request& newRequest)
 {
-	// std::cerr << RED << newRequest.getBody() << RESET << std::endl;
 	std::ofstream outFile;
 	outFile.open("./uploads/" + newRequest.getBody());
 	if (outFile.is_open() == false)
 		throw std::exception();
 	outFile << newRequest.getBody() << "'s content.";
 	outFile.close();
-	// Response newResponse;
-	newResponse.init(status, fd, "./pages/post_test.html");
-	newResponse.createBody();
-	newResponse.createHeaderFields();
-	newResponse.sendResponse();
+	Response.init(status, fd, "./pages/post_test.html");
+	Response.createBody();
+	Response.createHeaderFields();
+	Response.sendResponse();
 }
 
 void Server::handleERROR(int status, int fd)
 {
-	// Response newResponse;
-	newResponse.init(status, fd, ""); //AE make overload instead of passing ""
-	newResponse.createErrorBody();
-	newResponse.createHeaderFields();
-	newResponse.sendResponse();
+	Response.init(status, fd, ""); //AE make overload instead of passing ""
+	Response.createErrorBody();
+	Response.createHeaderFields();
+	Response.sendResponse();
 }
 
 void Server::handle_static_request(const std::string& buffer, int fd)

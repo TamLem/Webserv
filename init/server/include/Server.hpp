@@ -227,7 +227,7 @@ class Server
 		size_t _port;
 		size_t _server_fd;
 		std::vector <client> _clients;
-		Response newResponse;
+		Response Response;
 };
 
 #endif

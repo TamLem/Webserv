@@ -41,6 +41,7 @@ struct LocationStruct
 // ConfigStruct
 struct ConfigStruct
 {
+// bare minimum of the .conf file
 	std::string								serverName;
 	std::vector<std::string>				listen;
 	std::string								root;
@@ -48,10 +49,11 @@ struct ConfigStruct
 	std::string								cgiBin;
 	size_t									clientBodyBufferSize;
 
+// these variables have default values if not set in the .conf file
 	size_t									clientMaxBodySize;
 	std::string								indexPage;
 	std::map<std::string, LocationStruct>	location;
-	std::vector<std::string>				errorPage;
+	std::map<std::string, std::string>		errorPage;
 	bool									autoIndex;
 	bool									showLog;
 	bool									chunkedTransfer;

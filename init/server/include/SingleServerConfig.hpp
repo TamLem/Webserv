@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <map>
 #include <vector>
+#include <climits>
 
 #include "Base.hpp"
 #include "Config.hpp"
@@ -113,6 +114,18 @@ class SingleServerConfig
 		};
 
 		class InvalidValueTypeException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class NotAnErrorCodeException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateErrorPageException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

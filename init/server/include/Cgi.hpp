@@ -5,6 +5,7 @@
 #include <string>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include "Base.hpp"
 
 void cgi_response(std::string buffer, int fd)

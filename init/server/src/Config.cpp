@@ -191,10 +191,10 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 	confStruct.chunkedTransfer = false; // maybe not needed because it is always chunked ????????
 	confStruct.clientBodyBufferSize = 64000;
 	confStruct.clientMaxBodySize = 256000;
-	confStruct.cgi = std::vector<std::string>();
+	// confStruct.cgi = std::vector<std::string>();
 	confStruct.cgiBin = "cgi-bin";
 	confStruct.location = std::map<std::string, LocationStruct>();
-	confStruct.errorPage = std::vector<std::string>();
+	confStruct.errorPage = std::map<std::string, std::string>();
 	confStruct.showLog = false;
 
 	return (confStruct);
@@ -313,7 +313,7 @@ const std::map<std::string, LocationStruct> Config::getLocation() const
 	return (this->_conf.location);
 }
 
-const std::vector<std::string> Config::getErrorPage() const
+const std::map<std::string, std::string> Config::getErrorPage() const
 {
 	return (this->_conf.errorPage);
 }
@@ -409,20 +409,17 @@ const std::string Config::strGetCgiBin() const
 const std::string Config::strGetLocation() const
 {
 	std::stringstream print;
-	print << "haha";
+	print << "placeholder";
 	return (print.str());
 }
 
 const std::string Config::strGetErrorPage() const
 {
-	std::string print = "";
-	size_t size = this->_conf.errorPage.size();
-	for (size_t i = 0; i < size; ++i)
-	{
-		print.append(this->_conf.errorPage[i]);
-		print.append(" ");
-	}
-	return (print);
+	std::stringstream print;
+	std::map<std::string, std::string>::const_iterator it = this->_conf.errorPage.begin();
+	for (; it != this->_conf.errorPage.end(); ++it)
+		print << "\t\t" << it->first << " " << it->second << std::endl;
+	return (print.str());
 }
 
 const std::string Config::strGetShowLog() const
@@ -519,7 +516,7 @@ std::ostream	&operator<<(std::ostream &o, Config *a) // set the correct struct b
 	"\tcgi " << a->strGetCgi() << std::endl << \
 	"\tcgi_bin " << a->strGetCgiBin() << std::endl << \
 	"\tlocation " << a->strGetLocation() << std::endl << \
-	"\terror_page " << a->strGetErrorPage() << std::endl << \
+	"\terror_page\n" << a->strGetErrorPage() << \
 	"\tlog_level " << a->strGetShowLog() << std::endl << \
 	"}" << std::endl;
 	return (o);

@@ -21,6 +21,7 @@
 #include <csignal> // check if forbidden !!!!!!!!!!
 
 /* our includes */
+#include "Config.hpp"
 #include "Response.hpp"
 #include "Request.hpp"
 #include "SingleServerConfig.hpp"
@@ -43,8 +44,7 @@ static volatile int keep_running = 1;
 class Server
 {
 	public:
-		Server();
-		Server(int port);
+		Server(Config* config);
 		~Server(void);
 
 		void stop(void);
@@ -64,10 +64,12 @@ class Server
 		void handlePOST(int, int, const Request&);
 		void handleERROR(int, int);
 	private:
+		Server();
 		size_t _port;
 		size_t _server_fd;
 		std::vector <client> _clients;
 		Response Response;
+		Config* _config;
 		static void handle_signal(int sig);
 		void handle_signals(void);
 };

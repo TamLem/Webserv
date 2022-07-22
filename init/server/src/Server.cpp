@@ -2,17 +2,17 @@
 #include "Config.hpp"
 #include "Cgi.hpp"
 
-Server::Server(void)
-{
-	std::cout << "Server default constructor called for " << this << std::endl;
-	handle_signals();
-}
+// Server::Server(void)
+// {
+// 	std::cout << "Server default constructor called for " << this << std::endl;
+// 	handle_signals();
+// }
 
-Server::Server(int port)
+Server::Server(Config* config) : _config(config)
 {
 	std::cout << "Server constructor called for " << this << std::endl;
 	handle_signals();
-	_port = port;
+	_port = 8080;
 
 	if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
@@ -30,7 +30,7 @@ Server::Server(int port)
 	struct sockaddr_in serv_addr;
 	memset(&serv_addr, '0', sizeof(serv_addr)); // is memset allowed? !!!!!!!!!!!!!!!!!!!!
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(port);
+	serv_addr.sin_port = htons(_port);
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 // bind socket to address
@@ -220,7 +220,7 @@ void Server::handlePOST(int status, int fd, const Request& newRequest)
 	outFile.open("./uploads/" + newRequest.getBody());
 	if (outFile.is_open() == false)
 		throw std::exception();
-	outFile << newRequest.getBody() << "'s content.";
+	outFile << newRequest.getBody() << "'s content." << this->_config.getConfig;
 	outFile.close();
 	Response.init(status, fd, "./pages/post_test.html");
 	Response.createBody();

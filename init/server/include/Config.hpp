@@ -48,8 +48,8 @@ class Config
 	// Getter
 		// const std::string getConfigPath() const;
 		// std::map<std::string, ConfigStruct> getCluster() const;
-		ConfigStruct getConfig(std::string serverName) const; // new
-
+	
+	ConfigStruct getConfig(std::string serverName) const; // new
 		const std::vector<std::string> getListen() const;
 		const std::string getRoot() const;
 		const std::string getServerName() const;

@@ -23,7 +23,6 @@
 /* our includes */
 #include "Response.hpp"
 #include "Request.hpp"
-#include "Cgi.hpp"
 #include "SingleServerConfig.hpp"
 
 #include "Base.hpp"
@@ -69,6 +68,8 @@ class Server
 		size_t _server_fd;
 		std::vector <client> _clients;
 		Response Response;
+		static void handle_signal(int sig);
+		void handle_signals(void);
 };
 
 #endif

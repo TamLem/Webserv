@@ -1,30 +1,6 @@
 #include "Server.hpp"
 #include "Config.hpp"
 
-static void handle_signal(int sig)
-{
-	if (sig == SIGINT)
-	{
-		std::cerr << BLUE << "SIGINT detected, terminating server now" << RESET << std::endl;
-		keep_running = 0;
-	}
-	// else if (sig == SIGPIPE)
-	// {
-	// 	std::cerr << RED << "SIGPIPE detected, will crash now" << RESET << std::endl;
-	// 	keep_running = 0;
-	// }
-}
-
-// check if signal is forbidden!!!!!!!!!!!!!!!!!
-void	handle_signals(void)
-{
-	signal(SIGQUIT, SIG_IGN);
-	signal(SIGINT, SIG_IGN);
-	// signal(SIGPIPE, SIG_IGN);
-	signal(SIGINT, handle_signal);
-	// signal(SIGPIPE, handle_signal);
-}
-
 void parseArgv(int argc, char **argv) // maybe change to static void function or include it into some object
 {
 	if (argc <= 1 || argc > 2)
@@ -43,7 +19,6 @@ void parseArgv(int argc, char **argv) // maybe change to static void function or
 
 int main(int argc, char **argv)
 {
-	handle_signals();
 	parseArgv(argc, argv);
 	Config *config = new Config();
 	try

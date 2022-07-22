@@ -258,6 +258,17 @@ void Config::start(std::string configPath)
 }
 
 // Getter
+ConfigStruct Config::getConfigStruct(std::string serverName)
+{
+	std::string defaultConfig = "default";
+	if (this->applyConfig(serverName) == true)
+		return (this->_conf);
+	else
+		this->applyConfig(defaultConfig);
+
+	return (this->_conf);
+}
+
 const std::vector<std::string> Config::getListen() const
 {
 	return (this->_conf.listen);

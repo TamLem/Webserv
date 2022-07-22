@@ -220,7 +220,7 @@ void Server::handlePOST(int status, int fd, const Request& newRequest)
 	outFile.open("./uploads/" + newRequest.getBody());
 	if (outFile.is_open() == false)
 		throw std::exception();
-	outFile << newRequest.getBody() << "'s content." << this->_config.getConfig;
+	outFile << newRequest.getBody() << "'s content. Server: " << this->_config->getConfigStruct("weebserv").serverName;
 	outFile.close();
 	Response.init(status, fd, "./pages/post_test.html");
 	Response.createBody();

@@ -191,7 +191,7 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 {
 	ConfigStruct confStruct;
 	confStruct.serverName = "";
-	confStruct.listen = std::map<std::string, ushort>();
+	confStruct.listen = std::map<std::string, unsigned short>();
 	confStruct.root = "";
 	confStruct.autoIndex = false;
 	confStruct.indexPage = "index.html";
@@ -278,7 +278,7 @@ ConfigStruct Config::getConfigStruct(std::string serverName)
 	return (this->_conf);
 }
 
-const std::map<std::string, ushort> Config::getListen() const
+const std::map<std::string, unsigned short> Config::getListen() const
 {
 	return (this->_conf.listen);
 }
@@ -347,7 +347,7 @@ bool Config::getShowLog() const
 const std::string Config::strGetListen() const
 {
 	std::stringstream print;
-	std::map<std::string, ushort>::const_iterator it = this->_conf.listen.begin();
+	std::map<std::string, unsigned short>::const_iterator it = this->_conf.listen.begin();
 	for (; it != this->_conf.listen.end(); ++it)
 		print << "\t\t" << it->second << std::endl;
 	return (print.str());

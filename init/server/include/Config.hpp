@@ -44,13 +44,14 @@ class Config
 
 	// Public Methods
 		void start(std::string configPath);
+		void printCluster();
 
 	// Getter
 		// const std::string getConfigPath() const;
 		// std::map<std::string, ConfigStruct> getCluster() const;
 		ConfigStruct getConfigStruct(std::string serverName);
 
-		const std::map<std::string, ushort> getListen() const;
+		const std::map<std::string, unsigned short> getListen() const;
 		const std::string getRoot() const;
 		const std::string getServerName() const;
 		bool getAutoIndex() const;

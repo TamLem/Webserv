@@ -28,7 +28,7 @@
 // PortStruct
 struct PortStruct
 {
-	ushort port;
+	unsigned short port;
 	PortStruct *next;
 };
 
@@ -49,7 +49,7 @@ struct ConfigStruct
 {
 // bare minimum of the .conf file
 	std::string								serverName;
-	std::map<std::string, ushort>			listen;
+	std::map<std::string, unsigned short>			listen;
 	std::string								root;
 	// std::vector<std::string>				cgi;
 	std::string								cgiBin;

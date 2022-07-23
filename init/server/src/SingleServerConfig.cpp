@@ -122,11 +122,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 			std::cout << RED << keyValue << RESET << std::endl;
 			throw SingleServerConfig::NotAPortException();
 		}
-		ushort port = this->_checkListen(value);
+		unsigned short port = this->_checkListen(value);
 		// this->_conf->listen.insert(port);
 		if (this->_conf->listen.count(value) == 0)
 		{
-			this->_conf->listen.insert(std::make_pair<std::string, ushort>(value, port));
+			this->_conf->listen.insert(std::make_pair<std::string, unsigned short>(value, port));
 		}
 		break ;
 	}
@@ -294,7 +294,7 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 	// std::cout << YELLOW << "key:\t>" << key << "<" << std::endl << BLUE << "value:\t>" << value << "<" << RESET << std::endl;
 }
 
-ushort SingleServerConfig::_checkListen(std::string value)
+unsigned short SingleServerConfig::_checkListen(std::string value)
 {
 	size_t buffer = this->_strToSizeT(value);
 	if (buffer > USHRT_MAX)
@@ -302,7 +302,7 @@ ushort SingleServerConfig::_checkListen(std::string value)
 		std::cout << RED << buffer << RESET << std::endl;
 		throw SingleServerConfig::InvalidPortException();
 	}
-	ushort port = buffer;
+	unsigned short port = buffer;
 	return (port);
 	// std::cout << BLUE << "in _checkListen: >" << YELLOW << value << BLUE << "<" RESET << std::endl;
 }

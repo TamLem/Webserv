@@ -39,7 +39,7 @@ class SingleServerConfig
 		void _setVariables(std::string config);
 		void _parseKeyValue(std::string);
 
-		ushort _checkListen(std::string value);
+		unsigned short _checkListen(std::string value);
 		// void _handleCgi(std::string line);
 		void _handleLocation(std::string line);
 		void _handleErrorPage(std::string line);

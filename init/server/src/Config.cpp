@@ -157,6 +157,7 @@ void Config::_parseServerBlock(std::string serverBlock)
 
 void Config::_createConfigStruct(std::string server)
 {
+	static size_t structsCreated;
 	// std::cerr << "This was passed into _createConfigStruct:\n>" << server << "<" << std::endl;
 
 	if (server.find("server_name") == std::string::npos)
@@ -175,6 +176,12 @@ void Config::_createConfigStruct(std::string server)
 	// SingleServerConfig *SingleServerObject = new SingleServerConfig(server, confStruct);
 	SingleServerConfig temp(server, &confStruct); // check the confStruct for correct values!!!!!!!!!!
 	this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
+	++structsCreated;
+	if (structsCreated == 1)
+	{
+		serverName = "default";
+		this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
+	}
 	// delete SingleServerObject;
 	// std::cout << GREEN << "size: " << this->_cluster.size() << RESET << std::endl;
 	// std::cout << GREEN << "added server " << serverName << " to cluster" << RESET << std::endl;
@@ -202,11 +209,11 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 
 void Config::_freeConfigStruct()
 {
+	// check if freeing is needed!!!!!!!!!!!!!
 	// this->_conf.listen.clear();
 	// this->_conf.cgi.clear();
 	// this->_conf.location.clear();
 	// this->_conf.errorPage.clear();
-
 }
 
 void Config::_readConfigFile()
@@ -264,8 +271,10 @@ ConfigStruct Config::getConfigStruct(std::string serverName)
 	if (this->applyConfig(serverName) == true)
 		return (this->_conf);
 	else
+	{
+		std::cout << std::endl << RED << BOLD << "!!!!! DEFAULT STRUCT IS NOW BEEING USED !!!!!" << RESET << std::endl << std::endl;
 		this->applyConfig(defaultConfig);
-
+	}
 	return (this->_conf);
 }
 

@@ -37,6 +37,7 @@ struct client
 	struct sockaddr_in addr;
 };
 
+void cgi_handle(Request& request, std::string buf, int fd);
 #define MAX_EVENTS 128
 
 static volatile int keep_running = 1;
@@ -76,5 +77,7 @@ class Server
 		void handle_signals(void);
 		void _initPorts();
 };
+
+void cgi_handle(Request& request, std::string buf, int fd);
 
 #endif

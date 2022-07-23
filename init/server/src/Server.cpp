@@ -1,6 +1,6 @@
 #include "Server.hpp"
 #include "Config.hpp"
-#include "Cgi.hpp"
+#include "Cgi/Cgi.hpp"
 
 // Server::Server(void)
 // {
@@ -164,10 +164,7 @@ void Server::run_event_loop(int kq)
 				buf[n] = '\0';
 				std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
 
-				if (std::string(buf).find(".php") != std::string::npos)
-					cgi_response(buf, fd);
-				else
-					handle_static_request(buf, fd);
+				handle_static_request(buf, fd);
 			}
 		}
 	}
@@ -241,7 +238,9 @@ void Server::handle_static_request(const std::string& buffer, int fd)
 	try
 	{
 		Request newRequest(buffer);
-		if (newRequest.getMethod() == "POST")
+		if (buffer.find("/cgi/") != std::string::npos)
+			cgi_handle(newRequest, buffer, fd);
+		else if (newRequest.getMethod() == "POST")
 			handlePOST(200, fd, newRequest);
 		else
 			handleGET(200, fd, newRequest.getUri());
@@ -266,4 +265,12 @@ void Server::handle_static_request(const std::string& buffer, int fd)
 	{
 		handleERROR(500, fd);
 	}
+}
+
+void cgi_handle(Request& request, std::string buf, int fd)
+{
+	Cgi newCgi(request);
+
+	newCgi.printEnv();
+	newCgi.cgi_response(buf, fd);
 }

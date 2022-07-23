@@ -32,6 +32,7 @@ SRC_FILES	=	main.cpp \
 				Server.cpp \
 				Message.cpp \
 				Response.cpp \
+				Cgi.cpp		\
 				Request.cpp \
 				Config.cpp \
 				SingleServerConfig.cpp
@@ -40,6 +41,7 @@ else
 SRC_FILES	=	Linux_server.cpp \
 				Message.cpp \
 				Response.cpp \
+				Cgi.cpp		\
 				Request.cpp \
 				Config.cpp \
 				SingleServerConfig.cpp

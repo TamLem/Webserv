@@ -43,7 +43,9 @@ int main(int argc, char **argv)
 	// std::string secondName = "anotherone";
 
 	// std::cout << "### attempting to print contents of the configStructs" << std::endl;
-	config->printCluster();
+	#ifdef SHOW_LOG
+		config->printCluster();
+	#endif
 	// system("leaks webserv");
 	test->run();
 	delete config;

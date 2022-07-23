@@ -103,7 +103,9 @@ void Config::_parseServerBlock(std::string serverBlock)
 	serverStream << serverBlock;
 	bool serverFound = false;
 
-	// std::cout << "this was passed into the _parseServerBlock\n>" << serverBlock << "<" << std::endl;
+	#ifdef SHOW_LOG_2
+		std::cout << "this was passed into the _parseServerBlock\n>" << serverBlock << "<" << std::endl;
+	#endif
 
 	while (serverStream.good())
 	{
@@ -158,23 +160,22 @@ void Config::_parseServerBlock(std::string serverBlock)
 void Config::_createConfigStruct(std::string server)
 {
 	static size_t structsCreated;
-	// std::cerr << "This was passed into _createConfigStruct:\n>" << server << "<" << std::endl;
+	#ifdef SHOW_LOG_2
+		std::cerr << "This was passed into _createConfigStruct:\n>" << server << "<" << std::endl;
+	#endif
 
 	if (server.find("server_name") == std::string::npos)
 		throw Config::NoServerNameException();
 	std::string serverName = server.substr(server.find("server_name"));
 	serverName = serverName.substr(serverName.find_first_of(" ") + 1);
 	serverName = serverName.substr(0, serverName.find_first_of("\n"));
-	// std::cout << BLUE << "serverName: >" << RESET << serverName << BLUE << "<" << RESET << std::endl;
-	if (this->_cluster.count(serverName) == 1)// check for duplicate serverName !!!!!!!!!!!!!!!
+	if (this->_cluster.count(serverName) == 1)
 	{
 		std::cerr << RED << serverName << std::endl;
 		throw Config::DuplicateServerNameException();
 	}
 	ConfigStruct confStruct = this->_initConfigStruct();
-	// confStruct = new ConfigStruct();
-	// SingleServerConfig *SingleServerObject = new SingleServerConfig(server, confStruct);
-	SingleServerConfig temp(server, &confStruct); // check the confStruct for correct values!!!!!!!!!!
+	SingleServerConfig temp(server, &confStruct);
 	this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
 	++structsCreated;
 	if (structsCreated == 1)
@@ -182,9 +183,10 @@ void Config::_createConfigStruct(std::string server)
 		serverName = "default";
 		this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
 	}
-	// delete SingleServerObject;
 	// std::cout << GREEN << "size: " << this->_cluster.size() << RESET << std::endl;
-	// std::cout << GREEN << "added server " << serverName << " to cluster" << RESET << std::endl;
+	#ifdef SHOW_LOG_2
+		std::cout << GREEN << "added server " << serverName << " to cluster" << RESET << std::endl;
+	#endif
 }
 
 ConfigStruct Config::_initConfigStruct() // think about using defines in the Base.hpp or Config.hpp to set the default value so they are easy to change!!!!!
@@ -195,14 +197,14 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 	confStruct.root = "";
 	confStruct.autoIndex = false;
 	confStruct.indexPage = "index.html";
-	confStruct.chunkedTransfer = false; // maybe not needed because it is always chunked ????????
+	// confStruct.chunkedTransfer = false; // maybe not needed because it is always chunked ????????
 	confStruct.clientBodyBufferSize = 64000;
 	confStruct.clientMaxBodySize = 256000;
 	// confStruct.cgi = std::vector<std::string>();
 	confStruct.cgiBin = "cgi-bin";
 	confStruct.location = std::map<std::string, LocationStruct>();
 	confStruct.errorPage = std::map<std::string, std::string>();
-	confStruct.showLog = false;
+	// confStruct.showLog = false;
 
 	return (confStruct);
 }
@@ -228,12 +230,16 @@ void Config::_readConfigFile()
 // Constructor
 Config::Config()
 {
-	std::cout << GREEN << "Config Default Constructor called " << RESET << std::endl;
+	#ifdef SHOW_LOG
+		std::cout << GREEN << "Config Default Constructor called " << RESET << std::endl;
+	#endif
 }
 
 Config::Config(std::string configPath)
 {
-	std::cout << GREEN << "Config Constructor called" << RESET << std::endl;
+	#ifdef SHOW_LOG
+		std::cout << GREEN << "Config Constructor called" << RESET << std::endl;
+	#endif
 	this->start(configPath);
 }
 
@@ -249,7 +255,9 @@ Config::~Config()
 	// std ::cout << _cluster.size() << std::endl;
 	this->_cluster.clear();
 	// std ::cout << _cluster.size() << std::endl;
-	std::cout << RED << "Config Deconstructor called"<< RESET << std::endl;
+	#ifdef SHOW_LOG
+		std::cout << RED << "Config Deconstructor called"<< RESET << std::endl;
+	#endif
 }
 
 // Public Methods
@@ -276,14 +284,14 @@ void Config::printCluster()
 		"\tserver_name " << this->strGetServerName() << std::endl << \
 		"\tautoindex " << this->strGetAutoIndex() << std::endl << \
 		"\tindex_page " << this->strGetIndexPage() << std::endl << \
-		"\tchunked_transfer " << this->strGetChunkedTransfer() << std::endl << \
+		/* "\tchunked_transfer " << this->strGetChunkedTransfer() << std::endl << \ */
 		"\tclient_body_buffer_size " << this->strGetClientBodyBufferSize() << std::endl << \
 		"\tclient_max_body_size " << this->strGetClientMaxBodySize() << std::endl << \
-		/*"\tcgi " << a->strGetCgi() << std::endl << \*/
+		/* "\tcgi " << a->strGetCgi() << std::endl << \*/
 		"\tcgi_bin " << this->strGetCgiBin() << std::endl << \
 		"\tlocation " << this->strGetLocation() << std::endl << \
 		"\terror_page\n" << this->strGetErrorPage() << \
-		"\tlog_level " << this->strGetShowLog() << std::endl << \
+		/* "\tshow_log " << this->strGetShowLog() << std::endl << \ */
 		 GREEN << "}" << RESET << std::endl << std::endl;
 	}
 }
@@ -296,7 +304,9 @@ ConfigStruct Config::getConfigStruct(std::string serverName)
 		return (this->_conf);
 	else
 	{
-		std::cout << std::endl << RED << BOLD << "!!!!! DEFAULT STRUCT IS NOW BEEING USED !!!!!" << RESET << std::endl << std::endl;
+		// #ifdef SHOW_LOG
+			std::cout << std::endl << RED << BOLD << "!!!!! DEFAULT STRUCT IS NOW BEEING USED !!!!!" << RESET << std::endl << std::endl;
+		// #endif
 		this->applyConfig(defaultConfig);
 	}
 	return (this->_conf);
@@ -327,10 +337,10 @@ const std::string Config::getIndexPage() const
 	return (this->_conf.indexPage);
 }
 
-bool Config::getChunkedTransfer() const
-{
-	return (this->_conf.chunkedTransfer);
-}
+// bool Config::getChunkedTransfer() const
+// {
+// 	return (this->_conf.chunkedTransfer);
+// }
 
 size_t Config::getClientBodyBufferSize() const
 {
@@ -362,10 +372,10 @@ const std::map<std::string, std::string> Config::getErrorPage() const
 	return (this->_conf.errorPage);
 }
 
-bool Config::getShowLog() const
-{
-	return (this->_conf.showLog);
-}
+// bool Config::getShowLog() const
+// {
+// 	return (this->_conf.showLog);
+// }
 
 // Getters for printing
 const std::string Config::strGetListen() const
@@ -405,15 +415,15 @@ const std::string Config::strGetIndexPage() const
 	return (print);
 }
 
-const std::string Config::strGetChunkedTransfer() const
-{
-	std::string print;
-	if (getChunkedTransfer() == true)
-		print = "true";
-	else
-		print = "false";
-	return (print);
-}
+// const std::string Config::strGetChunkedTransfer() const
+// {
+// 	std::string print;
+// 	if (getChunkedTransfer() == true)
+// 		print = "true";
+// 	else
+// 		print = "false";
+// 	return (print);
+// }
 
 const std::string Config::strGetClientBodyBufferSize() const
 {
@@ -466,16 +476,16 @@ const std::string Config::strGetErrorPage() const
 	return (print.str());
 }
 
-const std::string Config::strGetShowLog() const
-{
-	std::string print;
+// const std::string Config::strGetShowLog() const
+// {
+// 	std::string print;
 
-	if (this->getShowLog() == true)
-		print = "true";
-	else
-		print = "false";
-	return (print);
-}
+// 	if (this->getShowLog() == true)
+// 		print = "true";
+// 	else
+// 		print = "false";
+// 	return (print);
+// }
 
 // Setter
 void Config::setConfigPath(std::string configPath)
@@ -551,7 +561,7 @@ const char* Config::NoServerFoundException::what(void) const throw()
 }
 
 // Ostream overload
-std::ostream	&operator<<(std::ostream &o, Config *a) // set the correct struct by giving the appropriate serverName to the setPrintFunction
+std::ostream	&operator<<(std::ostream &o, Config *a) // will print the contents of a->_conf
 {
 	o << a->strGetServerName() << " {" << std::endl << \
 	"\tlisten\n" << a->strGetListen() << \
@@ -559,14 +569,14 @@ std::ostream	&operator<<(std::ostream &o, Config *a) // set the correct struct b
 	"\tserver_name " << a->strGetServerName() << std::endl << \
 	"\tautoindex " << a->strGetAutoIndex() << std::endl << \
 	"\tindex_page " << a->strGetIndexPage() << std::endl << \
-	"\tchunked_transfer " << a->strGetChunkedTransfer() << std::endl << \
+	/* "\tchunked_transfer " << a->strGetChunkedTransfer() << std::endl << \ */
 	"\tclient_body_buffer_size " << a->strGetClientBodyBufferSize() << std::endl << \
 	"\tclient_max_body_size " << a->strGetClientMaxBodySize() << std::endl << \
-	/*"\tcgi " << a->strGetCgi() << std::endl << \*/
+	/* "\tcgi " << a->strGetCgi() << std::endl << \ */
 	"\tcgi_bin " << a->strGetCgiBin() << std::endl << \
 	"\tlocation " << a->strGetLocation() << std::endl << \
 	"\terror_page\n" << a->strGetErrorPage() << \
-	"\tlog_level " << a->strGetShowLog() << std::endl << \
+	/* "\tshow_log " << a->strGetShowLog() << std::endl << \ */
 	"}" << std::endl;
 	return (o);
 }

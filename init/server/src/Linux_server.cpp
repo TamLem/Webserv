@@ -11,7 +11,7 @@
 #include "Base.hpp"
 
 #include "Config.hpp"
-#include "Cgi.hpp"
+#include "Cgi/Cgi.hpp"
 
 // Forbidden includes
 #include <errno.h>
@@ -131,12 +131,7 @@ int main(int argc, char **argv)
 		close(new_sockfd);
 	}
 	close(sockfd);
-	std::string firstName = "weebserv";
-	std::string secondName = "anotherone";
-	config->applyConfig(firstName);
-	std::cout << config << std::endl;
-	config->applyConfig(secondName);
-	std::cout << config << std::endl;
+	config->printCluster();
 	delete config;
 	config = NULL;
 	return 0;

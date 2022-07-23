@@ -1,29 +1,34 @@
 #include "Server.hpp"
 #include "Config.hpp"
 
-void parseArgv(int argc, char **argv) // maybe change to static void function or include it into some object
+std::string parseArgv(int argc, char **argv) // maybe change to static void function or include it into some object
 {
-	if (argc <= 1 || argc > 2)
+	std::string defaultConfPath = "config/www.conf";
+	if (argc == 1)
 	{
-		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename>.conf" << RESET << std::endl;
+		return (defaultConfPath);
+	}
+	else if (argc > 2)
+	{
+		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename.conf>" << RESET << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	std::string sArgv = argv[1];
 	std::string ending = ".conf";
 	if ((argv[1] + sArgv.find_last_of(".")) != ending)
 	{
-		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename>.conf" << RESET << std::endl;
+		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename.conf>" << RESET << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	return (sArgv);
 }
 
 int main(int argc, char **argv)
 {
-	parseArgv(argc, argv);
 	Config *config = new Config();
 	try
 	{
-		config->start(argv[1]);
+		config->start(parseArgv(argc, argv));
 	}
 	catch (std::exception &e)
 	{

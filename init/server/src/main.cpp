@@ -37,9 +37,7 @@ int main(int argc, char **argv)
 	std::string firstName = "weebserv";
 	std::string secondName = "anotherone";
 
-	// SingleServerConfig first = test->cluster[firstName];
-	// SingleServerConfig second = test->cluster[secondName];
-	std::cout << "### attempting to print contents of the configStructs" << std::endl;
+	// std::cout << "### attempting to print contents of the configStructs" << std::endl;
 	config->getConfigStruct(firstName);
 	std::cout << config << std::endl;
 	config->getConfigStruct(secondName);

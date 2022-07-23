@@ -39,15 +39,11 @@ int main(int argc, char **argv)
 	Server *test = new Server(config); // somehow pass the listen ports to the server ??
 	// std::cout << BLUE << test->cluster.size() << " elements found inside map" << RESET << std::endl;
 	// test if the data inside the cluster is accessable
-	std::string firstName = "weebserv";
-	std::string secondName = "anotherone";
+	// std::string firstName = "weebserv";
+	// std::string secondName = "anotherone";
 
 	// std::cout << "### attempting to print contents of the configStructs" << std::endl;
-	config->getConfigStruct(firstName);
-	std::cout << config << std::endl;
-	config->getConfigStruct(secondName);
-	std::cout << config << std::endl;
-	// std::cout << RED << first.getServerName() << "<->" << second.getServerName() << RESET << std::endl;
+	config->printCluster();
 	// system("leaks webserv");
 	test->run();
 	delete config;

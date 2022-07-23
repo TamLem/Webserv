@@ -264,6 +264,30 @@ void Config::start(std::string configPath)
 	// std::cout << "finished start function of config object" << std::endl;
 }
 
+void Config::printCluster()
+{
+	std::map<std::string, ConfigStruct>::const_iterator it = this->_cluster.begin();
+	for (; it != this->_cluster.end(); ++it)
+	{
+		this->applyConfig(it->first);
+		std::cout << GREEN << it->first << " {" << RESET << std::endl << \
+		"\tlisten\n" << this->strGetListen() << \
+		"\troot " << this->strGetRoot() << std::endl << \
+		"\tserver_name " << this->strGetServerName() << std::endl << \
+		"\tautoindex " << this->strGetAutoIndex() << std::endl << \
+		"\tindex_page " << this->strGetIndexPage() << std::endl << \
+		"\tchunked_transfer " << this->strGetChunkedTransfer() << std::endl << \
+		"\tclient_body_buffer_size " << this->strGetClientBodyBufferSize() << std::endl << \
+		"\tclient_max_body_size " << this->strGetClientMaxBodySize() << std::endl << \
+		/*"\tcgi " << a->strGetCgi() << std::endl << \*/
+		"\tcgi_bin " << this->strGetCgiBin() << std::endl << \
+		"\tlocation " << this->strGetLocation() << std::endl << \
+		"\terror_page\n" << this->strGetErrorPage() << \
+		"\tlog_level " << this->strGetShowLog() << std::endl << \
+		 GREEN << "}" << RESET << std::endl << std::endl;
+	}
+}
+
 // Getter
 ConfigStruct Config::getConfigStruct(std::string serverName)
 {

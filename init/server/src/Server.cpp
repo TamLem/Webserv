@@ -152,7 +152,7 @@ void Server::run_event_loop(int kq)
 					std::cerr << RESET;
 					continue;
 				}
-				char buf[1024]; // probably needs to be an ifstream to not overflow with enormous requests
+				char buf[1024]; // probably needs to be an ifstream to not overflow with enormous requests !!!!!!!!!!!
 				int n = read(fd, buf, 1024);
 				if (n < 0)
 				{
@@ -233,7 +233,7 @@ void Server::handleERROR(int status, int fd)
 	Response.sendResponse();
 }
 
-void Server::handle_static_request(const std::string& buffer, int fd)
+void Server::handle_static_request(const std::string& buffer, int fd) // function name is wrong, since it also handles cgi !!!!!!!!
 {
 	try
 	{

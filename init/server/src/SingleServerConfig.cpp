@@ -94,6 +94,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 {
 	// std::cout << "given to _parseKeyValue >" << GREEN << keyValue << RESET << "<" << std::endl;
 
+	if (keyValue.find_first_of(WHITESPACE) == std::string::npos)
+	{
+		std::cout << RED << keyValue << RESET << std::endl;
+		throw SingleServerConfig::NoValueFoundException();
+	}
 	std::string key = keyValue.substr(0, keyValue.find_first_of(WHITESPACE));
 	std::string value = "";
 	int nKey = 0;
@@ -531,4 +536,9 @@ const char* SingleServerConfig::DuplicateErrorPageException::what(void) const th
 const char* SingleServerConfig::DefaultNotAllowedException::what(void) const throw()
 {
 	return ("server name <default> not allowed");
+}
+
+const char* SingleServerConfig::NoValueFoundException::what(void) const throw()
+{
+	return ("↑↑↑ please provide a value for this key");
 }

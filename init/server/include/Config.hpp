@@ -139,6 +139,12 @@ class Config
 			public:
 				virtual const char* what() const throw();
 		};
+
+		class NoServerFoundException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
 };
 
 // Ostream overload

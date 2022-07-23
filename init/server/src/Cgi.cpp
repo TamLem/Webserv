@@ -46,7 +46,6 @@ void Cgi::cgi_response(std::string buffer, int fd)
 	int pid = fork();
 	if (pid == 0)
 	{
-		// if(execlp("/usr/bin/php", "php", file.c_str(), NULL) == -1)
 		chdir("cgi-bin");
 		if (execve(_scriptName.c_str() , NULL, _env) == -1)
 		{
@@ -59,8 +58,9 @@ void Cgi::cgi_response(std::string buffer, int fd)
 	std::string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 	send(fd, header.c_str(), header.size(), 0);
 	char buf[1024];
+	buf[1023] = '\0';
 	int n;
-	while((n = read(pipefd[0], buf, 1024)))
+	while((n = read(pipefd[0], buf, 1023)) > 0)
 	{
 		cout << "cgi output: " << buf << endl;
 		send(fd, buf, n, 0);

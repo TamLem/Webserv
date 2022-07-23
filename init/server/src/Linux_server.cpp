@@ -16,6 +16,8 @@
 // Forbidden includes
 #include <errno.h>
 
+void cgi_handle(Request& request, std::string buf, int fd);
+
 // this was the first try of a socket connection, now is only used to have a working linux compatible simple server
 
 void parseArgv(int argc, char **argv)
@@ -98,36 +100,34 @@ int main(int argc, char **argv)
 			return 1;
 		}
 		std::cout << "Message received: " << buffer << std::endl;
-		if (std::string(buffer).find(".php") != std::string::npos)
-							cgi_response(buffer, sockfd);
-						else
-						{
-							try
-							{
-								Request newRequest(buffer);
-								Response newResponse(200, sockfd, newRequest.getUrl());
-							}
-							catch (Request::InvalidMethod& e)
-							{
-								Response newResponse(501, sockfd);
-							}
-							catch (Request::InvalidProtocol& e)
-							{
-								Response newResponse(505, sockfd);
-							}
-							catch (Message::BadRequest& e)
-							{
-								Response newResponse(400, sockfd);
-							}
-							catch (Response::ERROR_404& e)
-							{
-								Response newResponse(404, sockfd);
-							}
-							catch (std::exception& e)
-							{
-								Response newResponse(500, sockfd);
-							}
-						}
+		try
+		{
+			Request newRequest(buffer);
+			if (std::string(buffer).find("/cgi/") != std::string::npos)
+				cgi_handle(newRequest, buffer, sockfd);
+			else
+				Response newResponse(200, sockfd, newRequest.getUrl());
+		}
+		catch (Request::InvalidMethod& e)
+		{
+			Response newResponse(501, sockfd);
+		}
+		catch (Request::InvalidProtocol& e)
+		{
+			Response newResponse(505, sockfd);
+		}
+		catch (Message::BadRequest& e)
+		{
+			Response newResponse(400, sockfd);
+		}
+		catch (Response::ERROR_404& e)
+		{
+			Response newResponse(404, sockfd);
+		}
+		catch (std::exception& e)
+		{
+			Response newResponse(500, sockfd);
+		}
 		close(new_sockfd);
 	}
 	close(sockfd);
@@ -135,4 +135,12 @@ int main(int argc, char **argv)
 	delete config;
 	config = NULL;
 	return 0;
+}
+
+void cgi_handle(Request& request, std::string buf, int fd)
+{
+	Cgi newCgi(request);
+
+	newCgi.printEnv();
+	newCgi.cgi_response(buf, fd);
 }

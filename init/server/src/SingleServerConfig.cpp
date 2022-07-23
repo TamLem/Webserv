@@ -112,6 +112,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 			throw SingleServerConfig::InvalidWhitespaceException();
 		}
 		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+		if (value.find_first_not_of(DECIMAL) != std::string::npos)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::NotAPortException();
+		}
 		ushort port = this->_checkListen(value);
 		// this->_conf->listen.insert(port);
 		if (this->_conf->listen.count(value) == 0)
@@ -379,7 +384,7 @@ std::string validErrorCodes[] =
 
 static bool _isValidErrorCode(std::string errorCode)
 {
-	std::cout << errorCode << " handed to check if it a valid errorCode" << std::endl;
+	// std::cout << errorCode << " handed to check if it a valid errorCode" << std::endl;
 	for (size_t i = 0; i < 64; ++i)
 	{
 		if (validErrorCodes[i] == errorCode)
@@ -422,7 +427,7 @@ void SingleServerConfig::_handleErrorPage(std::string line)
 			this->_conf->errorPage.insert(std::make_pair<std::string, std::string>(key, value));
 		}
 	}
-	std::cout << BLUE << "in _handleErrorPage: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
+	// std::cout << BLUE << "in _handleErrorPage: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
 }
 
 size_t SingleServerConfig::_strToSizeT(std::string str)

@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	}
 	catch (std::exception &e)
 	{
-			std::cerr << RED << "Exception caught in main function: " << e.what() << RESET << std::endl;
+			std::cerr << RED << e.what() << RESET << std::endl;
 			delete config;
 			return (EXIT_FAILURE);
 	}
@@ -40,9 +40,9 @@ int main(int argc, char **argv)
 	// SingleServerConfig first = test->cluster[firstName];
 	// SingleServerConfig second = test->cluster[secondName];
 	std::cout << "### attempting to print contents of the configStructs" << std::endl;
-	config->applyConfig(firstName);
+	config->getConfigStruct(firstName);
 	std::cout << config << std::endl;
-	config->applyConfig(secondName);
+	config->getConfigStruct(secondName);
 	std::cout << config << std::endl;
 	// std::cout << RED << first.getServerName() << "<->" << second.getServerName() << RESET << std::endl;
 	// system("leaks webserv");

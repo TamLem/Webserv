@@ -46,6 +46,9 @@ class SingleServerConfig
 
 		size_t _strToSizeT(std::string str);
 
+		std::string _printLocationStruct(LocationStruct locationStruct);
+		LocationStruct _fillLocationStruct(std::string block);
+
 	public:
 	// Constructors
 		SingleServerConfig();
@@ -138,6 +141,18 @@ class SingleServerConfig
 		};
 
 		class NoValueFoundException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidLocationBlockException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateLocationException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

@@ -3,11 +3,15 @@
 // Constructors
 SingleServerConfig::SingleServerConfig()
 {
-	std::cout << GREEN << "SingleServerConfig default constructor called for " << this << RESET << std::endl;
+	#ifdef SHOW_LOG
+		std::cout << GREEN << "SingleServerConfig default constructor called for " << this << RESET << std::endl;
+	#endif
 }
 SingleServerConfig::SingleServerConfig(std::string config, ConfigStruct *conf): _conf(conf)
 {
-	std::cout << GREEN << "SingleServerConfig constructor called for " << this << RESET << std::endl;
+	#ifdef SHOW_LOG
+		std::cout << GREEN << "SingleServerConfig constructor called for " << this << RESET << std::endl;
+	#endif
 	// std::cout << "This content reached the server:\n>" << config << "<" << std::endl;
 	this->_setVariables(config);
 }
@@ -15,7 +19,9 @@ SingleServerConfig::SingleServerConfig(std::string config, ConfigStruct *conf): 
 // Deconstructors
 SingleServerConfig::~SingleServerConfig()
 {
-	std::cout << RED << "SingleServerConfig deconstructor called for " << this << RESET << std::endl;
+	#ifdef SHOW_LOG
+		std::cout << RED << "SingleServerConfig deconstructor called for " << this << RESET << std::endl;
+	#endif
 }
 
 enum
@@ -25,14 +31,14 @@ enum
 	server_name,
 	autoindex,
 	index_page,
-	chunked_transfer,
+	// chunked_transfer,
 	client_body_buffer_size,
 	client_max_body_size,
 	// cgi, //only needed if we do bonus
 	cgi_bin,
 	location,
 	error_page,
-	show_log,
+	// show_log,
 	not_found
 };
 
@@ -43,19 +49,22 @@ std::string configVariables[]=
 	"server_name",
 	"autoindex",
 	"index_page",
-	"chunked_transfer",
+	// "chunked_transfer",
 	"client_body_buffer_size",
 	"client_max_body_size",
 	// "cgi", // only needed if we do bonus
 	"cgi_bin",
 	"location",
-	"error_page", // can be i.e. value 404 /404.html || value 500 502 503 504 /50x.html
-	"show_log"
+	"error_page" // can be i.e. value 404 /404.html || value 500 502 503 504 /50x.html
+	// "show_log"
 };
 
 // Private Methods
 void SingleServerConfig::_setVariables(std::string config)
 {
+	#ifdef SHOW_LOG_2
+		std::cout << BLUE << config << "<-- reached the _setVariables function" << RESET << std::endl;
+	#endif
 	std::stringstream configStream(config);
 
 	std::string buffer = "";
@@ -67,8 +76,6 @@ void SingleServerConfig::_setVariables(std::string config)
 	buffer.clear();
 	while (std::getline(configStream, buffer) && configStream.good() && buffer != "}")
 	{
-		// !!!!!!!!!!!!!!!!!
-		// std::cout << BLUE << buffer << "<-- reached the evaluateKeyValue function" << RESET << std::endl;
 		if (buffer.find("location") != std::string::npos)
 		{
 			std::stringstream locationBlock;
@@ -92,7 +99,9 @@ void SingleServerConfig::_setVariables(std::string config)
 
 void SingleServerConfig::_parseKeyValue(std::string keyValue)
 {
-	// std::cout << "given to _parseKeyValue >" << GREEN << keyValue << RESET << "<" << std::endl;
+	#ifdef SHOW_LOG_2
+		std::cout << "given to _parseKeyValue >" << GREEN << keyValue << RESET << "<" << std::endl;
+	#endif
 
 	if (keyValue.find_first_of(WHITESPACE) == std::string::npos)
 	{
@@ -123,7 +132,6 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 			throw SingleServerConfig::NotAPortException();
 		}
 		unsigned short port = this->_checkListen(value);
-		// this->_conf->listen.insert(port);
 		if (this->_conf->listen.count(value) == 0)
 		{
 			this->_conf->listen.insert(std::make_pair<std::string, unsigned short>(value, port));
@@ -186,22 +194,22 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		break ;
 	}
 
-	case (chunked_transfer):
-	{
-		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
-		{
-			std::cout << RED << keyValue << std::endl;
-			throw SingleServerConfig::InvalidWhitespaceException();
-		}
-		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
-		if (value != "true" && value != "false")
-		{
-			std::cout << RED << keyValue << std::endl;
-			throw SingleServerConfig::InvalidValueTypeException();
-		}
-		this->_conf->chunkedTransfer = (value.compare("true") == 0);
-		break ;
-	}
+	// case (chunked_transfer):
+	// {
+	// 	if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+	// 	{
+	// 		std::cout << RED << keyValue << std::endl;
+	// 		throw SingleServerConfig::InvalidWhitespaceException();
+	// 	}
+	// 	value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+	// 	if (value != "true" && value != "false")
+	// 	{
+	// 		std::cout << RED << keyValue << std::endl;
+	// 		throw SingleServerConfig::InvalidValueTypeException();
+	// 	}
+	// 	this->_conf->chunkedTransfer = (value.compare("true") == 0);
+	// 	break ;
+	// }
 
 	case (client_body_buffer_size):
 	{
@@ -267,22 +275,22 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		break ;
 	}
 
-	case (show_log):
-	{
-		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
-		{
-			std::cout << RED << keyValue << std::endl;
-			throw SingleServerConfig::InvalidWhitespaceException();
-		}
-		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
-		if (value != "true" && value != "false")
-		{
-			std::cout << RED << keyValue << std::endl;
-			throw SingleServerConfig::InvalidValueTypeException();
-		}
-		this->_conf->showLog = (value.compare("true") == 0);
-		break ;
-	}
+	// case (show_log):
+	// {
+	// 	if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+	// 	{
+	// 		std::cout << RED << keyValue << std::endl;
+	// 		throw SingleServerConfig::InvalidWhitespaceException();
+	// 	}
+	// 	value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+	// 	if (value != "true" && value != "false")
+	// 	{
+	// 		std::cout << RED << keyValue << std::endl;
+	// 		throw SingleServerConfig::InvalidValueTypeException();
+	// 	}
+	// 	this->_conf->showLog = (value.compare("true") == 0);
+	// 	break ;
+	// }
 
 	default: // in case of some content that doe not match a known variable
 	{
@@ -291,7 +299,10 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		break;
 	}
 	}
-	// std::cout << YELLOW << "key:\t>" << key << "<" << std::endl << BLUE << "value:\t>" << value << "<" << RESET << std::endl;
+	#ifdef SHOW_LOG_2
+		if (value.length() > 0)
+			std::cout << "key >" << BLUE << key << RESET << "< value >" << YELLOW << value << RESET << "< added successfully to ConfigStruct" << std::endl;
+	#endif
 }
 
 unsigned short SingleServerConfig::_checkListen(std::string value)
@@ -313,10 +324,72 @@ unsigned short SingleServerConfig::_checkListen(std::string value)
 // 	// std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
 // }
 
+LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
+{
+	std::cout << ">" << YELLOW << block << RESET << "< landed in _fillLocationStruct" << std::endl << std::endl;
+	LocationStruct locationStruct;
+	// check and fill in variables here
+	return (locationStruct);
+}
+
 void SingleServerConfig::_handleLocation(std::string block)
 {
-	(void)block;
-	// std::cout << BLUE << "in _handleLocation: >" << YELLOW << block << BLUE << "<" RESET << std::endl;
+	std::stringstream bufferStream;
+	bufferStream << block;
+	std::string line;
+	std::getline(bufferStream, line);
+	if (line.substr(0, line.find_first_of(WHITESPACE)) != "location")
+	{
+		std::cout << RED << line.substr(0, line.find_first_of(WHITESPACE)) << RESET << std::endl;
+		throw SingleServerConfig::InvalidKeyException();
+	}
+	else
+	{
+		std::string key = line.substr(line.find_first_of(WHITESPACE) + 1);
+		if (key.substr(key.find_first_of(WHITESPACE) + 1) != "{")
+		{
+			throw SingleServerConfig::InvalidLocationBlockException();
+		}
+		key = key.substr(0, key.find_first_of(WHITESPACE));
+		if (this->_conf->location.count(key) == 1)
+		{
+			std::cout << RED << key << RESET << std::endl;
+			throw SingleServerConfig::DuplicateLocationException();
+		}
+		bool openBrackets = true;
+		std::stringstream blockStream;
+		while (bufferStream.good() && openBrackets == true)
+		{
+			std::getline(bufferStream, line);
+			if (line == "}")
+				openBrackets = false;
+			else if (openBrackets == false)
+			{
+				std::cout << RED << line << RESET << std::endl;
+				throw SingleServerConfig::InvalidLocationBlockException();
+			}
+			else
+				blockStream << line << std::endl;
+		}
+		LocationStruct value = this->_fillLocationStruct(blockStream.str());
+		// if (value.find_first_of(WHITESPACE) == std::string::npos || value.find_first_of(WHITESPACE) + 1 != "{")
+		// {
+		// 	std::cout << RED << block << RESET << std::endl;
+		// 	throw SingleServerConfig::InvalidLocationBlockException();
+		// }
+		// else if (key. != 3 || _isValidErrorCode(key) == false)
+		// {
+		// 	std::cout << RED << key << RESET << std::endl;
+		// 	throw SingleServerConfig::NotAnErrorCodeException();
+		// }
+		// else
+		// {
+			// #ifdef SHOW_LOG_2
+			// 	std::cout << "key >" << BLUE << key << RESET << "< value >" << YELLOW << this->_printLocationStruct(value) << RESET << "< added successfully to ConfigStruct" << std::endl;
+			// #endif
+			// this->_conf->errorPage.insert(std::make_pair<std::string, LocationStruct>(key, value));
+		// }
+	}
 }
 
 std::string validErrorCodes[] =
@@ -411,7 +484,6 @@ void SingleServerConfig::_handleErrorPage(std::string line)
 		std::string value = key.substr(key.find_first_of(WHITESPACE) + 1);
 		// std::cout << GREEN << ">" << value << "<" << RESET << std::endl;
 		key = key.substr(0, key.find_first_of(WHITESPACE));
-		// std::cout << "error key >" << BLUE << key << RESET << "< error value >" << YELLOW << value << RESET << std::endl;
 		if (value.find_first_of(WHITESPACE) != std::string::npos)
 		{
 			std::cout << RED << line << RESET << std::endl;
@@ -429,10 +501,12 @@ void SingleServerConfig::_handleErrorPage(std::string line)
 		}
 		else
 		{
+			#ifdef SHOW_LOG_2
+				std::cout << "key >" << BLUE << key << RESET << "< value >" << YELLOW << value << RESET << "< added successfully to ConfigStruct" << std::endl;
+			#endif
 			this->_conf->errorPage.insert(std::make_pair<std::string, std::string>(key, value));
 		}
 	}
-	// std::cout << BLUE << "in _handleErrorPage: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
 }
 
 size_t SingleServerConfig::_strToSizeT(std::string str)
@@ -541,4 +615,15 @@ const char* SingleServerConfig::DefaultNotAllowedException::what(void) const thr
 const char* SingleServerConfig::NoValueFoundException::what(void) const throw()
 {
 	return ("↑↑↑ please provide a value for this key");
+}
+
+const char* SingleServerConfig::InvalidLocationBlockException::what(void) const throw()
+{
+	std::cout << RED << "wrong syntax, has to be like >\n" << BLUE << "location *.filetype {\n\troot path/to/the/real/location\n\tmethod ALLOWED_METHOD/S\n\tautoindex off\n}\n" << RED << "< or >" << BLUE << "location /path/to/location/ {\n\troot path/to/the/real/location\n\tmethod ALLOWED_METHOD/S\n\tindex index_to_show\n\tautoindex off\n}\n" << std::endl;
+	return ("↑↑↑ invalid location-block found, please provide like shown");
+}
+
+const char* SingleServerConfig::DuplicateLocationException::what(void) const throw()
+{
+	return ("↑↑↑ only one location-block with same key allowed");
 }

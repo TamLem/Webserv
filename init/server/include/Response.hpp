@@ -28,6 +28,7 @@ class Response : public Message
 		// const std::string& getProtocol(void) const;
 		const std::string& getStatus(void) const;
 		const std::string& getStatusMessage(void) const;
+		const std::map<std::string, std::string>& getMessageMap(void) const;
 
 		std::string constructHeader(void);
 

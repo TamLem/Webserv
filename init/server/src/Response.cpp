@@ -73,6 +73,11 @@ const std::string& Response::getStatusMessage(void) const
 	return (this->statusMessage);
 }
 
+const std::map<std::string, std::string>& Response::getMessageMap(void) const
+{
+	return (this->messageMap);
+}
+
 std::string Response::constructHeader(void)
 {
 	std::stringstream stream;

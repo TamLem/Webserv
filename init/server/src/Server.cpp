@@ -245,25 +245,28 @@ void Server::handle_static_request(const std::string& buffer, int fd) // functio
 		else
 			handleGET("200", fd, newRequest.getUri());
 	}
-	catch (Request::InvalidMethod& e)
+	// catch (Request::InvalidMethod& e)
+	// {
+	// 	handleERROR("501", fd);
+	// }
+	// catch (Request::InvalidProtocol& e)
+	// {
+	// 	handleERROR("505", fd);
+	// }
+	// catch (Response::ERROR_404& e)
+	// {
+	// 	handleERROR("404", fd);
+	// }
+	// catch (Message::BadRequest& e)
+	// {
+	// 	handleERROR("400", fd);
+	// }
+	catch (std::exception& exception)
 	{
-		handleERROR("501", fd);
-	}
-	catch (Request::InvalidProtocol& e)
-	{
-		handleERROR("505", fd);
-	}
-	catch (Response::ERROR_404& e)
-	{
-		handleERROR("404", fd);
-	}
-	catch (Message::BadRequest& e)
-	{
-		handleERROR("400", fd);
-	}
-	catch (std::exception& e)
-	{
-		handleERROR("500", fd);
+		std::string code = exception.what();
+		if (Response.getMessageMap().count(code) != 1)
+			code = "500";
+		handleERROR(code, fd);
 	}
 }
 

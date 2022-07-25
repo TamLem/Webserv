@@ -164,11 +164,35 @@ class SingleServerConfig
 				virtual const char* what() const throw();
 		};
 
-		// class MethodRedeclarationException : public std::exception
-		// {
-		// 	public:
-		// 		virtual const char* what() const throw();
-		// };
+		class DuplicateLocationRootException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateLocationIndexException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateLocationAutoIndexException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidIndexCombinationException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class MissingIndexException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
 };
 
 #endif // SINGLESERVER_HPP

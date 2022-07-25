@@ -356,7 +356,9 @@ LocationStruct SingleServerConfig::_initLocationStruct()
 
 LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 {
-	std::cout << ">" << YELLOW << block << RESET << "< landed in _fillLocationStruct" << std::endl << std::endl;
+	// #ifdef SHOW_LOG_2
+		std::cout << ">" << YELLOW << block << RESET << "< landed in _fillLocationStruct" << std::endl << std::endl;
+	// #endif
 
 	LocationStruct locationStruct = this->_initLocationStruct();
 	std::stringstream blockStream;
@@ -393,6 +395,8 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 		{
 		case (location_root):
 		{
+			if (foundRoot == true)
+				throw SingleServerConfig::DuplicateLocationRootException();
 			if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 			{
 				std::cout << RED << keyValue << std::endl;
@@ -406,10 +410,6 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 
 		case (location_method):
 		{
-			// if (foundMethod == true)
-			// {
-			// 	throw SingleServerConfig::MethodRedeclarationExcetion();
-			// }
 			if (keyValue.find_last_not_of(WHITESPACE) - keyValue.find_first_of(WHITESPACE) > 15)
 			{
 				std::cout << RED << keyValue << RESET << std::endl;
@@ -448,6 +448,8 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 
 		case (location_index):
 		{
+			if (foundIndex == true)
+				throw SingleServerConfig::DuplicateLocationIndexException();
 			if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 			{
 				std::cout << RED << keyValue << std::endl;
@@ -461,6 +463,8 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 
 		case (location_auto_index):
 		{
+			if (foundAutoIndex == true)
+				throw SingleServerConfig::DuplicateLocationAutoIndexException();
 			if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 			{
 				std::cout << RED << keyValue << std::endl;
@@ -488,11 +492,23 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 	if (!foundRoot || !foundMethod)
 	{
 		if (!foundRoot)
-			std::cout << RED << "No root found" << RESET << std::endl;
+			std::cout << RED << "No root found in location " << key << RESET << std::endl;
 		else
-			std::cout << RED << "No method found" << RESET << std::endl;
+			std::cout << RED << "No method found in location " << key << RESET << std::endl;
+
 		throw SingleServerConfig::InvalidLocationException();
 	}
+	if (foundIndex == true && foundAutoIndex == true)
+	{
+		std::cout << RED << "location " << key << RESET << std::endl;
+		throw SingleServerConfig::InvalidIndexCombinationException();
+	}
+	else if (!foundIndex && !foundAutoIndex)
+	{
+		std::cout << RED << "location " << key << RESET << std::endl;
+		throw SingleServerConfig::MissingIndexException();
+	}
+
 
 	return (locationStruct);
 }
@@ -539,6 +555,7 @@ void SingleServerConfig::_handleLocation(std::string block)
 			throw SingleServerConfig::InvalidLocationBlockException();
 		}
 		key = key.substr(0, key.find_first_of(WHITESPACE));
+
 		if (this->_conf->location.count(key) == 1)
 		{
 			std::cout << RED << key << RESET << std::endl;
@@ -559,24 +576,22 @@ void SingleServerConfig::_handleLocation(std::string block)
 			else
 				blockStream << line << std::endl;
 		}
+
 		LocationStruct locationStruct = this->_fillLocationStruct(blockStream.str());
-		// if (value.find_first_of(WHITESPACE) == std::string::npos || value.find_first_of(WHITESPACE) + 1 != "{")
-		// {
-		// 	std::cout << RED << block << RESET << std::endl;
-		// 	throw SingleServerConfig::InvalidLocationBlockException();
-		// }
-		// else if (key. != 3 || _isValidErrorCode(key) == false)
-		// {
-		// 	std::cout << RED << key << RESET << std::endl;
-		// 	throw SingleServerConfig::NotAnErrorCodeException();
-		// }
-		// else
-		// {
-		// #ifdef SHOW_LOG_2
+		if (key.substr(key.length() - 1) == "/" && key.find("*") == std::string::npos) // find out if it is a dir or not
+			locationStruct.isDir = true;
+		else if (key.substr(0, 2) == "*." && key.find("/") == std::string::npos)
+			locationStruct.isDir = false;
+		else
+		{
+			std::cout << RED << ">" << key << "< is not a allowed pattern" << RESET << std::endl;
+			throw SingleServerConfig::InvalidLocationException(); // if the location key is not recognized
+		}
+
+		#ifdef SHOW_LOG_2
 			std::cout << "key >" << BLUE << key << RESET << "< value\n" << YELLOW << this->_printLocationStruct(locationStruct) << RESET << "< added successfully to ConfigStruct" << std::endl;
-		// #endif
+		#endif
 		this->_conf->location.insert(std::make_pair<std::string, LocationStruct>(key, locationStruct));
-		// }
 	}
 }
 
@@ -831,7 +846,27 @@ const char* SingleServerConfig::InvalidLocationException::what(void) const throw
 	return ("↑↑↑ caused the location-block to be invalid");
 }
 
-// const char* SingleServerConfig::MethodRedeclarationException::what(void) const throw()
-// {
-// 	return ("double use of method key is not allowed");
-// }
+const char* SingleServerConfig::DuplicateLocationRootException::what(void) const throw()
+{
+	return ("double use of root key is not allowed");
+}
+
+const char* SingleServerConfig::DuplicateLocationIndexException::what(void) const throw()
+{
+	return ("double use of index_page key is not allowed");
+}
+
+const char* SingleServerConfig::DuplicateLocationAutoIndexException::what(void) const throw()
+{
+	return ("double use of autoindex key is not allowed");
+}
+
+const char* SingleServerConfig::InvalidIndexCombinationException::what(void) const throw()
+{
+	return ("↑↑↑ autoindex can not be true if a index_page is defined, vice versa");
+}
+
+const char* SingleServerConfig::MissingIndexException::what(void) const throw()
+{
+	return ("↑↑↑ autoindex can not be false if no index_page defined");
+}

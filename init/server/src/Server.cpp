@@ -243,7 +243,7 @@ void Server::handleERROR(const std::string& status, int fd)
 	_response.sendResponse();
 }
 
-void Server::handleRequest(const std::string& buffer, int fd) // function name is wrong, since it also handles cgi !!!!!!!!
+void Server::handleRequest(const std::string& buffer, int fd)
 {
 	try
 	{

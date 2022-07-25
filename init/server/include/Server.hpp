@@ -68,7 +68,7 @@ class Server
 		size_t _port;
 		PortStruct _ports;
 		size_t _server_fd;
-		std::vector <client> _clients;
+		std::vector <client> _clients; // not sure if used
 		Response _response;
 		Config* _config;
 

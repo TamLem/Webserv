@@ -1,6 +1,8 @@
 #include "Server.hpp"
 #include "Config.hpp"
 
+#include <stdlib.h>
+
 std::string parseArgv(int argc, char **argv) // maybe change to static void function or include it into some object
 {
 	std::string defaultConfPath = "config/www.conf";
@@ -23,8 +25,14 @@ std::string parseArgv(int argc, char **argv) // maybe change to static void func
 	return (sArgv);
 }
 
+void my_leaks()
+{
+	system("leaks webserv");
+}
+
 int main(int argc, char **argv)
 {
+	// atexit(my_leaks);
 	Config *config = new Config();
 	try
 	{
@@ -37,16 +45,10 @@ int main(int argc, char **argv)
 			return (EXIT_FAILURE);
 	}
 	Server *test = new Server(config); // somehow pass the listen ports to the server ??
-	// std::cout << BLUE << test->cluster.size() << " elements found inside map" << RESET << std::endl;
-	// test if the data inside the cluster is accessable
-	// std::string firstName = "weebserv";
-	// std::string secondName = "anotherone";
 
-	// std::cout << "### attempting to print contents of the configStructs" << std::endl;
-	#ifdef SHOW_LOG
+	// #ifdef SHOW_LOG_2
 		config->printCluster();
-	#endif
-	// system("leaks webserv");
+	// #endif
 	test->run();
 	delete config;
 	delete test;

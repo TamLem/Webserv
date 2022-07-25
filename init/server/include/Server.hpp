@@ -69,7 +69,7 @@ class Server
 		PortStruct _ports;
 		size_t _server_fd;
 		std::vector <client> _clients;
-		Response Response;
+		Response _response;
 		Config* _config;
 
 		Server();

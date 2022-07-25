@@ -205,10 +205,10 @@ void Server::run()
 
 void Server::handleGET(const std::string& status, int fd, const std::string& uri)
 {
-	Response.init(status, fd, uri);
-	Response.createBody();
-	Response.createHeaderFields();
-	Response.sendResponse();
+	_response.init(status, fd, uri);
+	_response.createBody();
+	_response.createHeaderFields();
+	_response.sendResponse();
 }
 
 void Server::handlePOST(const std::string& status, int fd, const Request& newRequest)
@@ -219,18 +219,18 @@ void Server::handlePOST(const std::string& status, int fd, const Request& newReq
 		throw std::exception();
 	outFile << newRequest.getBody() << "'s content. Server: " << this->_config->getConfigStruct("weebserv").serverName;
 	outFile.close();
-	Response.init(status, fd, "./pages/post_test.html");
-	Response.createBody();
-	Response.createHeaderFields();
-	Response.sendResponse();
+	_response.init(status, fd, "./pages/post_test.html");
+	_response.createBody();
+	_response.createHeaderFields();
+	_response.sendResponse();
 }
 
 void Server::handleERROR(const std::string& status, int fd)
 {
-	Response.init(status, fd, ""); //AE make overload instead of passing ""
-	Response.createErrorBody();
-	Response.createHeaderFields();
-	Response.sendResponse();
+	_response.init(status, fd, ""); //AE make overload instead of passing ""
+	_response.createErrorBody();
+	_response.createHeaderFields();
+	_response.sendResponse();
 }
 
 void Server::handle_static_request(const std::string& buffer, int fd) // function name is wrong, since it also handles cgi !!!!!!!!
@@ -264,7 +264,7 @@ void Server::handle_static_request(const std::string& buffer, int fd) // functio
 	catch (std::exception& exception)
 	{
 		std::string code = exception.what();
-		if (Response.getMessageMap().count(code) != 1)
+		if (_response.getMessageMap().count(code) != 1)
 			code = "500";
 		handleERROR(code, fd);
 	}

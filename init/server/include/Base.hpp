@@ -36,12 +36,12 @@ struct PortStruct
 struct LocationStruct
 {
 	bool isDir;
-	std::string root;
-	std::string indexPage;
 	bool autoIndex;
 	bool getAllowed;
 	bool postAllowed;
 	bool deleteAllowed;
+	std::string root;
+	std::string indexPage;
 };
 
 // ConfigStruct

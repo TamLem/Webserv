@@ -11,7 +11,7 @@
 Server::Server(Config* config) : _config(config)
 {
 	#ifdef SHOW_LOG
-		std::cout << "Server constructor called for " << this << std::endl;
+		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
 	#endif
 	handle_signals();
 	_port = 8080;
@@ -49,7 +49,7 @@ Server::~Server(void)
 {
 	close(this->_server_fd);
 	#ifdef SHOW_LOG
-		std::cout << "server deconstructor called for " << this << std::endl;
+		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
 

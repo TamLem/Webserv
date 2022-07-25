@@ -12,7 +12,9 @@ SingleServerConfig::SingleServerConfig(std::string config, ConfigStruct *conf): 
 	#ifdef SHOW_LOG
 		std::cout << GREEN << "SingleServerConfig constructor called for " << this << RESET << std::endl;
 	#endif
-	// std::cout << "This content reached the server:\n>" << config << "<" << std::endl;
+	#ifdef SHOW_LOG_2
+		std::cout << "This content reached the SingleServerConfigConstructor:\n>" << BLUE << config << RESET << "<" << std::endl;
+	#endif
 	this->_setVariables(config);
 }
 
@@ -31,14 +33,12 @@ enum
 	server_name,
 	autoindex,
 	index_page,
-	// chunked_transfer,
 	client_body_buffer_size,
 	client_max_body_size,
 	// cgi, //only needed if we do bonus
 	cgi_bin,
 	location,
 	error_page,
-	// show_log,
 	not_found
 };
 
@@ -49,14 +49,12 @@ std::string configVariables[]=
 	"server_name",
 	"autoindex",
 	"index_page",
-	// "chunked_transfer",
 	"client_body_buffer_size",
 	"client_max_body_size",
 	// "cgi", // only needed if we do bonus
 	"cgi_bin",
 	"location",
-	"error_page" // can be i.e. value 404 /404.html || value 500 502 503 504 /50x.html
-	// "show_log"
+	"error_page"
 };
 
 // Private Methods
@@ -68,7 +66,7 @@ void SingleServerConfig::_setVariables(std::string config)
 	std::stringstream configStream(config);
 
 	std::string buffer = "";
-	while (buffer.find("{") == std::string::npos && configStream.good()) // maybe change this.....!!!!!!!!!!!!
+	while (buffer.find("{") == std::string::npos && configStream.good())
 	{
 		buffer.clear();
 		std::getline(configStream, buffer);
@@ -80,8 +78,6 @@ void SingleServerConfig::_setVariables(std::string config)
 		{
 			std::stringstream locationBlock;
 			locationBlock << buffer << std::endl;
-			// std::string subkey = buffer.substr(buffer.find_first_of(WHITESPACE));
-			// subkey = subkey.substr(0, subkey.find_first_of(WHITESPACE));
 
 			while (std::getline(configStream, buffer) && configStream.good())
 			{
@@ -194,23 +190,6 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		break ;
 	}
 
-	// case (chunked_transfer):
-	// {
-	// 	if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
-	// 	{
-	// 		std::cout << RED << keyValue << std::endl;
-	// 		throw SingleServerConfig::InvalidWhitespaceException();
-	// 	}
-	// 	value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
-	// 	if (value != "true" && value != "false")
-	// 	{
-	// 		std::cout << RED << keyValue << std::endl;
-	// 		throw SingleServerConfig::InvalidValueTypeException();
-	// 	}
-	// 	this->_conf->chunkedTransfer = (value.compare("true") == 0);
-	// 	break ;
-	// }
-
 	case (client_body_buffer_size):
 	{
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
@@ -245,7 +224,7 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		break ;
 	}
 
-	// case (cgi): // only needed if we do bonus, else will be standard, ask tam!!!!!!!!!!
+	// case (cgi): // only needed if we do bonus
 	// {
 	// 	this->_handleCgi(keyValue);
 	// 	break ;
@@ -275,23 +254,6 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		break ;
 	}
 
-	// case (show_log):
-	// {
-	// 	if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
-	// 	{
-	// 		std::cout << RED << keyValue << std::endl;
-	// 		throw SingleServerConfig::InvalidWhitespaceException();
-	// 	}
-	// 	value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
-	// 	if (value != "true" && value != "false")
-	// 	{
-	// 		std::cout << RED << keyValue << std::endl;
-	// 		throw SingleServerConfig::InvalidValueTypeException();
-	// 	}
-	// 	this->_conf->showLog = (value.compare("true") == 0);
-	// 	break ;
-	// }
-
 	default: // in case of some content that does not match a known variable
 	{
 		std::cerr << RED << ">" << keyValue << "<" << std::endl;
@@ -315,10 +277,9 @@ unsigned short SingleServerConfig::_checkListen(std::string value)
 	}
 	unsigned short port = buffer;
 	return (port);
-	// std::cout << BLUE << "in _checkListen: >" << YELLOW << value << BLUE << "<" RESET << std::endl;
 }
 
-// void SingleServerConfig::_handleCgi(std::string line)
+// void SingleServerConfig::_handleCgi(std::string line) // only needed if we do bonus
 // {
 // 	(void)line;
 // 	// std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
@@ -356,9 +317,9 @@ LocationStruct SingleServerConfig::_initLocationStruct()
 
 LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 {
-	// #ifdef SHOW_LOG_2
+	#ifdef SHOW_LOG_2
 		std::cout << ">" << YELLOW << block << RESET << "< landed in _fillLocationStruct" << std::endl << std::endl;
-	// #endif
+	#endif
 
 	LocationStruct locationStruct = this->_initLocationStruct();
 	std::stringstream blockStream;
@@ -423,7 +384,6 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 					std::cout << RED << keyValue << RESET << std::endl;
 					throw SingleServerConfig::InvalidWhitespaceException();
 				}
-				// std::cout << " top >" << value << "<" << std::endl;
 				std::string tempValue = value.substr(0, value.find_first_of(WHITESPACE));
 				if (tempValue == "GET" && locationStruct.getAllowed == false)
 					locationStruct.getAllowed = true;
@@ -440,7 +400,6 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 					value = value.substr(value.find_first_of(WHITESPACE) + 1);
 				else
 					value = "";
-				// std::cout << "bottom >" << value << "<" << std::endl;
 			}
 			foundMethod = true;
 			break ;
@@ -498,12 +457,12 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 
 		throw SingleServerConfig::InvalidLocationException();
 	}
-	if (foundIndex == true && foundAutoIndex == true)
+	if (foundIndex == true && locationStruct.autoIndex == true)
 	{
 		std::cout << RED << "location " << key << RESET << std::endl;
 		throw SingleServerConfig::InvalidIndexCombinationException();
 	}
-	else if (!foundIndex && !foundAutoIndex)
+	else if ((!foundIndex && !foundAutoIndex) || (!foundIndex && locationStruct.autoIndex == false))
 	{
 		std::cout << RED << "location " << key << RESET << std::endl;
 		throw SingleServerConfig::MissingIndexException();
@@ -578,7 +537,7 @@ void SingleServerConfig::_handleLocation(std::string block)
 		}
 
 		LocationStruct locationStruct = this->_fillLocationStruct(blockStream.str());
-		if (key.substr(key.length() - 1) == "/" && key.find("*") == std::string::npos) // find out if it is a dir or not
+		if (key.substr(key.length() - 1) == "/" && key.find("*") == std::string::npos && key.substr(0, 1) != "/") // to find out if it is a dir or not
 			locationStruct.isDir = true;
 		else if (key.substr(0, 2) == "*." && key.find("/") == std::string::npos)
 			locationStruct.isDir = false;
@@ -595,6 +554,7 @@ void SingleServerConfig::_handleLocation(std::string block)
 	}
 }
 
+// think about usig the already existing map in Server from aenglert instead !!!!!!
 std::string validErrorCodes[] =
 {
 	"100",
@@ -665,7 +625,6 @@ std::string validErrorCodes[] =
 
 static bool _isValidErrorCode(std::string errorCode)
 {
-	// std::cout << errorCode << " handed to check if it a valid errorCode" << std::endl;
 	for (size_t i = 0; i < 64; ++i)
 	{
 		if (validErrorCodes[i] == errorCode)
@@ -685,7 +644,6 @@ void SingleServerConfig::_handleErrorPage(std::string line)
 	{
 		std::string key = line.substr(line.find_first_of(WHITESPACE) + 1);
 		std::string value = key.substr(key.find_first_of(WHITESPACE) + 1);
-		// std::cout << GREEN << ">" << value << "<" << RESET << std::endl;
 		key = key.substr(0, key.find_first_of(WHITESPACE));
 		if (value.find_first_of(WHITESPACE) != std::string::npos)
 		{
@@ -714,8 +672,6 @@ void SingleServerConfig::_handleErrorPage(std::string line)
 
 size_t SingleServerConfig::_strToSizeT(std::string str)
 {
-	// std::cout << "str send to _strToSizeT >" << str << "<" << std::endl;
-
 	size_t out = 0;
 	std::stringstream buffer;
 	#ifdef __APPLE__

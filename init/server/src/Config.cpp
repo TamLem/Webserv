@@ -257,32 +257,22 @@ const std::string Config::_printLocationStruct(LocationStruct locationStruct) co
 Config::Config()
 {
 	#ifdef SHOW_LOG
-		std::cout << GREEN << "Config Default Constructor called " << RESET << std::endl;
+		std::cout << GREEN << "Config Default Constructor called for " << this << RESET << std::endl;
 	#endif
-}
-
-Config::Config(std::string configPath)
-{
-	#ifdef SHOW_LOG
-		std::cout << GREEN << "Config Constructor called" << RESET << std::endl;
-	#endif
-	this->start(configPath);
 }
 
 // Deconstructor
 Config::~Config()
 {
 	std::map<std::string, ConfigStruct>::iterator it;
-	for (it = this->_cluster.begin(); it != this->_cluster.end(); ++it)
-	{
-		this->applyConfig(it->first);
-		this->_freeConfigStruct();
-	}
-	// std ::cout << _cluster.size() << std::endl;
-	this->_cluster.clear();
-	// std ::cout << _cluster.size() << std::endl;
+	// for (it = this->_cluster.begin(); it != this->_cluster.end(); ++it)
+	// {
+	// 	this->applyConfig(it->first);
+	// 	this->_freeConfigStruct();
+	// }
+	// this->_cluster.clear();
 	#ifdef SHOW_LOG
-		std::cout << RED << "Config Deconstructor called"<< RESET << std::endl;
+		std::cout << RED << "Config Deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
 
@@ -291,11 +281,7 @@ void Config::start(std::string configPath)
 {
 	this->setConfigPath(configPath);
 	this->_openConfigFile();
-	// std::cout << GREEN << "allocating cluster map now" << std::endl;
-	// this->_cluster = std::map<std::string, SingleServerConfig>();
-	// std::cout << _cluster << RESET << std::endl;
-	this->_readConfigFile();
-	// std::cout << "finished start function of config object" << std::endl;
+	this->_readConfigFile(); // reads from file and starts the filling of the map of ConfigStructs
 }
 
 void Config::printCluster()
@@ -310,23 +296,21 @@ void Config::printCluster()
 		"\tserver_name " << this->strGetServerName() << std::endl << \
 		"\tautoindex " << this->strGetAutoIndex() << std::endl << \
 		"\tindex_page " << this->strGetIndexPage() << std::endl << \
-		/* "\tchunked_transfer " << this->strGetChunkedTransfer() << std::endl << \ */
 		"\tclient_body_buffer_size " << this->strGetClientBodyBufferSize() << std::endl << \
 		"\tclient_max_body_size " << this->strGetClientMaxBodySize() << std::endl << \
-		/* "\tcgi " << a->strGetCgi() << std::endl << \*/
+		/* "\tcgi " << a->strGetCgi() << std::endl << \*/ // only needed if we do bonus
 		"\tcgi_bin " << this->strGetCgiBin() << std::endl << \
 		this->strGetLocation() << std::endl << \
 		"\terror_page\n" << this->strGetErrorPage() << \
-		/* "\tshow_log " << this->strGetShowLog() << std::endl << \ */
 		 GREEN << "}" << RESET << std::endl << std::endl;
 	}
 }
 
 // Getter
-ConfigStruct Config::getConfigStruct(std::string serverName)
+ConfigStruct Config::getConfigStruct(std::string hostName) // use this function if you want to have access to the ConfigStruct of a server
 {
 	std::string defaultConfig = "default";
-	if (this->applyConfig(serverName) == true)
+	if (this->applyConfig(hostName) == true)
 		return (this->_conf);
 	else
 	{
@@ -363,11 +347,6 @@ const std::string Config::getIndexPage() const
 	return (this->_conf.indexPage);
 }
 
-// bool Config::getChunkedTransfer() const
-// {
-// 	return (this->_conf.chunkedTransfer);
-// }
-
 size_t Config::getClientBodyBufferSize() const
 {
 	return (this->_conf.clientBodyBufferSize);
@@ -378,7 +357,7 @@ size_t Config::getClientMaxBodySize() const
 	return (this->_conf.clientMaxBodySize);
 }
 
-// const std::vector<std::string> Config::getCgi() const
+// const std::vector<std::string> Config::getCgi() const // only needed if we do bonus
 // {
 // 	return (this->_conf.cgi);
 // }
@@ -397,11 +376,6 @@ const std::map<std::string, std::string> Config::getErrorPage() const
 {
 	return (this->_conf.errorPage);
 }
-
-// bool Config::getShowLog() const
-// {
-// 	return (this->_conf.showLog);
-// }
 
 // Getters for printing
 const std::string Config::strGetListen() const
@@ -441,16 +415,6 @@ const std::string Config::strGetIndexPage() const
 	return (print);
 }
 
-// const std::string Config::strGetChunkedTransfer() const
-// {
-// 	std::string print;
-// 	if (getChunkedTransfer() == true)
-// 		print = "true";
-// 	else
-// 		print = "false";
-// 	return (print);
-// }
-
 const std::string Config::strGetClientBodyBufferSize() const
 {
 	std::stringstream print;
@@ -465,7 +429,7 @@ const std::string Config::strGetClientMaxBodySize() const
 	return (print.str());
 }
 
-// const std::string Config::strGetCgi() const
+// const std::string Config::strGetCgi() const // only needed if we do bonus
 // {
 // 	std::string print = "";
 // 	size_t size = this->_conf.cgi.size();
@@ -504,21 +468,9 @@ const std::string Config::strGetErrorPage() const
 	return (print.str());
 }
 
-// const std::string Config::strGetShowLog() const
-// {
-// 	std::string print;
-
-// 	if (this->getShowLog() == true)
-// 		print = "true";
-// 	else
-// 		print = "false";
-// 	return (print);
-// }
-
 // Setter
 void Config::setConfigPath(std::string configPath)
 {
-	// some error checking
 	this->_configPath = configPath;
 }
 
@@ -530,7 +482,7 @@ bool Config::applyConfig(std::string serverName)
 		return (true);
 	}
 	else
-		return (false); // maybe throw an exception
+		return (false); // the return of this function needs to be checked
 }
 
 // Exceptions
@@ -586,25 +538,4 @@ const char* Config::ContentOutsideServerBlockException::what(void) const throw()
 const char* Config::NoServerFoundException::what(void) const throw()
 {
 	return ("please provide at least one server-block in .conf file");
-}
-
-// Ostream overload
-std::ostream	&operator<<(std::ostream &o, Config *a) // will print the contents of a->_conf
-{
-	o << a->strGetServerName() << " {" << std::endl << \
-	"\tlisten\n" << a->strGetListen() << \
-	"\troot " << a->strGetRoot() << std::endl << \
-	"\tserver_name " << a->strGetServerName() << std::endl << \
-	"\tautoindex " << a->strGetAutoIndex() << std::endl << \
-	"\tindex_page " << a->strGetIndexPage() << std::endl << \
-	/* "\tchunked_transfer " << a->strGetChunkedTransfer() << std::endl << \ */
-	"\tclient_body_buffer_size " << a->strGetClientBodyBufferSize() << std::endl << \
-	"\tclient_max_body_size " << a->strGetClientMaxBodySize() << std::endl << \
-	/* "\tcgi " << a->strGetCgi() << std::endl << \ */
-	"\tcgi_bin " << a->strGetCgiBin() << std::endl << \
-	a->strGetLocation() << std::endl << \
-	"\terror_page\n" << a->strGetErrorPage() << \
-	/* "\tshow_log " << a->strGetShowLog() << std::endl << \ */
-	"}" << std::endl;
-	return (o);
 }

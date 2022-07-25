@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-std::string parseArgv(int argc, char **argv) // maybe change to static void function or include it into some object
+std::string parseArgv(int argc, char **argv) // maybe change to static void function or include it into some object !!!
 {
 	std::string defaultConfPath = "config/www.conf";
 	if (argc == 1)
@@ -46,9 +46,9 @@ int main(int argc, char **argv)
 	}
 	Server *test = new Server(config); // somehow pass the listen ports to the server ??
 
-	// #ifdef SHOW_LOG_2
+	#ifdef SHOW_LOG_2
 		config->printCluster();
-	// #endif
+	#endif
 	test->run();
 	delete config;
 	delete test;

@@ -1,14 +1,52 @@
 #include "Cgi/Cgi.hpp"
 
-void Cgi::setEnv(Request &request)
+#include <string.h>
+
+Cgi::Cgi(Request &request)
+{
+	_env = NULL;
+	_method = request.getMethod();
+	string url = request.getUrl();
+	int scriptNameStart = url.find("/cgi/") + 5;
+	int scriptNameEnd = url.find("/", scriptNameStart);
+	if (scriptNameEnd == (int)string::npos)
+		scriptNameEnd = url.find("?", scriptNameStart);
+	int queryStart = url.find("?");
+	_scriptName = url.substr(scriptNameStart, scriptNameEnd - scriptNameStart);
+	_pathInfo = (scriptNameEnd != (int)string::npos ) ? url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";
+	_queryString = (queryStart != (int)string::npos )? url.substr(queryStart + 1, string::npos) : "";
+	setEnv(request);
+	// "Accept");
+	// "Host");
+	// "Referer");
+	// "Content-Length");
+	// "Origin"); // client address, POST only
+	// "Referer"); //client page where request was made from
+	// "Content-Length");
+	// "REMOTE_ADDR"); //refere
+	// "REMOTE_HOST"); //if not provided same as REMOTE_ADDR
+	// "REQUEST_METHOD"); //case-sensitive GET, POST, UPDATE
+	// "SCRIPT_NAME");
+	// "SERVER_NAME");
+}
+
+Cgi::~Cgi()
+{
+	int i = 0;
+	while(_env[i])
+		delete _env[i++];
+	delete _env;
+}
+
+void Cgi::setEnv(Request &request) // think about changing this to return a const char **
 {
 	const std::map<std::string, std::string>& reqHeaders = request.getHeaderFields();
-	string envVars[] = { "REQUEST_METHOD", "GATEWAY_INTERFACE", "PATH_INFO", "PATH_TRANSLATED", "SCRIPT_NAME", 
+	string envVars[] = { "REQUEST_METHOD", "GATEWAY_INTERFACE", "PATH_INFO", "PATH_TRANSLATED", "SCRIPT_NAME",
 		"QUERY_STRING", "SERVER_NAME", "SERVER_PORT", "SERVER_PROTOCOL", "CONTENT_TYPE", "CONTENT_LENGTH", "REMOTE_HOST", "REMOTE_ADDR", };
 
 	_env = new char*[ENV_LEN];
-	_env[ENV_LEN - 1] = nullptr; 
-	
+	_env[ENV_LEN - 1] = NULL;
+
 	int i = 0;
 	_env[i] = strdup((envVars[i] + "=" + _method).c_str()); i++;
 	_env[i] = strdup((envVars[i] + "=" + "CGI/1.1").c_str()); i++;
@@ -28,7 +66,7 @@ void Cgi::setEnv(Request &request)
 	}
 
 	while(_env[i])
-		_env[i++] = nullptr;
+		_env[i++] = NULL;
 }
 
 void Cgi::cgi_response(std::string buffer, int fd)

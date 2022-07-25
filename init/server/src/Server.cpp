@@ -164,7 +164,7 @@ void Server::run_event_loop(int kq)
 				buf[n] = '\0';
 				std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
 
-				handle_static_request(buf, fd);
+				handleRequest(buf, fd);
 			}
 		}
 	}
@@ -233,7 +233,7 @@ void Server::handleERROR(const std::string& status, int fd)
 	_response.sendResponse();
 }
 
-void Server::handle_static_request(const std::string& buffer, int fd) // function name is wrong, since it also handles cgi !!!!!!!!
+void Server::handleRequest(const std::string& buffer, int fd) // function name is wrong, since it also handles cgi !!!!!!!!
 {
 	try
 	{
@@ -245,22 +245,6 @@ void Server::handle_static_request(const std::string& buffer, int fd) // functio
 		else
 			handleGET("200", fd, newRequest.getUri());
 	}
-	// catch (Request::InvalidMethod& e)
-	// {
-	// 	handleERROR("501", fd);
-	// }
-	// catch (Request::InvalidProtocol& e)
-	// {
-	// 	handleERROR("505", fd);
-	// }
-	// catch (Response::ERROR_404& e)
-	// {
-	// 	handleERROR("404", fd);
-	// }
-	// catch (Message::BadRequest& e)
-	// {
-	// 	handleERROR("400", fd);
-	// }
 	catch (std::exception& exception)
 	{
 		std::string code = exception.what();

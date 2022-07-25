@@ -10,6 +10,10 @@
 #include <sstream>
 #include <map>
 #include <stdexcept>
+// #include <unistd.h>
+// #include <cstring>
+// #include <stdio.h>
+// #include <stdlib.h>
 
 #include "Base.hpp"
 #include "SingleServerConfig.hpp"
@@ -27,17 +31,17 @@ class Config
 
 	// Private Methods
 		void _openConfigFile();
-		void _readConfigFile();
 		void _checkBrackets(std::string buffer);
 		void _parseServerBlock(std::string serverBlock);
 		void _createConfigStruct(std::string server);
 		ConfigStruct _initConfigStruct();
-		void _freeConfigStruct();
+		void _freeConfigStruct(); // currently empty
+		void _readConfigFile();
+		const std::string _printLocationStruct(LocationStruct locationStruct) const;
 
 	public:
 	// Constructors
 		Config();
-		Config(std::string configPath);
 
 	// Deconstructors
 		~Config();
@@ -47,38 +51,32 @@ class Config
 		void printCluster();
 
 	// Getter
-		// const std::string getConfigPath() const;
-		// std::map<std::string, ConfigStruct> getCluster() const;
-		ConfigStruct getConfigStruct(std::string serverName);
+		ConfigStruct getConfigStruct(std::string hostName);
 
 		const std::map<std::string, unsigned short> getListen() const;
 		const std::string getRoot() const;
 		const std::string getServerName() const;
 		bool getAutoIndex() const;
 		const std::string getIndexPage() const;
-		bool getChunkedTransfer() const;
 		size_t getClientBodyBufferSize() const;
 		size_t getClientMaxBodySize() const;
-		// const std::vector<std::string> getCgi() const;
+		// const std::vector<std::string> getCgi() const; // only needed if we do bonus
 		const std::string getCgiBin() const;
 		const std::map<std::string, LocationStruct> getLocation() const;
 		const std::map<std::string, std::string> getErrorPage() const;
-		bool getShowLog() const;
 
-	// Getters for printing (consverts every value to string)
+	// Getters for printing (converts every value to string)
 		const std::string strGetListen() const;
 		const std::string strGetRoot() const;
 		const std::string strGetServerName() const;
 		const std::string strGetAutoIndex() const;
 		const std::string strGetIndexPage() const;
-		const std::string strGetChunkedTransfer() const;
 		const std::string strGetClientBodyBufferSize() const;
 		const std::string strGetClientMaxBodySize() const;
-		// const std::string strGetCgi() const;
+		// const std::string strGetCgi() const; // only needed if we do bonus
 		const std::string strGetCgiBin() const;
 		const std::string strGetLocation() const;
 		const std::string strGetErrorPage() const;
-		const std::string strGetShowLog() const;
 
 	// private: //maybe private for the setters adds more security
 	// Setter
@@ -147,8 +145,5 @@ class Config
 				virtual const char* what() const throw();
 		};
 };
-
-// Ostream overload
-std::ostream &operator<<(std::ostream &o, Config *a);
 
 #endif

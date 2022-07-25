@@ -36,12 +36,12 @@ struct PortStruct
 struct LocationStruct
 {
 	bool isDir;
-	std::string root;
-	std::string indexPage;
 	bool autoIndex;
 	bool getAllowed;
 	bool postAllowed;
 	bool deleteAllowed;
+	std::string root;
+	std::string indexPage;
 };
 
 // ConfigStruct
@@ -61,8 +61,8 @@ struct ConfigStruct
 	std::map<std::string, LocationStruct>	location;
 	std::map<std::string, std::string>		errorPage;
 	bool									autoIndex;
-	bool									showLog;
-	bool									chunkedTransfer;
+	// bool									showLog; // this might make more sense to be controlled via Makefile since it is difficult to do it for each server-block individually
+	// bool									chunkedTransfer;
 };
 
 #endif // BASE_HPP

@@ -21,30 +21,21 @@ class SingleServerConfig
 {
 	private:
 		ConfigStruct *_conf;
-		// std::vector<std::string> _listen;
-		// std::string _root;
-		// std::string _serverName;
-		// bool _autoIndex;
-		// std::string _indexPage;
-		// bool _chunkedTransfer;
-		// size_t _clientBodyBufferSize;
-		// size_t _clientMaxBodySize;
-		// std::vector<std::string> _cgi;
-		// std::string _cgiBin;
-		// std::map<std::string, std::string> _location;
-		// std::vector<std::string> _errorPage;
-		// size_t _logLevel;
 
 	// Private Methods
 		void _setVariables(std::string config);
 		void _parseKeyValue(std::string);
 
 		unsigned short _checkListen(std::string value);
-		// void _handleCgi(std::string line);
+		// void _handleCgi(std::string line); // only needed if we do bonus
 		void _handleLocation(std::string line);
 		void _handleErrorPage(std::string line);
 
 		size_t _strToSizeT(std::string str);
+
+		std::string _printLocationStruct(LocationStruct locationStruct);
+		LocationStruct _fillLocationStruct(std::string block);
+		LocationStruct _initLocationStruct();
 
 	public:
 	// Constructors
@@ -55,8 +46,6 @@ class SingleServerConfig
 		~SingleServerConfig();
 
 	// Public Methods
-
-
 
 	// Exceptions
 		class NoRootException : public std::exception
@@ -138,6 +127,66 @@ class SingleServerConfig
 		};
 
 		class NoValueFoundException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidLocationBlockException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateLocationException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidKeyValueException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidMethodValueException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidLocationException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateLocationRootException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateLocationIndexException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateLocationAutoIndexException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidIndexCombinationException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class MissingIndexException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

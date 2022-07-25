@@ -10,7 +10,9 @@
 
 Server::Server(Config* config) : _config(config)
 {
-	std::cout << "Server constructor called for " << this << std::endl;
+	#ifdef SHOW_LOG
+		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
+	#endif
 	handle_signals();
 	_port = 8080;
 
@@ -46,7 +48,9 @@ Server::Server(Config* config) : _config(config)
 Server::~Server(void)
 {
 	close(this->_server_fd);
-	std::cout << "server deconstructor called for " << this << std::endl;
+	#ifdef SHOW_LOG
+		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
+	#endif
 }
 
 
@@ -126,8 +130,10 @@ void Server::run_event_loop(int kq)
 					std::cerr << RESET;
 					continue;
 				}
-				else
-					std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
+				#ifdef SHOW_LOG
+					else
+						std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
+				#endif
 				int set = 1;
 				setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
 				add_client(fd, *(struct sockaddr_in *)&addr);
@@ -139,7 +145,9 @@ void Server::run_event_loop(int kq)
 				remove_client(evList[i].ident);
 				EV_SET(&ev, evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 				kevent(kq, &ev, 1, NULL, 0, NULL);
-				std::cout << GREEN << "Client " << evList[i].ident << " disconnected" << RESET << std::endl;
+				#ifdef SHOW_LOG
+					std::cout << GREEN << "Client " << evList[i].ident << " disconnected" << RESET << std::endl;
+				#endif
 			}
 			else if (evList[i].flags & EVFILT_READ) //handle client read event
 			{
@@ -162,7 +170,9 @@ void Server::run_event_loop(int kq)
 					continue;
 				}
 				buf[n] = '\0';
-				std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
+				#ifdef SHOW_LOG
+					std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
+				#endif
 
 				handleRequest(buf, fd);
 			}
@@ -233,7 +243,7 @@ void Server::handleERROR(const std::string& status, int fd)
 	_response.sendResponse();
 }
 
-void Server::handleRequest(const std::string& buffer, int fd) // function name is wrong, since it also handles cgi !!!!!!!!
+void Server::handleRequest(const std::string& buffer, int fd)
 {
 	try
 	{

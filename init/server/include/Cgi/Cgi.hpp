@@ -41,7 +41,7 @@ class Cgi
 				scriptNameEnd = url.find("?", scriptNameStart);
 			int queryStart = url.find("?");
 			_scriptName = url.substr(scriptNameStart, scriptNameEnd - scriptNameStart);
-			_pathInfo = (scriptNameEnd != (int)string::npos ) ? url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";
+			_pathInfo = (scriptNameEnd != (int)string::npos ) ?  url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";
 			_queryString = (queryStart != (int)string::npos )? url.substr(queryStart + 1, string::npos) : "";
 			setEnv(request);
 

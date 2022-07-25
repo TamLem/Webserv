@@ -298,40 +298,40 @@ const std::string& Request::getFragment(void) const
 
 const char* Request::InvalidNumberOfTokens::what() const throw()
 {
-	return ("Exception: invalid number of tokens");
+	return ("400");
 }
 
 const char* Request::EmptyMessage::what() const throw()
 {
-	return ("Exception: empty message");
+	return ("400");
 }
 
 const char* Request::InvalidMethod::what() const throw()
 {
-	return ("Exception: invalid method");
+	return ("501");
 }
 
 const char* Request::InvalidHeaderField::what() const throw()
 {
-	return ("Exception: invalid header field");
+	return ("400");
 }
 
 const char* Request::NoHost::what() const throw()
 {
-	return ("Exception: no host");
+	return ("400");
 }
 
 const char* Request::InvalidHeaderFieldName::what() const throw()
 {
-	return ("Exception: detected invalid character in http message header field-name");
+	return ("400");
 }
 
 const char* Request::InvalidHeaderFieldValue::what() const throw()
 {
-	return ("Exception: detected invalid character in http message header field-value");
+	return ("400");
 }
 
 const char* Request::InvalidProtocol::what() const throw()
 {
-	return ("Exception: invalid protocol");
+	return ("505");
 }

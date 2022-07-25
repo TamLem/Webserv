@@ -174,7 +174,7 @@ void Server::run_event_loop(int kq)
 					std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
 				#endif
 
-				handle_static_request(buf, fd);
+				handleRequest(buf, fd);
 			}
 		}
 	}
@@ -213,15 +213,15 @@ void Server::run()
 	run_event_loop(kq);
 }
 
-void Server::handleGET(int status, int fd, const std::string& uri)
+void Server::handleGET(const std::string& status, int fd, const std::string& uri)
 {
-	Response.init(status, fd, uri);
-	Response.createBody();
-	Response.createHeaderFields();
-	Response.sendResponse();
+	_response.init(status, fd, uri);
+	_response.createBody();
+	_response.createHeaderFields();
+	_response.sendResponse();
 }
 
-void Server::handlePOST(int status, int fd, const Request& newRequest)
+void Server::handlePOST(const std::string& status, int fd, const Request& newRequest)
 {
 	std::ofstream outFile;
 	outFile.open("./uploads/" + newRequest.getBody());
@@ -229,21 +229,21 @@ void Server::handlePOST(int status, int fd, const Request& newRequest)
 		throw std::exception();
 	outFile << newRequest.getBody() << "'s content. Server: " << this->_config->getConfigStruct("weebserv").serverName;
 	outFile.close();
-	Response.init(status, fd, "./pages/post_test.html");
-	Response.createBody();
-	Response.createHeaderFields();
-	Response.sendResponse();
+	_response.init(status, fd, "./pages/post_test.html");
+	_response.createBody();
+	_response.createHeaderFields();
+	_response.sendResponse();
 }
 
-void Server::handleERROR(int status, int fd)
+void Server::handleERROR(const std::string& status, int fd)
 {
-	Response.init(status, fd, ""); //AE make overload instead of passing ""
-	Response.createErrorBody();
-	Response.createHeaderFields();
-	Response.sendResponse();
+	_response.init(status, fd, ""); //AE make overload instead of passing ""
+	_response.createErrorBody();
+	_response.createHeaderFields();
+	_response.sendResponse();
 }
 
-void Server::handle_static_request(const std::string& buffer, int fd) // function name is wrong, since it also handles cgi !!!!!!!!
+void Server::handleRequest(const std::string& buffer, int fd) // function name is wrong, since it also handles cgi !!!!!!!!
 {
 	try
 	{
@@ -251,29 +251,16 @@ void Server::handle_static_request(const std::string& buffer, int fd) // functio
 		if (buffer.find("/cgi/") != std::string::npos)
 			cgi_handle(newRequest, buffer, fd);
 		else if (newRequest.getMethod() == "POST")
-			handlePOST(200, fd, newRequest);
+			handlePOST("200", fd, newRequest);
 		else
-			handleGET(200, fd, newRequest.getUri());
+			handleGET("200", fd, newRequest.getUri());
 	}
-	catch (Request::InvalidMethod& e)
+	catch (std::exception& exception)
 	{
-		handleERROR(501, fd);
-	}
-	catch (Request::InvalidProtocol& e)
-	{
-		handleERROR(505, fd);
-	}
-	catch (Response::ERROR_404& e)
-	{
-		handleERROR(404, fd);
-	}
-	catch (Message::BadRequest& e)
-	{
-		handleERROR(400, fd);
-	}
-	catch (std::exception& e)
-	{
-		handleERROR(500, fd);
+		std::string code = exception.what();
+		if (_response.getMessageMap().count(code) != 1)
+			code = "500";
+		handleERROR(code, fd);
 	}
 }
 

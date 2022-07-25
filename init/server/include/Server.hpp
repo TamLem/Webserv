@@ -60,16 +60,16 @@ class Server
 
 		void run(void);
 
-		void handle_static_request(const std::string&, int);
-		void handleGET(int, int, const std::string&);
-		void handlePOST(int, int, const Request&);
-		void handleERROR(int, int);
+		void handleRequest(const std::string&, int);
+		void handleGET(const std::string&, int, const std::string&);
+		void handlePOST(const std::string&, int, const Request&);
+		void handleERROR(const std::string&, int);
 	private:
 		size_t _port;
 		PortStruct _ports;
 		size_t _server_fd;
 		std::vector <client> _clients;
-		Response Response;
+		Response _response;
 		Config* _config;
 
 		Server();

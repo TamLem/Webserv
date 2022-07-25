@@ -292,7 +292,7 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 	// 	break ;
 	// }
 
-	default: // in case of some content that doe not match a known variable
+	default: // in case of some content that does not match a known variable
 	{
 		std::cerr << RED << ">" << keyValue << "<" << std::endl;
 		throw SingleServerConfig::InvalidKeyException();
@@ -324,12 +324,200 @@ unsigned short SingleServerConfig::_checkListen(std::string value)
 // 	// std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
 // }
 
+enum
+{
+	location_root,
+	location_method,
+	location_index,
+	location_auto_index
+};
+
+std::string locationVariables[]=
+{
+	"root",
+	"method",
+	"index_page",
+	"autoindex"
+};
+
+LocationStruct SingleServerConfig::_initLocationStruct()
+{
+	LocationStruct locationStruct;
+	locationStruct.isDir = true;
+	locationStruct.autoIndex = false;
+	locationStruct.getAllowed = false;
+	locationStruct.postAllowed = false;
+	locationStruct.deleteAllowed = false;
+	locationStruct.root = "";
+	locationStruct.indexPage = "";
+
+	return (locationStruct);
+}
+
 LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 {
 	std::cout << ">" << YELLOW << block << RESET << "< landed in _fillLocationStruct" << std::endl << std::endl;
-	LocationStruct locationStruct;
-	// check and fill in variables here
+
+	LocationStruct locationStruct = this->_initLocationStruct();
+	std::stringstream blockStream;
+	blockStream << block;
+	std::string keyValue;
+	std::string key;
+	std::string value;
+
+	bool foundRoot = false;
+	bool foundMethod = false;
+	bool foundIndex = false;
+	bool foundAutoIndex = false;
+
+	while (blockStream.good())
+	{
+		std::getline(blockStream, keyValue);
+		if (keyValue.length() <= 0)
+			continue ;
+		if (keyValue.find_first_of(WHITESPACE) == std::string::npos)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::InvalidKeyValueException();
+		}
+		key = keyValue.substr(0, keyValue.find_first_of(WHITESPACE));
+		size_t foundKey = location_root;
+
+		for (; foundKey < location_auto_index + 1; ++foundKey)
+		{
+			if (locationVariables[foundKey] == key)
+				break ;
+		}
+
+		switch (foundKey)
+		{
+		case (location_root):
+		{
+			if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+			{
+				std::cout << RED << keyValue << std::endl;
+				throw SingleServerConfig::InvalidWhitespaceException();
+			}
+			value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+			locationStruct.root = value;
+			foundRoot = true;
+			break ;
+		}
+
+		case (location_method):
+		{
+			// if (foundMethod == true)
+			// {
+			// 	throw SingleServerConfig::MethodRedeclarationExcetion();
+			// }
+			if (keyValue.find_last_not_of(WHITESPACE) - keyValue.find_first_of(WHITESPACE) > 15)
+			{
+				std::cout << RED << keyValue << RESET << std::endl;
+				throw SingleServerConfig::InvalidMethodValueException();
+			}
+			value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+			for (; value.length() > 0;)
+			{
+				if (value.find_first_of(WHITESPACE) < value.find_first_not_of(WHITESPACE))
+				{
+					std::cout << RED << keyValue << RESET << std::endl;
+					throw SingleServerConfig::InvalidWhitespaceException();
+				}
+				// std::cout << " top >" << value << "<" << std::endl;
+				std::string tempValue = value.substr(0, value.find_first_of(WHITESPACE));
+				if (tempValue == "GET" && locationStruct.getAllowed == false)
+					locationStruct.getAllowed = true;
+				else if (tempValue == "POST" && locationStruct.postAllowed == false)
+					locationStruct.postAllowed = true;
+				else if (tempValue == "DELETE" && locationStruct.deleteAllowed == false)
+					locationStruct.deleteAllowed = true;
+				else
+				{
+					std::cout << RED << tempValue << RESET << std::endl;
+					throw SingleServerConfig::InvalidMethodValueException();
+				}
+				if (value.find_first_of(WHITESPACE) != std::string::npos)
+					value = value.substr(value.find_first_of(WHITESPACE) + 1);
+				else
+					value = "";
+				// std::cout << "bottom >" << value << "<" << std::endl;
+			}
+			foundMethod = true;
+			break ;
+		}
+
+		case (location_index):
+		{
+			if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+			{
+				std::cout << RED << keyValue << std::endl;
+				throw SingleServerConfig::InvalidWhitespaceException();
+			}
+			value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+			locationStruct.indexPage = value;
+			foundIndex = true;
+			break ;
+		}
+
+		case (location_auto_index):
+		{
+			if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+			{
+				std::cout << RED << keyValue << std::endl;
+				throw SingleServerConfig::InvalidWhitespaceException();
+			}
+			value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+			if (value != "true" && value != "false")
+			{
+				std::cout << RED << keyValue << std::endl;
+				throw SingleServerConfig::InvalidValueTypeException();
+			}
+			locationStruct.autoIndex = (value.compare("true") == 0);
+			foundAutoIndex = true;
+			break ;
+		}
+
+		default:
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::InvalidKeyException();
+			break ;
+		}
+		}
+	}
+	if (!foundRoot || !foundMethod)
+	{
+		if (!foundRoot)
+			std::cout << RED << "No root found" << RESET << std::endl;
+		else
+			std::cout << RED << "No method found" << RESET << std::endl;
+		throw SingleServerConfig::InvalidLocationException();
+	}
+
 	return (locationStruct);
+}
+
+std::string SingleServerConfig::_printLocationStruct(LocationStruct locationStruct)
+{
+	std::stringstream outStream;
+	outStream << "\t{\n\t\troot " << locationStruct.root << std::endl \
+	<< "\t\tmethod ";
+	if (locationStruct.getAllowed)
+		outStream << "GET ";
+	if (locationStruct.postAllowed)
+		outStream << "POST ";
+	if (locationStruct.deleteAllowed)
+		outStream << "DELETE";
+	outStream << std::endl;
+	if (locationStruct.autoIndex)
+		outStream << "\t\tautoindex true" << std::endl;
+	else
+	{
+		outStream << "\t\tindex " << locationStruct.indexPage << std::endl;
+	}
+	outStream << "\t}" << std::endl;
+
+	return (outStream.str());
 }
 
 void SingleServerConfig::_handleLocation(std::string block)
@@ -371,7 +559,7 @@ void SingleServerConfig::_handleLocation(std::string block)
 			else
 				blockStream << line << std::endl;
 		}
-		LocationStruct value = this->_fillLocationStruct(blockStream.str());
+		LocationStruct locationStruct = this->_fillLocationStruct(blockStream.str());
 		// if (value.find_first_of(WHITESPACE) == std::string::npos || value.find_first_of(WHITESPACE) + 1 != "{")
 		// {
 		// 	std::cout << RED << block << RESET << std::endl;
@@ -384,10 +572,10 @@ void SingleServerConfig::_handleLocation(std::string block)
 		// }
 		// else
 		// {
-			// #ifdef SHOW_LOG_2
-			// 	std::cout << "key >" << BLUE << key << RESET << "< value >" << YELLOW << this->_printLocationStruct(value) << RESET << "< added successfully to ConfigStruct" << std::endl;
-			// #endif
-			// this->_conf->errorPage.insert(std::make_pair<std::string, LocationStruct>(key, value));
+		// #ifdef SHOW_LOG_2
+			std::cout << "key >" << BLUE << key << RESET << "< value\n" << YELLOW << this->_printLocationStruct(locationStruct) << RESET << "< added successfully to ConfigStruct" << std::endl;
+		// #endif
+		this->_conf->location.insert(std::make_pair<std::string, LocationStruct>(key, locationStruct));
 		// }
 	}
 }
@@ -627,3 +815,23 @@ const char* SingleServerConfig::DuplicateLocationException::what(void) const thr
 {
 	return ("↑↑↑ only one location-block with same key allowed");
 }
+
+const char* SingleServerConfig::InvalidKeyValueException::what(void) const throw()
+{
+	return ("↑↑↑ this key-value pair is invalid");
+}
+
+const char* SingleServerConfig::InvalidMethodValueException::what(void) const throw()
+{
+	return ("↑↑↑ this method is not recognized as a valid method or was already declared");
+}
+
+const char* SingleServerConfig::InvalidLocationException::what(void) const throw()
+{
+	return ("↑↑↑ caused the location-block to be invalid");
+}
+
+// const char* SingleServerConfig::MethodRedeclarationException::what(void) const throw()
+// {
+// 	return ("double use of method key is not allowed");
+// }

@@ -27,12 +27,13 @@ class Config
 
 	// Private Methods
 		void _openConfigFile();
-		void _readConfigFile();
 		void _checkBrackets(std::string buffer);
 		void _parseServerBlock(std::string serverBlock);
 		void _createConfigStruct(std::string server);
 		ConfigStruct _initConfigStruct();
 		void _freeConfigStruct();
+		void _readConfigFile();
+		const std::string _printLocationStruct(LocationStruct locationStruct) const;
 
 	public:
 	// Constructors

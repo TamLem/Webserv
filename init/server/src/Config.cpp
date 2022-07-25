@@ -227,6 +227,32 @@ void Config::_readConfigFile()
 	this->_checkBrackets(buffer);
 }
 
+const std::string Config::_printLocationStruct(LocationStruct locationStruct) const
+{
+	std::stringstream outStream;
+
+	outStream << "\t{\n\t\troot " << locationStruct.root << std::endl;
+
+	outStream << "\t\tmethod ";
+	if (locationStruct.getAllowed)
+		outStream << "GET ";
+	if (locationStruct.postAllowed)
+		outStream << "POST ";
+	if (locationStruct.deleteAllowed)
+		outStream << "DELETE";
+	outStream << std::endl;
+
+	if (locationStruct.autoIndex)
+		outStream << "\t\tautoindex true" << std::endl;
+	else
+	{
+		outStream << "\t\tindex " << locationStruct.indexPage << std::endl;
+	}
+	outStream << "\t}" << std::endl;
+
+	return (outStream.str());
+}
+
 // Constructor
 Config::Config()
 {
@@ -289,7 +315,7 @@ void Config::printCluster()
 		"\tclient_max_body_size " << this->strGetClientMaxBodySize() << std::endl << \
 		/* "\tcgi " << a->strGetCgi() << std::endl << \*/
 		"\tcgi_bin " << this->strGetCgiBin() << std::endl << \
-		"\tlocation " << this->strGetLocation() << std::endl << \
+		this->strGetLocation() << std::endl << \
 		"\terror_page\n" << this->strGetErrorPage() << \
 		/* "\tshow_log " << this->strGetShowLog() << std::endl << \ */
 		 GREEN << "}" << RESET << std::endl << std::endl;
@@ -462,8 +488,10 @@ const std::string Config::strGetLocation() const
 	std::stringstream print;
 	std::map<std::string, LocationStruct>::const_iterator it = this->_conf.location.begin();
 	for (; it != this->_conf.location.end(); ++it)
-		print << "\t\t" << it->first << " " << "placeholder for LocationStruct" << std::endl;
-	print << "/placeholer\n\t\t\troot place/hold/placeholder\n\t\t\tmethod GET POST DELETE\n\t\t\tautoindex true";
+	{
+		print << "\tlocation " << it->first << std::endl;
+		print << this->_printLocationStruct(it->second);
+	}
 	return (print.str());
 }
 
@@ -574,7 +602,7 @@ std::ostream	&operator<<(std::ostream &o, Config *a) // will print the contents 
 	"\tclient_max_body_size " << a->strGetClientMaxBodySize() << std::endl << \
 	/* "\tcgi " << a->strGetCgi() << std::endl << \ */
 	"\tcgi_bin " << a->strGetCgiBin() << std::endl << \
-	"\tlocation " << a->strGetLocation() << std::endl << \
+	a->strGetLocation() << std::endl << \
 	"\terror_page\n" << a->strGetErrorPage() << \
 	/* "\tshow_log " << a->strGetShowLog() << std::endl << \ */
 	"}" << std::endl;

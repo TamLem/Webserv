@@ -21,19 +21,6 @@ class SingleServerConfig
 {
 	private:
 		ConfigStruct *_conf;
-		// std::vector<std::string> _listen;
-		// std::string _root;
-		// std::string _serverName;
-		// bool _autoIndex;
-		// std::string _indexPage;
-		// bool _chunkedTransfer;
-		// size_t _clientBodyBufferSize;
-		// size_t _clientMaxBodySize;
-		// std::vector<std::string> _cgi;
-		// std::string _cgiBin;
-		// std::map<std::string, std::string> _location;
-		// std::vector<std::string> _errorPage;
-		// size_t _logLevel;
 
 	// Private Methods
 		void _setVariables(std::string config);
@@ -48,6 +35,7 @@ class SingleServerConfig
 
 		std::string _printLocationStruct(LocationStruct locationStruct);
 		LocationStruct _fillLocationStruct(std::string block);
+		LocationStruct _initLocationStruct();
 
 	public:
 	// Constructors
@@ -157,6 +145,30 @@ class SingleServerConfig
 			public:
 				virtual const char* what() const throw();
 		};
+
+		class InvalidKeyValueException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidMethodValueException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidLocationException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		// class MethodRedeclarationException : public std::exception
+		// {
+		// 	public:
+		// 		virtual const char* what() const throw();
+		// };
 };
 
 #endif // SINGLESERVER_HPP

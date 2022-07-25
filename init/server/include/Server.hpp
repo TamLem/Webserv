@@ -61,9 +61,9 @@ class Server
 		void run(void);
 
 		void handle_static_request(const std::string&, int);
-		void handleGET(int, int, const std::string&);
-		void handlePOST(int, int, const Request&);
-		void handleERROR(int, int);
+		void handleGET(const std::string&, int, const std::string&);
+		void handlePOST(const std::string&, int, const Request&);
+		void handleERROR(const std::string&, int);
 	private:
 		size_t _port;
 		PortStruct _ports;

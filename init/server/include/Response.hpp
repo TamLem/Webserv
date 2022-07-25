@@ -8,13 +8,13 @@
 class Response : public Message
 {
 	private:
-		int status;
+		std::string status;
 		std::string statusMessage;
-		std::map<int, std::string> messageMap;
+		std::map<std::string, std::string> messageMap;
 		int fd;
 		std::string uri;
 		void createMessageMap(void);
-		bool isValidStatus(const int);
+		bool isValidStatus(const std::string&);
 		int sendall(const int sock_fd, char *buffer, const int len) const;
 	public:
 		Response(void);
@@ -26,12 +26,12 @@ class Response : public Message
 		// void setStatus(const int&);
 
 		// const std::string& getProtocol(void) const;
-		const int& getStatus(void) const;
+		const std::string& getStatus(void) const;
 		const std::string& getStatusMessage(void) const;
 
 		std::string constructHeader(void);
 
-		void init(int, int, const std::string&);
+		void init(const std::string&, int, const std::string&);
 		void createHeaderFields(void);
 		void createBody(void);
 		void createErrorBody(void);

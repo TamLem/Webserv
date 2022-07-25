@@ -203,7 +203,7 @@ void Server::run()
 	run_event_loop(kq);
 }
 
-void Server::handleGET(int status, int fd, const std::string& uri)
+void Server::handleGET(const std::string& status, int fd, const std::string& uri)
 {
 	Response.init(status, fd, uri);
 	Response.createBody();
@@ -211,7 +211,7 @@ void Server::handleGET(int status, int fd, const std::string& uri)
 	Response.sendResponse();
 }
 
-void Server::handlePOST(int status, int fd, const Request& newRequest)
+void Server::handlePOST(const std::string& status, int fd, const Request& newRequest)
 {
 	std::ofstream outFile;
 	outFile.open("./uploads/" + newRequest.getBody());
@@ -225,7 +225,7 @@ void Server::handlePOST(int status, int fd, const Request& newRequest)
 	Response.sendResponse();
 }
 
-void Server::handleERROR(int status, int fd)
+void Server::handleERROR(const std::string& status, int fd)
 {
 	Response.init(status, fd, ""); //AE make overload instead of passing ""
 	Response.createErrorBody();
@@ -241,29 +241,29 @@ void Server::handle_static_request(const std::string& buffer, int fd) // functio
 		if (buffer.find("/cgi/") != std::string::npos)
 			cgi_handle(newRequest, buffer, fd);
 		else if (newRequest.getMethod() == "POST")
-			handlePOST(200, fd, newRequest);
+			handlePOST("200", fd, newRequest);
 		else
-			handleGET(200, fd, newRequest.getUri());
+			handleGET("200", fd, newRequest.getUri());
 	}
 	catch (Request::InvalidMethod& e)
 	{
-		handleERROR(501, fd);
+		handleERROR("501", fd);
 	}
 	catch (Request::InvalidProtocol& e)
 	{
-		handleERROR(505, fd);
+		handleERROR("505", fd);
 	}
 	catch (Response::ERROR_404& e)
 	{
-		handleERROR(404, fd);
+		handleERROR("404", fd);
 	}
 	catch (Message::BadRequest& e)
 	{
-		handleERROR(400, fd);
+		handleERROR("400", fd);
 	}
 	catch (std::exception& e)
 	{
-		handleERROR(500, fd);
+		handleERROR("500", fd);
 	}
 }
 

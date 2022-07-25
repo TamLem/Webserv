@@ -29,10 +29,10 @@ void Config::_checkBrackets(std::string all)
 			continue ;
 		serverStream << buffer << std::endl; // fill stringstream for the SingleServerConfig
 		// std::cerr << ">" << YELLOW << buffer << RESET << "< got written into serverStream" << std::endl;
-		if (buffer.find("server {") != std::string::npos && buffer.find("#") > buffer.find("server {"))
+		if (buffer.find("server {") != std::string::npos && buffer.find_first_of("#;") > buffer.find("server {"))
 		{
 			// std::cout << BLUE << "opened server brackets with >" << buffer << "<" << RESET << std::endl;
-			if (buffer.substr(buffer.find("server {") + 8).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("server {") + 8).find_first_of("#") || (buffer.find_first_not_of(WHITESPACE) != buffer.find("server {")))
+			if (buffer.substr(buffer.find("server {") + 8).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("server {") + 8).find_first_of("#;") || (buffer.find_first_not_of(WHITESPACE) != buffer.find("server {")))
 			{
 				// std::cerr << "1>" << RED << buffer << RESET << "<" << std::endl;
 				throw Config::WrongConfigSyntaxException();
@@ -45,10 +45,10 @@ void Config::_checkBrackets(std::string all)
 			else
 				openServer = true;
 		}
-		else if (buffer.find("location ") != std::string::npos && buffer.find("#") > buffer.find("location "))
+		else if (buffer.find("location ") != std::string::npos && buffer.find_first_of("#;") > buffer.find("location "))
 		{
 			// std::cout << BLUE << "opened location brackets with >" << buffer << "<" << RESET << std::endl;
-			if (buffer.find(" {") == std::string::npos || buffer.find(" {") > buffer.find("#"))
+			if (buffer.find(" {") == std::string::npos || buffer.find(" {") > buffer.find_first_of("#;"))
 			{
 				std::cout << RED << buffer << std::endl;
 				throw Config::WrongListenBlockException();
@@ -61,10 +61,10 @@ void Config::_checkBrackets(std::string all)
 			else
 				openLocation = true;
 		}
-		else if (buffer.find("}") != std::string::npos && buffer.find("#") > buffer.find("}"))
+		else if (buffer.find("}") != std::string::npos && buffer.find_first_of("#;") > buffer.find("}"))
 		{
 			// std::cerr << GREEN << "found this to close a bracket >" << buffer << "<" << RESET << std::endl;
-			if (buffer.substr(buffer.find("}") + 1).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("}") + 1).find_first_of("#") || buffer.find_first_not_of(WHITESPACE) != buffer.find("}"))
+			if (buffer.substr(buffer.find("}") + 1).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("}") + 1).find_first_of("#;") || buffer.find_first_not_of(WHITESPACE) != buffer.find("}"))
 			{
 				// std::cerr << "3>" << RED << buffer << RESET << "<" << std::endl;
 				throw Config::WrongConfigSyntaxException();
@@ -88,7 +88,7 @@ void Config::_checkBrackets(std::string all)
 	{
 		throw Config::InvalidBracketsException();
 	}
-	else if (buffer.length() > 0 && (buffer.find("#") == std::string::npos || buffer.find_first_not_of(WHITESPACE) < buffer.find_first_of("#")))
+	else if (buffer.length() > 0 && (buffer.find_first_of("#;") == std::string::npos || buffer.find_first_not_of(WHITESPACE) < buffer.find_first_of("#;")))
 	{
 		std::cout << BLUE << ">" << buffer << "<" << RESET << std::endl;
 		throw Config::ContentOutsideServerBlockException();
@@ -105,17 +105,17 @@ void Config::_parseServerBlock(std::string serverBlock)
 
 	// std::cout << "this was passed into the _parseServerBlock\n>" << serverBlock << "<" << std::endl;
 
-	while (serverStream.good()) // clear out all the comments, leading and trailing whitespaces
+	while (serverStream.good())
 	{
 		buffer.clear();
 		std::getline(serverStream, buffer);
 		if (buffer.length() == 0)
 			continue ;
 		// std::cerr << YELLOW << "before: >" << buffer << "<" << RESET << std::endl;
-		size_t start = buffer.find_first_not_of(WHITESPACE);
+		size_t start = buffer.find_first_not_of(WHITESPACE); // clear out all the leading whitespaces
 		if (start == std::string::npos)
 			continue ;
-		size_t end = buffer.find_first_of('#');
+		size_t end = buffer.find_first_of("#;"); // clear out all the comments and trailing whitespaces
 		if (end == std::string::npos)
 		{
 			end = buffer.find_last_not_of(WHITESPACE);
@@ -150,13 +150,14 @@ void Config::_parseServerBlock(std::string serverBlock)
 			server.append("\n");
 		}
 	}
-	// if (server.length() == 0)
-	// 	throw some Exception();
+	if (server.length() == 0)
+		throw Config::NoServerFoundException();
 	this->_createConfigStruct(server);
 }
 
 void Config::_createConfigStruct(std::string server)
 {
+	static size_t structsCreated;
 	// std::cerr << "This was passed into _createConfigStruct:\n>" << server << "<" << std::endl;
 
 	if (server.find("server_name") == std::string::npos)
@@ -175,6 +176,12 @@ void Config::_createConfigStruct(std::string server)
 	// SingleServerConfig *SingleServerObject = new SingleServerConfig(server, confStruct);
 	SingleServerConfig temp(server, &confStruct); // check the confStruct for correct values!!!!!!!!!!
 	this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
+	++structsCreated;
+	if (structsCreated == 1)
+	{
+		serverName = "default";
+		this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
+	}
 	// delete SingleServerObject;
 	// std::cout << GREEN << "size: " << this->_cluster.size() << RESET << std::endl;
 	// std::cout << GREEN << "added server " << serverName << " to cluster" << RESET << std::endl;
@@ -184,7 +191,7 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 {
 	ConfigStruct confStruct;
 	confStruct.serverName = "";
-	confStruct.listen = std::vector<std::string>();
+	confStruct.listen = std::map<std::string, unsigned short>();
 	confStruct.root = "";
 	confStruct.autoIndex = false;
 	confStruct.indexPage = "index.html";
@@ -202,11 +209,11 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 
 void Config::_freeConfigStruct()
 {
+	// check if freeing is needed!!!!!!!!!!!!!
 	// this->_conf.listen.clear();
 	// this->_conf.cgi.clear();
 	// this->_conf.location.clear();
 	// this->_conf.errorPage.clear();
-
 }
 
 void Config::_readConfigFile()
@@ -257,6 +264,30 @@ void Config::start(std::string configPath)
 	// std::cout << "finished start function of config object" << std::endl;
 }
 
+void Config::printCluster()
+{
+	std::map<std::string, ConfigStruct>::const_iterator it = this->_cluster.begin();
+	for (; it != this->_cluster.end(); ++it)
+	{
+		this->applyConfig(it->first);
+		std::cout << GREEN << it->first << " {" << RESET << std::endl << \
+		"\tlisten\n" << this->strGetListen() << \
+		"\troot " << this->strGetRoot() << std::endl << \
+		"\tserver_name " << this->strGetServerName() << std::endl << \
+		"\tautoindex " << this->strGetAutoIndex() << std::endl << \
+		"\tindex_page " << this->strGetIndexPage() << std::endl << \
+		"\tchunked_transfer " << this->strGetChunkedTransfer() << std::endl << \
+		"\tclient_body_buffer_size " << this->strGetClientBodyBufferSize() << std::endl << \
+		"\tclient_max_body_size " << this->strGetClientMaxBodySize() << std::endl << \
+		/*"\tcgi " << a->strGetCgi() << std::endl << \*/
+		"\tcgi_bin " << this->strGetCgiBin() << std::endl << \
+		"\tlocation " << this->strGetLocation() << std::endl << \
+		"\terror_page\n" << this->strGetErrorPage() << \
+		"\tlog_level " << this->strGetShowLog() << std::endl << \
+		 GREEN << "}" << RESET << std::endl << std::endl;
+	}
+}
+
 // Getter
 ConfigStruct Config::getConfigStruct(std::string serverName)
 {
@@ -264,12 +295,14 @@ ConfigStruct Config::getConfigStruct(std::string serverName)
 	if (this->applyConfig(serverName) == true)
 		return (this->_conf);
 	else
+	{
+		std::cout << std::endl << RED << BOLD << "!!!!! DEFAULT STRUCT IS NOW BEEING USED !!!!!" << RESET << std::endl << std::endl;
 		this->applyConfig(defaultConfig);
-
+	}
 	return (this->_conf);
 }
 
-const std::vector<std::string> Config::getListen() const
+const std::map<std::string, unsigned short> Config::getListen() const
 {
 	return (this->_conf.listen);
 }
@@ -309,10 +342,10 @@ size_t Config::getClientMaxBodySize() const
 	return (this->_conf.clientMaxBodySize);
 }
 
-const std::vector<std::string> Config::getCgi() const
-{
-	return (this->_conf.cgi);
-}
+// const std::vector<std::string> Config::getCgi() const
+// {
+// 	return (this->_conf.cgi);
+// }
 
 const std::string Config::getCgiBin() const
 {
@@ -337,14 +370,11 @@ bool Config::getShowLog() const
 // Getters for printing
 const std::string Config::strGetListen() const
 {
-	std::string print = "";
-	size_t size = this->_conf.listen.size();
-	for (size_t i = 0; i < size; ++i)
-	{
-		print.append(this->_conf.listen[i]);
-		print.append(" ");
-	}
-	return (print);
+	std::stringstream print;
+	std::map<std::string, unsigned short>::const_iterator it = this->_conf.listen.begin();
+	for (; it != this->_conf.listen.end(); ++it)
+		print << "\t\t" << it->second << std::endl;
+	return (print.str());
 }
 
 const std::string Config::strGetRoot() const
@@ -399,17 +429,17 @@ const std::string Config::strGetClientMaxBodySize() const
 	return (print.str());
 }
 
-const std::string Config::strGetCgi() const
-{
-	std::string print = "";
-	size_t size = this->_conf.cgi.size();
-	for (size_t i = 0; i < size; ++i)
-	{
-		print.append(this->_conf.cgi[i]);
-		print.append(" ");
-	}
-	return (print);
-}
+// const std::string Config::strGetCgi() const
+// {
+// 	std::string print = "";
+// 	size_t size = this->_conf.cgi.size();
+// 	for (size_t i = 0; i < size; ++i)
+// 	{
+// 		print.append(this->_conf.cgi[i]);
+// 		print.append(" ");
+// 	}
+// 	return (print);
+// }
 
 const std::string Config::strGetCgiBin() const
 {
@@ -420,7 +450,10 @@ const std::string Config::strGetCgiBin() const
 const std::string Config::strGetLocation() const
 {
 	std::stringstream print;
-	print << "placeholder";
+	std::map<std::string, LocationStruct>::const_iterator it = this->_conf.location.begin();
+	for (; it != this->_conf.location.end(); ++it)
+		print << "\t\t" << it->first << " " << "placeholder for LocationStruct" << std::endl;
+	print << "/placeholer\n\t\t\troot place/hold/placeholder\n\t\t\tmethod GET POST DELETE\n\t\t\tautoindex true";
 	return (print.str());
 }
 
@@ -469,17 +502,17 @@ bool Config::applyConfig(std::string serverName)
 // incomplete brackets
 const char* Config::InvalidBracketsException::what(void) const throw()
 {
-	return ("Invalid brackets in .conf-file");
+	return ("Invalid brackets in .conf file");
 }
 
 const char* Config::FileOpenException::what(void) const throw()
 {
-	return ("Failed to read from .conf-file");
+	return ("Failed to read from .conf file, check file existance and readrights");
 }
 
 const char* Config::ServerInsideServerException::what(void) const throw()
 {
-	return ("Wrong Syntax in .conf-file, server-block inside server-block found");
+	return ("Wrong Syntax in .conf file, server-block inside server-block found");
 }
 
 const char* Config::InvalidCharException::what(void) const throw()
@@ -504,7 +537,7 @@ const char* Config::DuplicateServerNameException::what(void) const throw()
 
 const char* Config::WrongListenBlockException::what(void) const throw()
 {
-	return ("↑↑↑ wrong listen-block found inside .conf-file, see above");
+	return ("↑↑↑ wrong listen-block found inside .conf file, see above");
 }
 
 const char* Config::ContentOutsideServerBlockException::what(void) const throw()
@@ -512,11 +545,16 @@ const char* Config::ContentOutsideServerBlockException::what(void) const throw()
 	return ("non-whitespace and non-commented content is forbidden outside server-block");
 }
 
+const char* Config::NoServerFoundException::what(void) const throw()
+{
+	return ("please provide at least one server-block in .conf file");
+}
+
 // Ostream overload
 std::ostream	&operator<<(std::ostream &o, Config *a) // set the correct struct by giving the appropriate serverName to the setPrintFunction
 {
 	o << a->strGetServerName() << " {" << std::endl << \
-	"\tlisten " << a->strGetListen() << std::endl << \
+	"\tlisten\n" << a->strGetListen() << \
 	"\troot " << a->strGetRoot() << std::endl << \
 	"\tserver_name " << a->strGetServerName() << std::endl << \
 	"\tautoindex " << a->strGetAutoIndex() << std::endl << \
@@ -524,7 +562,7 @@ std::ostream	&operator<<(std::ostream &o, Config *a) // set the correct struct b
 	"\tchunked_transfer " << a->strGetChunkedTransfer() << std::endl << \
 	"\tclient_body_buffer_size " << a->strGetClientBodyBufferSize() << std::endl << \
 	"\tclient_max_body_size " << a->strGetClientMaxBodySize() << std::endl << \
-	"\tcgi " << a->strGetCgi() << std::endl << \
+	/*"\tcgi " << a->strGetCgi() << std::endl << \*/
 	"\tcgi_bin " << a->strGetCgiBin() << std::endl << \
 	"\tlocation " << a->strGetLocation() << std::endl << \
 	"\terror_page\n" << a->strGetErrorPage() << \

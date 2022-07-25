@@ -39,8 +39,8 @@ class SingleServerConfig
 		void _setVariables(std::string config);
 		void _parseKeyValue(std::string);
 
-		void _checkListen(std::string line);
-		void _handleCgi(std::string line);
+		unsigned short _checkListen(std::string value);
+		// void _handleCgi(std::string line);
 		void _handleLocation(std::string line);
 		void _handleErrorPage(std::string line);
 
@@ -132,6 +132,12 @@ class SingleServerConfig
 		};
 
 		class DefaultNotAllowedException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class NoValueFoundException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

@@ -14,7 +14,7 @@
 #define BLUE "\033[34m"
 #define RED "\033[31m"
 
-bool Response::isValidStatus(const int status)
+bool Response::isValidStatus(const std::string& status)
 {
 	if (this->messageMap.count(status))
 		return (true);
@@ -44,13 +44,13 @@ Response::Response(void)// : status(status), fd(fd), uri(uri)
 // 	// this->sendResponse();
 // }
 
-void Response::init(int status, int fd, const std::string& uri)
+void Response::init(const std::string& status, int fd, const std::string& uri)
 {
 	this->headerFields.clear();
 
-	this->status = status;
 	if (!isValidStatus(status))
 		throw InvalidStatus();
+	this->status = status;
 	this->fd = fd;
 	this->uri = uri;
 	this->protocol = PROTOCOL;
@@ -63,7 +63,7 @@ Response::~Response(void)
 
 }
 
-const int& Response::getStatus(void) const
+const std::string& Response::getStatus(void) const
 {
 	return (this->status);
 }
@@ -71,6 +71,11 @@ const int& Response::getStatus(void) const
 const std::string& Response::getStatusMessage(void) const
 {
 	return (this->statusMessage);
+}
+
+const std::map<std::string, std::string>& Response::getMessageMap(void) const
+{
+	return (this->messageMap);
 }
 
 std::string Response::constructHeader(void)
@@ -171,73 +176,73 @@ void Response::sendResponse(void)
 void Response::createMessageMap(void)
 {
 	//1xx informational response
-	this->messageMap[100] = "Continue";
-	this->messageMap[101] = "Switching Protocols";
-	this->messageMap[102] = "Processing";
-	this->messageMap[103] = "Early Hints";
+	this->messageMap["100"] = "Continue";
+	this->messageMap["101"] = "Switching Protocols";
+	this->messageMap["102"] = "Processing";
+	this->messageMap["103"] = "Early Hints";
 	//2xx success
-	this->messageMap[200] = "OK";
-	this->messageMap[201] = "Created";
-	this->messageMap[202] = "Accepted";
-	this->messageMap[203] = "Non-Authoritative Information";
-	this->messageMap[204] = "No Content";
-	this->messageMap[205] = "Reset Content";
-	this->messageMap[206] = "Partial Content";
-	this->messageMap[207] = "Multi-Status";
-	this->messageMap[208] = "Already Reported";
-	this->messageMap[226] = "IM Used";
+	this->messageMap["200"] = "OK";
+	this->messageMap["201"] = "Created";
+	this->messageMap["202"] = "Accepted";
+	this->messageMap["203"] = "Non-Authoritative Information";
+	this->messageMap["204"] = "No Content";
+	this->messageMap["205"] = "Reset Content";
+	this->messageMap["206"] = "Partial Content";
+	this->messageMap["207"] = "Multi-Status";
+	this->messageMap["208"] = "Already Reported";
+	this->messageMap["226"] = "IM Used";
 	//3xx redirection
-	this->messageMap[300] = "Multiple Choices";
-	this->messageMap[301] = "Moved Permanently";
-	this->messageMap[302] = "Found";
-	this->messageMap[303] = "See Other";
-	this->messageMap[304] = "Not Modified";
-	this->messageMap[305] = "Use Proxy";
-	this->messageMap[306] = "Switch Proxy";
-	this->messageMap[307] = "Temporary Redirect";
-	this->messageMap[308] = "Permanent Redirect";
+	this->messageMap["300"] = "Multiple Choices";
+	this->messageMap["301"] = "Moved Permanently";
+	this->messageMap["302"] = "Found";
+	this->messageMap["303"] = "See Other";
+	this->messageMap["304"] = "Not Modified";
+	this->messageMap["305"] = "Use Proxy";
+	this->messageMap["306"] = "Switch Proxy";
+	this->messageMap["307"] = "Temporary Redirect";
+	this->messageMap["308"] = "Permanent Redirect";
 	//4xx client errors
-	this->messageMap[400] = "Bad Request";
-	this->messageMap[401] = "Unauthorized";
-	this->messageMap[402] = "Payment Required";
-	this->messageMap[403] = "Forbidden";
-	this->messageMap[404] = "Not Found";
-	this->messageMap[405] = "Method Not Allowed";
-	this->messageMap[406] = "Not Acceptable";
-	this->messageMap[407] = "Proxy Authentication Required";
-	this->messageMap[408] = "Request Timeout";
-	this->messageMap[409] = "Conflict";
-	this->messageMap[410] = "Gone";
-	this->messageMap[411] = "Length Required";
-	this->messageMap[412] = "Precondition Failed";
-	this->messageMap[413] = "Content Too Large";
-	this->messageMap[414] = "URI Too Long";
-	this->messageMap[415] = "Unsupported Media Type";
-	this->messageMap[416] = "Range Not Satisfiable";
-	this->messageMap[417] = "Expectation Failed";
-	this->messageMap[418] = "I'm a teapot";
-	this->messageMap[421] = "Misdirected Request";
-	this->messageMap[422] = "Unprocessable Content";
-	this->messageMap[423] = "Locked";
-	this->messageMap[424] = "Failed Dependency";
-	this->messageMap[425] = "Too Early";
-	this->messageMap[426] = "Upgrade Required";
-	this->messageMap[428] = "Precondition Required";
-	this->messageMap[429] = "Too Many Requests";
-	this->messageMap[431] = "Request Header Fields Too Large";
-	this->messageMap[451] = "Unavailable For Legal Reasons";
+	this->messageMap["400"] = "Bad Request";
+	this->messageMap["401"] = "Unauthorized";
+	this->messageMap["402"] = "Payment Required";
+	this->messageMap["403"] = "Forbidden";
+	this->messageMap["404"] = "Not Found";
+	this->messageMap["405"] = "Method Not Allowed";
+	this->messageMap["406"] = "Not Acceptable";
+	this->messageMap["407"] = "Proxy Authentication Required";
+	this->messageMap["408"] = "Request Timeout";
+	this->messageMap["409"] = "Conflict";
+	this->messageMap["410"] = "Gone";
+	this->messageMap["411"] = "Length Required";
+	this->messageMap["412"] = "Precondition Failed";
+	this->messageMap["413"] = "Content Too Large";
+	this->messageMap["414"] = "URI Too Long";
+	this->messageMap["415"] = "Unsupported Media Type";
+	this->messageMap["416"] = "Range Not Satisfiable";
+	this->messageMap["417"] = "Expectation Failed";
+	this->messageMap["418"] = "I'm a teapot";
+	this->messageMap["421"] = "Misdirected Request";
+	this->messageMap["422"] = "Unprocessable Content";
+	this->messageMap["423"] = "Locked";
+	this->messageMap["424"] = "Failed Dependency";
+	this->messageMap["425"] = "Too Early";
+	this->messageMap["426"] = "Upgrade Required";
+	this->messageMap["428"] = "Precondition Required";
+	this->messageMap["429"] = "Too Many Requests";
+	this->messageMap["431"] = "Request Header Fields Too Large";
+	this->messageMap["451"] = "Unavailable For Legal Reasons";
 	//5xx server errors
-	this->messageMap[500] = "Internal Server Error";
-	this->messageMap[501] = "Not Implemented";
-	this->messageMap[502] = "Bad Gateway";
-	this->messageMap[503] = "Service Unavailable";
-	this->messageMap[504] = "Gateway Timeout";
-	this->messageMap[505] = "HTTP Version Not Supported";
-	this->messageMap[506] = "Variant Also Negotiates";
-	this->messageMap[507] = "Insufficient Storage";
-	this->messageMap[508] = "Loop Detected";
-	this->messageMap[510] = "Not Extended";
-	this->messageMap[511] = "Network Authentication Required";
+	this->messageMap["500"] = "Internal Server Error";
+	this->messageMap["501"] = "Not Implemented";
+	this->messageMap["502"] = "Bad Gateway";
+	this->messageMap["503"] = "Service Unavailable";
+	this->messageMap["504"] = "Gateway Timeout";
+	this->messageMap["505"] = "HTTP Version Not Supported";
+	this->messageMap["506"] = "Variant Also Negotiates";
+	this->messageMap["507"] = "Insufficient Storage";
+	this->messageMap["508"] = "Loop Detected";
+	this->messageMap["510"] = "Not Extended";
+	this->messageMap["511"] = "Network Authentication Required";
 }
 
 std::ostream& operator<<(std::ostream& out, const Response& response)
@@ -255,5 +260,5 @@ const char* Response::InvalidStatus::what() const throw()
 
 const char* Response::ERROR_404::what() const throw()
 {
-	return ("Exception: 404");
+	return ("404");
 }

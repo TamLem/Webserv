@@ -44,13 +44,14 @@ class Config
 
 	// Public Methods
 		void start(std::string configPath);
+		void printCluster();
 
 	// Getter
 		// const std::string getConfigPath() const;
 		// std::map<std::string, ConfigStruct> getCluster() const;
-		ConfigStruct getConfigStruct(std::string serverName); // new
+		ConfigStruct getConfigStruct(std::string serverName);
 
-		const std::vector<std::string> getListen() const;
+		const std::map<std::string, unsigned short> getListen() const;
 		const std::string getRoot() const;
 		const std::string getServerName() const;
 		bool getAutoIndex() const;
@@ -58,10 +59,10 @@ class Config
 		bool getChunkedTransfer() const;
 		size_t getClientBodyBufferSize() const;
 		size_t getClientMaxBodySize() const;
-		const std::vector<std::string> getCgi() const;
+		// const std::vector<std::string> getCgi() const;
 		const std::string getCgiBin() const;
 		const std::map<std::string, LocationStruct> getLocation() const;
-		const std::map<std::string, std::string> getErrorPage() const; // rethink this type !!!!! maybe map is better, but then more pasing needs to be done
+		const std::map<std::string, std::string> getErrorPage() const;
 		bool getShowLog() const;
 
 	// Getters for printing (consverts every value to string)
@@ -73,7 +74,7 @@ class Config
 		const std::string strGetChunkedTransfer() const;
 		const std::string strGetClientBodyBufferSize() const;
 		const std::string strGetClientMaxBodySize() const;
-		const std::string strGetCgi() const;
+		// const std::string strGetCgi() const;
 		const std::string strGetCgiBin() const;
 		const std::string strGetLocation() const;
 		const std::string strGetErrorPage() const;
@@ -81,8 +82,8 @@ class Config
 
 	// private: //maybe private for the setters adds more security
 	// Setter
-		void setConfigPath(std::string configPath);
-		bool applyConfig(std::string serverName);
+		void setConfigPath(std::string configPath); // set to private??????
+		bool applyConfig(std::string serverName); // check if moving it to private makes sense
 
 	// public:
 	// Exceptions
@@ -135,6 +136,12 @@ class Config
 		};
 
 		class ContentOutsideServerBlockException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class NoServerFoundException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

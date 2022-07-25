@@ -36,10 +36,10 @@ const std::map<std::string, std::string>& Message::getHeaderFields(void) const
 
 const char* Message::HeaderFieldDuplicate::what() const throw()
 {
-	return ("Exception: header field duplicate");
+	return ("400");
 }
 
 const char* Message::InvalidStartLine::what() const throw()
 {
-	return ("Exception: invalid start line format");
+	return ("400");
 }

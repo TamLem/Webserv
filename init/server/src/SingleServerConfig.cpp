@@ -94,6 +94,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 {
 	// std::cout << "given to _parseKeyValue >" << GREEN << keyValue << RESET << "<" << std::endl;
 
+	if (keyValue.find_first_of(WHITESPACE) == std::string::npos)
+	{
+		std::cout << RED << keyValue << RESET << std::endl;
+		throw SingleServerConfig::NoValueFoundException();
+	}
 	std::string key = keyValue.substr(0, keyValue.find_first_of(WHITESPACE));
 	std::string value = "";
 	int nKey = 0;
@@ -112,8 +117,17 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 			throw SingleServerConfig::InvalidWhitespaceException();
 		}
 		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
-		this->_checkListen(value);
-		this->_conf->listen.push_back(value);
+		if (value.find_first_not_of(DECIMAL) != std::string::npos)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::NotAPortException();
+		}
+		unsigned short port = this->_checkListen(value);
+		// this->_conf->listen.insert(port);
+		if (this->_conf->listen.count(value) == 0)
+		{
+			this->_conf->listen.insert(std::make_pair<std::string, unsigned short>(value, port));
+		}
 		break ;
 	}
 
@@ -280,22 +294,24 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 	// std::cout << YELLOW << "key:\t>" << key << "<" << std::endl << BLUE << "value:\t>" << value << "<" << RESET << std::endl;
 }
 
-void SingleServerConfig::_checkListen(std::string value)
+unsigned short SingleServerConfig::_checkListen(std::string value)
 {
-	size_t port = this->_strToSizeT(value);
-	if (port > USHRT_MAX)
+	size_t buffer = this->_strToSizeT(value);
+	if (buffer > USHRT_MAX)
 	{
-		std::cout << RED << port << RESET << std::endl;
+		std::cout << RED << buffer << RESET << std::endl;
 		throw SingleServerConfig::InvalidPortException();
 	}
+	unsigned short port = buffer;
+	return (port);
 	// std::cout << BLUE << "in _checkListen: >" << YELLOW << value << BLUE << "<" RESET << std::endl;
 }
 
-void SingleServerConfig::_handleCgi(std::string line)
-{
-	(void)line;
-	// std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
-}
+// void SingleServerConfig::_handleCgi(std::string line)
+// {
+// 	(void)line;
+// 	// std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
+// }
 
 void SingleServerConfig::_handleLocation(std::string block)
 {
@@ -373,7 +389,7 @@ std::string validErrorCodes[] =
 
 static bool _isValidErrorCode(std::string errorCode)
 {
-	std::cout << errorCode << " handed to check if it a valid errorCode" << std::endl;
+	// std::cout << errorCode << " handed to check if it a valid errorCode" << std::endl;
 	for (size_t i = 0; i < 64; ++i)
 	{
 		if (validErrorCodes[i] == errorCode)
@@ -416,7 +432,7 @@ void SingleServerConfig::_handleErrorPage(std::string line)
 			this->_conf->errorPage.insert(std::make_pair<std::string, std::string>(key, value));
 		}
 	}
-	std::cout << BLUE << "in _handleErrorPage: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
+	// std::cout << BLUE << "in _handleErrorPage: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
 }
 
 size_t SingleServerConfig::_strToSizeT(std::string str)
@@ -520,4 +536,9 @@ const char* SingleServerConfig::DuplicateErrorPageException::what(void) const th
 const char* SingleServerConfig::DefaultNotAllowedException::what(void) const throw()
 {
 	return ("server name <default> not allowed");
+}
+
+const char* SingleServerConfig::NoValueFoundException::what(void) const throw()
+{
+	return ("↑↑↑ please provide a value for this key");
 }

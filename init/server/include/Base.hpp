@@ -1,7 +1,6 @@
 #ifndef BASE_HPP
 #define BASE_HPP
 
-#include <vector>
 #include <map>
 #include <string>
 #include <iostream>
@@ -26,6 +25,13 @@
 #define CR '\r'
 #define TCHAR "!#$%&'*+-.^_`|~"
 
+// PortStruct
+struct PortStruct
+{
+	unsigned short port;
+	PortStruct *next;
+};
+
 // LocationStruct
 struct LocationStruct
 {
@@ -43,9 +49,9 @@ struct ConfigStruct
 {
 // bare minimum of the .conf file
 	std::string								serverName;
-	std::vector<std::string>				listen;
+	std::map<std::string, unsigned short>			listen;
 	std::string								root;
-	std::vector<std::string>				cgi;
+	// std::vector<std::string>				cgi;
 	std::string								cgiBin;
 	size_t									clientBodyBufferSize;
 

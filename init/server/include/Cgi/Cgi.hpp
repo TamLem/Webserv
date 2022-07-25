@@ -31,7 +31,7 @@ class Cgi
 	public:
 		Cgi(Request &request)
 		{
-			_env = nullptr;
+			_env = NULL;
 			_method = request.getMethod();
 
 			string url = request.getUrl();

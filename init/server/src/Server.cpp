@@ -252,6 +252,10 @@ void Server::handleRequest(const std::string& buffer, int fd)
 	try
 	{
 		Request newRequest(buffer);
+		std::map<std::string, std::string> headerFields;
+		headerFields = newRequest.getHeaderFields();
+		std::cout << RED << "<<<<<<<<<<" << headerFields["host"] << ">>>>>>>>>>>" << RESET << std::endl;
+		std::cout << RED << "<<<<<<<<<<" << this->_config->getConfigStruct(headerFields["host"]).serverName << ">>>>>>>>>>>" << RESET << std::endl;
 		if (buffer.find("/cgi/") != std::string::npos)
 			cgi_handle(newRequest, buffer, fd);
 		else if (newRequest.getMethod() == "POST")
@@ -266,7 +270,8 @@ void Server::handleRequest(const std::string& buffer, int fd)
 			code = "500";
 		handleERROR(code);
 	}
-	this->_response.sendResponse(fd);
+	std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
+	this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
 }
 
 void cgi_handle(Request& request, std::string buf, int fd)

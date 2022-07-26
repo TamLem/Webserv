@@ -61,9 +61,6 @@ class Server
 		void run(void);
 
 		void handleRequest(const std::string&, int);
-		void handleGET(const Request&);
-		void handlePOST(const Request&);
-		void handleERROR(const std::string&);
 	private:
 		size_t _port;
 		std::set<unsigned short> _ports;
@@ -76,6 +73,10 @@ class Server
 		static void handle_signal(int sig);
 		void handle_signals(void);
 		void _initPorts();
+		
+		void handleGET(const Request&);
+		void handlePOST(const Request&);
+		void handleERROR(const std::string&);
 };
 
 void cgi_handle(Request& request, std::string buf, int fd);

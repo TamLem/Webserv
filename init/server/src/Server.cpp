@@ -215,21 +215,11 @@ void Server::run()
 
 void Server::handleGET(const Request& request)
 {
-	// _response.setFd(request.getFd());
-	// _response.setProtocol(PROTOCOL);
-	// _response.addDefaultHeaderFields();
-	// _response.setStatus("200");
-	// _response.createBody(request.getUri());
-	// _response.sendResponse();
-
-		// _response.init(request);
 	_response.setFd(request.getFd());
 	_response.setProtocol(PROTOCOL);
-	// _response.setUri(request.getUri());
 	_response.createBody(request.getUri());
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
-	// _response.sendResponse();
 }
 
 void Server::handlePOST(const Request& request)
@@ -246,24 +236,14 @@ void Server::handlePOST(const Request& request)
 	_response.createBody("./pages/post_test.html");
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
-	// _response.sendResponse();
 }
 
 void Server::handleERROR(const std::string& status)
 {
-	// _response.setStatus(status);
-	// _response.setFd(fd);
-	// _response.setProtocol(PROTOCOL);
-	// _response.addDefaultHeaderFields();
-	// _response.createErrorBody();
-	// _response.sendResponse();
-
 	_response.setStatus(status);
-	// _response.setFd(fd);
 	_response.setProtocol(PROTOCOL);
 	_response.createErrorBody();
 	_response.addDefaultHeaderFields();
-	// _response.sendResponse();
 }
 
 void Server::handleRequest(const std::string& buffer, int fd)

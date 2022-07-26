@@ -21,28 +21,10 @@ bool Response::isValidStatus(const std::string& status)
 	return (false);
 }
 
-Response::Response(void)// : status(status), fd(fd), uri(uri)
+Response::Response(void)
 {
 	this->createMessageMap();
-
-	// this->init(status, fd, uri);
-
-	// this->createBody();
-	// this->addDefaultHeaderFields();
-	// this->sendResponse();
 }
-
-// Response::Response(int status, int fd)// : status(status), fd(fd)
-// {
-// 	this->createMessageMap();
-
-// 	// std::string placeholder = "";
-// 	// this->init(status, fd, placeholder);
-
-// 	// this->createErrorBody();
-// 	// this->addDefaultHeaderFields();
-// 	// this->sendResponse();
-// }
 
 void Response::clear(void)
 {
@@ -55,33 +37,6 @@ void Response::clear(void)
 	fd = -1;
 	uri = "";
 }
-
-// void Response::init(const Request& request)
-// {
-// 	// (void)request;
-// 	// this->clear();
-// 	// if (!isValidStatus(status))
-// 	// 	throw InvalidStatus();
-// 	// this->status = status;
-// 	this->fd = request.getFd();
-// 	// this->uri = request.getUri();
-// 	this->protocol = PROTOCOL;
-// 	// this->statusMessage = this->messageMap[this->status];
-// 	// this->hasBody = true;
-// }
-
-// void Response::init(const std::string& status, int fd, const std::string& uri)
-// {
-// 	// this->clear();
-// 	if (!isValidStatus(status))
-// 		throw InvalidStatus();
-// 	this->status = status;
-// 	this->fd = fd;
-// 	this->uri = uri;
-// 	this->protocol = PROTOCOL;
-// 	this->statusMessage = this->messageMap[this->status];
-// 	this->hasBody = true;
-// }
 
 Response::~Response(void)
 {
@@ -304,7 +259,13 @@ std::ostream& operator<<(std::ostream& out, const Response& response)
 {
 	out << response.getProtocol() << " "
 	<< response.getStatus() << " "
-	<< response.getStatusMessage();
+	<< response.getStatusMessage() << std::endl;
+	for (std::map<std::string, std::string>::const_iterator it = response.getHeaderFields().begin(); it != response.getHeaderFields().end(); ++it)
+	{
+		out << it->first << ": "
+		<< it->second << "\n";
+	}
+	// out << response.getBody() << std::endl;
 	return (out);
 }
 

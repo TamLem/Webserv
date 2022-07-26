@@ -63,7 +63,7 @@ class Server
 		void handleRequest(const std::string&, int);
 		void handleGET(const Request&);
 		void handlePOST(const Request&);
-		void handleERROR(const std::string&, int);
+		void handleERROR(const std::string&);
 	private:
 		size_t _port;
 		std::set<unsigned short> _ports;

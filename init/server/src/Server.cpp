@@ -215,12 +215,21 @@ void Server::run()
 
 void Server::handleGET(const Request& request)
 {
+	// _response.setFd(request.getFd());
+	// _response.setProtocol(PROTOCOL);
+	// _response.addDefaultHeaderFields();
+	// _response.setStatus("200");
+	// _response.createBody(request.getUri());
+	// _response.sendResponse();
+
+		// _response.init(request);
 	_response.setFd(request.getFd());
 	_response.setProtocol(PROTOCOL);
+	// _response.setUri(request.getUri());
+	_response.createBody(request.getUri());
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
-	_response.createBody(request.getUri());
-	_response.sendResponse();
+	// _response.sendResponse();
 }
 
 void Server::handlePOST(const Request& request)
@@ -234,28 +243,35 @@ void Server::handlePOST(const Request& request)
 
 	_response.setFd(request.getFd());
 	_response.setProtocol(PROTOCOL);
+	_response.createBody("./pages/post_test.html");
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
-	_response.createBody("./pages/post_test.html");
-	_response.sendResponse();
+	// _response.sendResponse();
 }
 
-void Server::handleERROR(const std::string& status, int fd)
+void Server::handleERROR(const std::string& status)
 {
+	// _response.setStatus(status);
+	// _response.setFd(fd);
+	// _response.setProtocol(PROTOCOL);
+	// _response.addDefaultHeaderFields();
+	// _response.createErrorBody();
+	// _response.sendResponse();
+
 	_response.setStatus(status);
-	_response.setFd(fd);
+	// _response.setFd(fd);
 	_response.setProtocol(PROTOCOL);
-	_response.addDefaultHeaderFields();
 	_response.createErrorBody();
-	_response.sendResponse();
+	_response.addDefaultHeaderFields();
+	// _response.sendResponse();
 }
 
 void Server::handleRequest(const std::string& buffer, int fd)
 {
+	this->_response.clear();
 	try
 	{
 		Request newRequest(buffer, fd);
-		this->_response.clear();
 		if (buffer.find("/cgi/") != std::string::npos)
 			cgi_handle(newRequest, buffer, fd);
 		else if (newRequest.getMethod() == "POST")
@@ -268,9 +284,9 @@ void Server::handleRequest(const std::string& buffer, int fd)
 		std::string code = exception.what();
 		if (_response.getMessageMap().count(code) != 1)
 			code = "500";
-		handleERROR(code, fd);
+		handleERROR(code);
 	}
-	// this->_response.sendResponse();
+	this->_response.sendResponse(fd);
 }
 
 void cgi_handle(Request& request, std::string buf, int fd)

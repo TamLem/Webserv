@@ -44,7 +44,7 @@ class Response : public Message
 		void addDefaultHeaderFields(void);
 		void createBody(const std::string&);
 		void createErrorBody(void);
-		void sendResponse(void);
+		void sendResponse(int);
 
 	class InvalidStatus : public std::exception
 	{

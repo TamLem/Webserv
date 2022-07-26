@@ -222,10 +222,10 @@ void Response::addDefaultHeaderFields(void)
 	}
 }
 
-void Response::sendResponse(void)
+void Response::sendResponse(int fd)
 {
-	std::string message = this->constructHeader() + this->body;
-	sendall(this->fd, (char *)message.c_str(), message.length());
+	std::string response = this->constructHeader() + this->body;
+	sendall(fd, (char *)response.c_str(), response.length());
 }
 
 void Response::createMessageMap(void)

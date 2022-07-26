@@ -215,7 +215,9 @@ void Server::run()
 
 void Server::handleGET(const Request& request)
 {
-	_response.init(request);
+	// _response.init(request);
+	_response.setFd(request.getFd());
+	_response.setProtocol(PROTOCOL);
 	// _response.setUri(request.getUri());
 	_response.createBody(request.getUri());
 	_response.addDefaultHeaderFields();
@@ -231,7 +233,9 @@ void Server::handlePOST(const Request& request)
 		throw std::exception();
 	outFile << request.getBody() << "'s content. Server: " << this->_config->getConfigStruct("weebserv").serverName;
 	outFile.close();
-	_response.init(request);
+	_response.setFd(request.getFd());
+	_response.setProtocol(PROTOCOL);
+	// _response.init(request);
 	_response.createBody("./pages/post_test.html");
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");

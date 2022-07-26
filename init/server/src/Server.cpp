@@ -215,13 +215,11 @@ void Server::run()
 
 void Server::handleGET(const Request& request)
 {
-	// _response.init(request);
 	_response.setFd(request.getFd());
 	_response.setProtocol(PROTOCOL);
-	// _response.setUri(request.getUri());
-	_response.createBody(request.getUri());
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
+	_response.createBody(request.getUri());
 	_response.sendResponse();
 }
 
@@ -233,23 +231,22 @@ void Server::handlePOST(const Request& request)
 		throw std::exception();
 	outFile << request.getBody() << "'s content. Server: " << this->_config->getConfigStruct("weebserv").serverName;
 	outFile.close();
+
 	_response.setFd(request.getFd());
 	_response.setProtocol(PROTOCOL);
-	// _response.init(request);
-	_response.createBody("./pages/post_test.html");
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
+	_response.createBody("./pages/post_test.html");
 	_response.sendResponse();
 }
 
 void Server::handleERROR(const std::string& status, int fd)
 {
-	// _response.init(status, fd, ""); //AE make overload instead of passing ""
 	_response.setStatus(status);
 	_response.setFd(fd);
 	_response.setProtocol(PROTOCOL);
-	_response.createErrorBody();
 	_response.addDefaultHeaderFields();
+	_response.createErrorBody();
 	_response.sendResponse();
 }
 

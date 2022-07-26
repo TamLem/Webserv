@@ -39,8 +39,8 @@ class Response : public Message
 		std::string constructHeader(void);
 
 		void clear(void);
-		void init(const Request&);
-		void init(const std::string&, int, const std::string&);
+		// void init(const Request&);
+		// void init(const std::string&, int, const std::string&);
 		void addDefaultHeaderFields(void);
 		void createBody(const std::string&);
 		void createErrorBody(void);
@@ -55,7 +55,7 @@ class Response : public Message
 	{
 		const char* what() const throw();
 	};
-	
+
 	class InvalidProtocol : public std::exception
 	{
 		const char* what() const throw();

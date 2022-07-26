@@ -56,32 +56,32 @@ void Response::clear(void)
 	uri = "";
 }
 
-void Response::init(const Request& request)
-{
-	// (void)request;
-	// this->clear();
-	// if (!isValidStatus(status))
-	// 	throw InvalidStatus();
-	// this->status = status;
-	this->fd = request.getFd();
-	// this->uri = request.getUri();
-	this->protocol = PROTOCOL;
-	// this->statusMessage = this->messageMap[this->status];
-	// this->hasBody = true;
-}
+// void Response::init(const Request& request)
+// {
+// 	// (void)request;
+// 	// this->clear();
+// 	// if (!isValidStatus(status))
+// 	// 	throw InvalidStatus();
+// 	// this->status = status;
+// 	this->fd = request.getFd();
+// 	// this->uri = request.getUri();
+// 	this->protocol = PROTOCOL;
+// 	// this->statusMessage = this->messageMap[this->status];
+// 	// this->hasBody = true;
+// }
 
-void Response::init(const std::string& status, int fd, const std::string& uri)
-{
-	// this->clear();
-	if (!isValidStatus(status))
-		throw InvalidStatus();
-	this->status = status;
-	this->fd = fd;
-	this->uri = uri;
-	this->protocol = PROTOCOL;
-	this->statusMessage = this->messageMap[this->status];
-	this->hasBody = true;
-}
+// void Response::init(const std::string& status, int fd, const std::string& uri)
+// {
+// 	// this->clear();
+// 	if (!isValidStatus(status))
+// 		throw InvalidStatus();
+// 	this->status = status;
+// 	this->fd = fd;
+// 	this->uri = uri;
+// 	this->protocol = PROTOCOL;
+// 	this->statusMessage = this->messageMap[this->status];
+// 	this->hasBody = true;
+// }
 
 Response::~Response(void)
 {

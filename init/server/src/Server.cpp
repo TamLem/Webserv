@@ -26,7 +26,7 @@ Server::Server(Config* config) : _config(config)
 
 // Set socket reusable from Time-Wait state
 	int val = 1;
-	setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // how to implement | SO_NOSIGPIPE
+	setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
 
 // initialize server address struct
 	struct sockaddr_in serv_addr;
@@ -41,7 +41,7 @@ Server::Server(Config* config) : _config(config)
 		std::cerr << RED << "Error binding socket" << std::endl;
 		perror(NULL);
 		std::cerr << RESET;
-		exit(EXIT_FAILURE);
+		exit(EXIT_FAILURE); // maybe change to return or throw
 	}
 }
 
@@ -63,7 +63,7 @@ void Server::handle_signal(int sig)
 	}
 	// else if (sig == SIGPIPE)
 	// {
-	// 	std::cerr << RED << "SIGPIPE detected, will crash now" << RESET << std::endl;
+	// 	std::cerr << RED << "SIGPIPE detected, will end now" << RESET << std::endl;
 	// 	keep_running = 0;
 	// }
 }

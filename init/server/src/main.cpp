@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-std::string parseArgv(int argc, char **argv) // maybe change to static void function or include it into some object !!!
+std::string parseArgv(int argc, char **argv) // include this into some object, maybe config would be appropriate, since it does do the parsing
 {
 	std::string defaultConfPath = "config/www.conf";
 	if (argc == 1)
@@ -13,14 +13,14 @@ std::string parseArgv(int argc, char **argv) // maybe change to static void func
 	else if (argc > 2)
 	{
 		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename.conf>" << RESET << std::endl;
-		exit(EXIT_FAILURE);
+		exit(EXIT_FAILURE); // maybe change to return or throw
 	}
 	std::string sArgv = argv[1];
 	std::string ending = ".conf";
 	if ((argv[1] + sArgv.find_last_of(".")) != ending)
 	{
 		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename.conf>" << RESET << std::endl;
-		exit(EXIT_FAILURE);
+		exit(EXIT_FAILURE); // maybe change to return or throw
 	}
 	return (sArgv);
 }
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 			delete config;
 			return (EXIT_FAILURE);
 	}
-	Server *test = new Server(config); // somehow pass the listen ports to the server ??
+	Server *test = new Server(config);
 
 	#ifdef SHOW_LOG_2
 		config->printCluster();

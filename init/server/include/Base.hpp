@@ -25,13 +25,6 @@
 #define CR '\r'
 #define TCHAR "!#$%&'*+-.^_`|~"
 
-// PortStruct
-struct PortStruct
-{
-	unsigned short port;
-	PortStruct *next;
-};
-
 // LocationStruct
 struct LocationStruct
 {
@@ -49,7 +42,7 @@ struct ConfigStruct
 {
 // bare minimum of the .conf file
 	std::string								serverName;
-	std::map<std::string, unsigned short>			listen;
+	std::map<std::string, unsigned short>	listen;
 	std::string								root;
 	// std::vector<std::string>				cgi;
 	std::string								cgiBin;

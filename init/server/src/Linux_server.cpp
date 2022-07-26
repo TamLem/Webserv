@@ -45,7 +45,7 @@ void handleGET(const std::string& status, int fd, const std::string& uri)
 {
 	_response.init(status, fd, uri);
 	_response.createBody();
-	_response.createHeaderFields();
+	_response.addDefaultHeaderFields();
 	_response.sendResponse();
 }
 
@@ -59,7 +59,7 @@ void handlePOST(const std::string& status, int fd, const Request& newRequest)
 	outFile.close();
 	_response.init(status, fd, "./pages/post_test.html");
 	_response.createBody();
-	_response.createHeaderFields();
+	_response.addDefaultHeaderFields();
 	_response.sendResponse();
 }
 
@@ -67,7 +67,7 @@ void handleERROR(const std::string& status, int fd)
 {
 	_response.init(status, fd, ""); //AE make overload instead of passing ""
 	_response.createErrorBody();
-	_response.createHeaderFields();
+	_response.addDefaultHeaderFields();
 	_response.sendResponse();
 }
 

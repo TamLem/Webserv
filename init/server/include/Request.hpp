@@ -1,3 +1,5 @@
+#ifndef REQUEST_HPP
+#define REQUEST_HPP
 #pragma once
 
 #include <string> //std::string
@@ -24,7 +26,6 @@ class Request : public Message
 		void createStartLineTokens(std::vector<std::string>&, const std::string&) const;
 		void breakUpUri(const std::string&);
 		bool isValidMethod(const std::string) const;
-		bool isValidProtocol(const std::string&) const;
 		void parseHeaderFields(std::istringstream&);
 		void parseHeaderFieldLine(const std::string&);
 		void createHeaderTokens(std::vector<std::string>& tokens, const std::string& message);
@@ -38,7 +39,8 @@ class Request : public Message
 		void parseBody(std::istringstream&);
 		void addMethods(void);
 	public:
-		Request(const std::string&);
+		// Request(const std::string&);
+		Request(const std::string&, int fd);
 		// Request(const std::string&, int fd);
 		~Request(void);
 
@@ -94,3 +96,5 @@ class Request : public Message
 };
 
 std::ostream& operator<<(std::ostream&, const Request&);
+
+#endif

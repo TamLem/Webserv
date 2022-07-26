@@ -1,9 +1,12 @@
+#ifndef RESPONSE_HPP
+#define RESPONSE_HPP
 #pragma once
 
 #include <string>
 #include <map>
 #include <iostream> //std::ostream
 #include "Message.hpp"
+#include "Request.hpp"
 
 class Response : public Message
 {
@@ -11,7 +14,6 @@ class Response : public Message
 		std::string status;
 		std::string statusMessage;
 		std::map<std::string, std::string> messageMap;
-		int fd;
 		std::string uri;
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
@@ -23,7 +25,11 @@ class Response : public Message
 		~Response(void);
 
 		// void setProtocol(const std::string&);
-		// void setStatus(const int&);
+		void setStatus(const std::string&);
+		void setBody(const std::string&);
+		void setUri(const std::string&);
+		void setFd(int);
+		void setProtocol(const std::string&);
 
 		// const std::string& getProtocol(void) const;
 		const std::string& getStatus(void) const;
@@ -33,9 +39,10 @@ class Response : public Message
 		std::string constructHeader(void);
 
 		void clear(void);
+		void init(const Request&);
 		void init(const std::string&, int, const std::string&);
-		void createHeaderFields(void);
-		void createBody(void);
+		void addDefaultHeaderFields(void);
+		void createBody(const std::string&);
 		void createErrorBody(void);
 		void sendResponse(void);
 
@@ -48,8 +55,13 @@ class Response : public Message
 	{
 		const char* what() const throw();
 	};
-
+	
+	class InvalidProtocol : public std::exception
+	{
+		const char* what() const throw();
+	};
 };
 
 std::ostream& operator<<(std::ostream&, const Response&);
 
+#endif

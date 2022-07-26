@@ -213,33 +213,39 @@ void Server::run()
 	run_event_loop(kq);
 }
 
-void Server::handleGET(const std::string& status, int fd, const std::string& uri)
+void Server::handleGET(const Request& request)
 {
-	_response.init(status, fd, uri);
-	_response.createBody();
-	_response.createHeaderFields();
+	_response.init(request);
+	// _response.setUri(request.getUri());
+	_response.createBody(request.getUri());
+	_response.addDefaultHeaderFields();
+	_response.setStatus("200");
 	_response.sendResponse();
 }
 
-void Server::handlePOST(const std::string& status, int fd, const Request& newRequest)
+void Server::handlePOST(const Request& request)
 {
 	std::ofstream outFile;
-	outFile.open("./uploads/" + newRequest.getBody());
+	outFile.open("./uploads/" + request.getBody());
 	if (outFile.is_open() == false)
 		throw std::exception();
-	outFile << newRequest.getBody() << "'s content. Server: " << this->_config->getConfigStruct("weebserv").serverName;
+	outFile << request.getBody() << "'s content. Server: " << this->_config->getConfigStruct("weebserv").serverName;
 	outFile.close();
-	_response.init(status, fd, "./pages/post_test.html");
-	_response.createBody();
-	_response.createHeaderFields();
+	_response.init(request);
+	_response.createBody("./pages/post_test.html");
+	_response.addDefaultHeaderFields();
+	_response.setStatus("200");
 	_response.sendResponse();
 }
 
 void Server::handleERROR(const std::string& status, int fd)
 {
-	_response.init(status, fd, ""); //AE make overload instead of passing ""
+	// _response.init(status, fd, ""); //AE make overload instead of passing ""
+	_response.setStatus(status);
+	_response.setFd(fd);
+	_response.setProtocol(PROTOCOL);
 	_response.createErrorBody();
-	_response.createHeaderFields();
+	_response.addDefaultHeaderFields();
 	_response.sendResponse();
 }
 
@@ -247,14 +253,14 @@ void Server::handleRequest(const std::string& buffer, int fd)
 {
 	try
 	{
-		Request newRequest(buffer);
+		Request newRequest(buffer, fd);
 		this->_response.clear();
 		if (buffer.find("/cgi/") != std::string::npos)
 			cgi_handle(newRequest, buffer, fd);
 		else if (newRequest.getMethod() == "POST")
-			handlePOST("200", fd, newRequest);
+			handlePOST(newRequest);
 		else
-			handleGET("200", fd, newRequest.getUri());
+			handleGET(newRequest);
 	}
 	catch (std::exception& exception)
 	{

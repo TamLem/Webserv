@@ -163,16 +163,16 @@ int main(int argc, char **argv)
 			std::cout << "Error accepting connection" << std::endl;
 			return 1;
 		}
-		std::cout << "Connection accepted" << std::endl;
+		std::cout << GREEN << "New connection on socket " << new_sockfd << RESET << std::endl;
 		char buffer[10000] = {0};
 		if (read(new_sockfd, buffer, sizeof(buffer)) < 0)
 		{
 			std::cout << "Error reading from socket" << std::endl;
 			return 1;
 		}
-		std::cout << "Message received: " << buffer << std::endl;
+		std::cout << YELLOW << "Received->" << RESET << buffer << YELLOW << "<-Received" << RESET << std::endl;
 		handleRequest(buffer, new_sockfd);
-		keep_running = false;
+		// keep_running = false;
 		close(new_sockfd);
 	}
 	close(sockfd);

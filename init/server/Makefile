@@ -2,17 +2,19 @@ NAME		=	webserv
 
 CXX			=	c++
 
-CXXFLAGS	=	-std=c++98 -Wall -Werror -Wextra
+UNAME		:=	$(shell uname)
+
+ifeq ($(UNAME), Darwin)
+CXXFLAGS	=	-std=c++98 -Wall -Wextra -Werror
+else
+CXXFLAGS	=	-std=c++98 -Wall -Wextra #-Werror // please fix this Tam
+endif
 
 CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds
 
 CXXFLAGS	+=	-D SHOW_LOG #enables the printing of surface-level logs, server-side only !!! make re is needed if you just enabled this !!!
 
 # CXXFLAGS	+=	-D SHOW_LOG_2 #enables the printing of deep-level logs, server-side only !!! make re is needed if you just enabled this !!!
-
-UNAME		:=	$(shell uname)
-
-# CXXFLAGS	+=	-g
 
 #directories
 PWD			=	$(shell pwd)

@@ -32,6 +32,7 @@ class Response : public Message
 
 		std::string constructHeader(void);
 
+		void clear(void);
 		void init(const std::string&, int, const std::string&);
 		void createHeaderFields(void);
 		void createBody(void);

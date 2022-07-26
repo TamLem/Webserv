@@ -44,10 +44,21 @@ Response::Response(void)// : status(status), fd(fd), uri(uri)
 // 	// this->sendResponse();
 // }
 
+void Response::clear(void)
+{
+	this->protocol = "";
+	this->body = "";
+	hasBody = false;
+	this->headerFields.clear();
+	this->status = "";
+	this->statusMessage = "";
+	fd = -1;
+	uri = "";
+}
+
 void Response::init(const std::string& status, int fd, const std::string& uri)
 {
-	this->headerFields.clear();
-
+	// this->clear();
 	if (!isValidStatus(status))
 		throw InvalidStatus();
 	this->status = status;

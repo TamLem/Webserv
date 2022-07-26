@@ -90,6 +90,7 @@ void handleRequest(const std::string& buffer, int fd)
 			code = "500";
 		handleERROR(code, fd);
 	}
+	// _response.sendResponse();
 }
 
 void cgi_handle(Request& request, std::string buf, int fd)

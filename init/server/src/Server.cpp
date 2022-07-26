@@ -85,36 +85,36 @@ void Server::stop(void){}
 
 int Server::get_client(int fd)
 {
-	for (size_t i = 0; i < _clients.size(); i++)
-	{
-		if (_clients[i].fd == fd)
-			return (i);
-	}
-	return (-1);
+// 	for (size_t i = 0; i < _clients.size(); i++)
+// 	{
+// 		if (_clients[i].fd == fd)
+// 			return (i);
+// 	}
+// 	return (-1);
 }
 
 int Server::add_client(int fd, struct sockaddr_in addr)
 {
-	struct client c;
-	c.fd = fd;
-	c.addr = addr;
-	_clients.push_back(c);
-	return (_clients.size() - 1);
+	// struct client c;
+	// c.fd = fd;
+	// c.addr = addr;
+	// _clients.push_back(c);
+	// return (_clients.size() - 1);
 }
 
 int Server::remove_client(int fd)
 {
-	int i = get_client(fd);
-	if (i == -1)
-		return (-1);
-	_clients.erase(_clients.begin() + i);
-	return (0);
+	// int i = get_client(fd);
+	// if (i == -1)
+	// 	return (-1);
+	// _clients.erase(_clients.begin() + i);
+	// return (0);
 }
 
 void Server::run_event_loop(int kq)
 {
 // add those to private members
-	struct kevent ev;
+	// struct kevent ev;
 	// struct kevent evList[MAX_EVENTS];
 	struct sockaddr_storage addr; // temp
 //
@@ -123,75 +123,87 @@ void Server::run_event_loop(int kq)
 	{
 // start _getEvents
 		// int num_events = kevent(kq, NULL, 0, evList, MAX_EVENTS, NULL);
+		this->_socketHandler.getEvents();
 // end _getEvents
-		for (int i = 0; i < num_events; i++)
+		for (int i = 0; i < this->_socketHandler.getNumEvents() ; i++)
 		{
+			this->_socketHandler.acceptConnection(i);
+			this->_socketHandler.removeClient(i);
+			if (this->_socketHandler.readFromClient(i) == false)
+
+
 			if (evList[i].ident == _server_fd)
 			{
+				this->_socketHandler.acceptConnection(i); // acceptConnection()
 // start _acceptConnections
-				socklen_t addrlen = sizeof(addr);
-				int fd = accept(_server_fd, (struct sockaddr *)&addr, &addrlen);
-				if (fd < 0)
-				{
-					std::cerr << RED << "Error accepting connection" << std::endl;
-					perror(NULL);
-					std::cerr << RESET;
-					continue;
-				}
-				#ifdef SHOW_LOG
-					else
-						std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
-				#endif
+				// socklen_t addrlen = sizeof(addr);
+				// int fd = accept(_server_fd, (struct sockaddr *)&addr, &addrlen);
+				// if (fd < 0)
+				// {
+				// 	std::cerr << RED << "Error accepting connection" << std::endl;
+				// 	perror(NULL);
+				// 	std::cerr << RESET;
+				// 	continue;
+				// }
+				// #ifdef SHOW_LOG
+				// 	else
+				// 		std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
+				// #endif
+				if (this->_socketHandler.acceptConnection(_server_fd) == false) // _addToEventLoop is called inside here if needed
+					continue ;
 // start _addToEventLoop
-				int set = 1;
-				setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
-				add_client(fd, *(struct sockaddr_in *)&addr);
-				EV_SET(&ev, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-				kevent(kq, &ev, 1, NULL, 0, NULL);
+				// int set = 1;
+				// setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
+				// add_client(fd, *(struct sockaddr_in *)&addr);
+				// EV_SET(&ev, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+				// kevent(kq, &ev, 1, NULL, 0, NULL);
 // end _addToEventLoop
 // end _acceptConnections
 			}
-			else if (evList[i].flags & EV_EOF) //handle client disconnect event
+			else if (evList[i].flags & EV_EOF) //removeClient()
 			{
+				this->_socketHandler.removeClient(i);
 // start _removeClient
-				remove_client(evList[i].ident);
-				EV_SET(&ev, evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-				kevent(kq, &ev, 1, NULL, 0, NULL);
-				#ifdef SHOW_LOG
-					std::cout << GREEN << "Client " << evList[i].ident << " disconnected" << RESET << std::endl;
-				#endif
+				// remove_client(evList[i].ident);
+				// EV_SET(&ev, evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+				// kevent(kq, &ev, 1, NULL, 0, NULL);
+				// #ifdef SHOW_LOG
+				// 	std::cout << GREEN << "Client " << evList[i].ident << " disconnected" << RESET << std::endl;
+				// #endif
 // end _removeClient
 			}
-			else if (evList[i].flags & EVFILT_READ) //handle client read event
+			else if (evList[i].flags & EVFILT_READ) // turn this into function that returns fd or -1
 			{
 // start _readFromClient
-				int fd = evList[i].ident;
-				int i = get_client(fd);
-				if (i == -1)
-				{
-					std::cerr << RED << "Error getting client" << std::endl;
-					perror(NULL);
-					std::cerr << RESET;
-					continue;
-				}
-			// run this in a loop to accept chuncks
-				char buf[client_body_buffer_size]; // probably needs to be an ifstream to not overflow with enormous requests !!!!!!!!!!!
-				int n = read(fd, buf, client_body_buffer_size);
-			//
-				if (n < 0)
-				{
-					std::cerr << RED << "Error reading from client" << std::endl;
-					perror(NULL);
-					std::cerr << RESET;
-					continue;
-				}
-				buf[n] = '\0';
-				#ifdef SHOW_LOG
-					std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
-				#endif
-
-				handleRequest(buf, fd);
+			// 	int fd = evList[i].ident;
+			// 	int i = get_client(fd);
+			// 	if (i == -1)
+			// 	{
+			// 		std::cerr << RED << "Error getting client" << std::endl;
+			// 		perror(NULL);
+			// 		std::cerr << RESET;
+			// 		continue;
+			// 	}
+			// // run this in a loop to accept chuncks
+			// 	char buf[client_body_buffer_size]; // probably needs to be an ifstream to not overflow with enormous requests !!!!!!!!!!!
+			// 	int n = read(fd, buf, client_body_buffer_size);
+			// //
+			// 	if (n < 0)
+			// 	{
+			// 		std::cerr << RED << "Error reading from client" << std::endl;
+			// 		perror(NULL);
+			// 		std::cerr << RESET;
+			// 		continue;
+			// 	}
+			// 	buf[n] = '\0';
+			// 	#ifdef SHOW_LOG
+			// 		std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
+			// 	#endif
+				if (this->_socketHandler.readFromClient() == false)
+					continue ;
 // end _readFromClient
+
+				handleRequest(this->_socketHandler.getBuffer(), this->_socketHandler.getFD());
 			}
 		}
 	}
@@ -212,24 +224,24 @@ void Server::run()
 // end _listenMainSockets
 
 // start _initEventLoop
-	int kq = kqueue();
-	if (kq == -1)
-	{
-		std::cerr << RED << "Error creating kqueue" << std::endl;
-		perror(NULL);
-		std::cerr << RESET;
-		return;
-	}
-	struct kevent ev;
-	EV_SET(&ev, _server_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	int ret = kevent(kq, &ev, 1, NULL, 0, NULL);
-	if (ret == -1)
-	{
-		std::cerr << RED << "Error adding server socket to kqueue" << std::endl;
-		perror(NULL);
-		std::cerr << RESET;
-		return;
-	}
+	// int kq = kqueue();
+	// if (kq == -1)
+	// {
+	// 	std::cerr << RED << "Error creating kqueue" << std::endl;
+	// 	perror(NULL);
+	// 	std::cerr << RESET;
+	// 	return;
+	// }
+	// struct kevent ev;
+	// EV_SET(&ev, _server_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	// int ret = kevent(kq, &ev, 1, NULL, 0, NULL);
+	// if (ret == -1)
+	// {
+	// 	std::cerr << RED << "Error adding server socket to kqueue" << std::endl;
+	// 	perror(NULL);
+	// 	std::cerr << RESET;
+	// 	return;
+	// }
 // end _initEventLoop
 	run_event_loop(kq);
 }

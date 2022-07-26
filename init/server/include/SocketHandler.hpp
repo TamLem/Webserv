@@ -43,39 +43,52 @@ class SocketHandler
 {
 	private:
 	// Private Variables
-		Config *_config;
+		// Config *_config; // maybe not needed
+		std::map<std::string, ConfigStruct> _cluster;
+
 		std::set<int> _ports;
 		std::vector<ClientStruct> _clients;
 		std::vector<int> _serverFds; // maybe not needed
+
 		struct kevent _evList[MAX_EVENTS];
+
 		std::map<int, int> _serverMap;
 		int _kq;
+		int _numEvents;
+		char *_buffer[1024]; //temp
+		int _fd; //temp
+
+		// defines only to not have undefined behaviour
+		SocketHandler(const SocketHandler &src);
+		SocketHandler &operator=(const SocketHandler &src);
 
 	// Private Members
 		void _initPorts(); // read from ConfigStruct into _ports
 		void _initMainSockets();
 		void _listenMainSockets();
 		void _initEventLoop();
-		void _getEvents();
-		void _acceptConnection();
-		void _addClient();
-		void _removeClient();
-		void _getClient();
+		int _addClient(int fd, struct sockaddr_in addr);
+		int _removeClient(int fd);
+		int _getClient(int fd);
 
 	public:
 	// Constructors
 		SocketHandler(Config *config);
-		SocketHandler(const SocketHandler &src);
 
 	// Deconstructors
 		~SocketHandler(); // have a loop that closes all used fd's stored in the ServerStruct
 
 	// Overloaded Operators
-		SocketHandler &operator=(const SocketHandler &src);
 
 	// Public Methods
+		void getEvents();
+		bool acceptConnection(int serverFD);
+		bool readFromClient(); // maybe pass the iterator of the loop to here
 
 	// Getter
+		int getNumEvents() const;
+		std::string getBuffer() const;
+		int getFD() const;
 
 	// Setter
 

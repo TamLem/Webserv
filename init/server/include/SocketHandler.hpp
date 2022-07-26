@@ -55,7 +55,7 @@ class SocketHandler
 		std::map<int, int> _serverMap;
 		int _kq;
 		int _numEvents;
-		char *_buffer[1024]; //temp
+		std::string _buffer; //temp
 		int _fd; //temp
 
 		// defines only to not have undefined behaviour
@@ -68,8 +68,8 @@ class SocketHandler
 		void _listenMainSockets();
 		void _initEventLoop();
 		int _addClient(int fd, struct sockaddr_in addr);
-		int _removeClient(int fd);
 		int _getClient(int fd);
+		bool _isPrintableAscii(char *str);
 
 	public:
 	// Constructors
@@ -82,8 +82,9 @@ class SocketHandler
 
 	// Public Methods
 		void getEvents();
-		bool acceptConnection(int serverFD);
-		bool readFromClient(); // maybe pass the iterator of the loop to here
+		bool acceptConnection(int i);
+		bool readFromClient(int i);
+		int removeClient(int fd);
 
 	// Getter
 		int getNumEvents() const;

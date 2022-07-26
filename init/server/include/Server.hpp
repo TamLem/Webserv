@@ -54,7 +54,7 @@ class Server
 		Server(Config* config);
 		~Server(void);
 
-		void stop(void);
+		// void stop(void);
 
 		int get_client(int fd);
 
@@ -62,7 +62,7 @@ class Server
 
 		int remove_client(int fd);
 
-		void run_event_loop(int kq);
+		void run_event_loop(void);
 
 		void run(void);
 
@@ -71,9 +71,9 @@ class Server
 		void handlePOST(const std::string&, int, const Request&);
 		void handleERROR(const std::string&, int);
 	private:
-		size_t _port;
+		// size_t _port;
 		// std::set<unsigned short> _ports; // moved to socket handler
-		size_t _server_fd;
+		// size_t _server_fd;
 		std::vector <client> _clients;
 		Response _response;
 		SocketHandler _socketHandler;

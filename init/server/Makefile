@@ -36,6 +36,7 @@ CUT			=	\033[K
 ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be different on other Macs)
 SRC_FILES	=	main.cpp \
 				Server.cpp \
+				SocketServer.cpp \
 				Message.cpp \
 				Response.cpp \
 				Cgi.cpp		\

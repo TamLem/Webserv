@@ -8,13 +8,13 @@
 // 	handle_signals();
 // }
 
-Server::Server(Config* config) : _config(config)
+Server::Server(Config* config) : _config(config), _socketHandler(SocketHandler(config))
 {
 	#ifdef SHOW_LOG
 		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
 	#endif
 	handle_signals();
-	_port = 8080;
+	// _port = 8080;
 
 // start _initMainPorts
 	// if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -50,7 +50,7 @@ Server::Server(Config* config) : _config(config)
 
 Server::~Server(void)
 {
-	close(this->_server_fd);
+	// close(this->_server_fd);
 	#ifdef SHOW_LOG
 		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
 	#endif
@@ -111,12 +111,12 @@ int Server::remove_client(int fd)
 	// return (0);
 }
 
-void Server::run_event_loop(int kq)
+void Server::run_event_loop()
 {
 // add those to private members
 	// struct kevent ev;
 	// struct kevent evList[MAX_EVENTS];
-	struct sockaddr_storage addr; // temp
+	// struct sockaddr_storage addr; // temp
 //
 
 	while(keep_running)
@@ -129,12 +129,18 @@ void Server::run_event_loop(int kq)
 		{
 			this->_socketHandler.acceptConnection(i);
 			this->_socketHandler.removeClient(i);
-			if (this->_socketHandler.readFromClient(i) == false)
-
-
-			if (evList[i].ident == _server_fd)
+			if (this->_socketHandler.readFromClient(i) == true)
 			{
-				this->_socketHandler.acceptConnection(i); // acceptConnection()
+				handleRequest(this->_socketHandler.getBuffer(), this->_socketHandler.getFD());
+			}
+			// this->_socketHandler.acceptConnection(i);
+			// this->_socketHandler.removeClient(i);
+			// if (this->_socketHandler.readFromClient(i) == false)
+
+
+			// if (evList[i].ident == _server_fd)
+			// {
+			// 	this->_socketHandler.acceptConnection(i); // acceptConnection()
 // start _acceptConnections
 				// socklen_t addrlen = sizeof(addr);
 				// int fd = accept(_server_fd, (struct sockaddr *)&addr, &addrlen);
@@ -149,8 +155,6 @@ void Server::run_event_loop(int kq)
 				// 	else
 				// 		std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
 				// #endif
-				if (this->_socketHandler.acceptConnection(_server_fd) == false) // _addToEventLoop is called inside here if needed
-					continue ;
 // start _addToEventLoop
 				// int set = 1;
 				// setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
@@ -159,10 +163,10 @@ void Server::run_event_loop(int kq)
 				// kevent(kq, &ev, 1, NULL, 0, NULL);
 // end _addToEventLoop
 // end _acceptConnections
-			}
-			else if (evList[i].flags & EV_EOF) //removeClient()
-			{
-				this->_socketHandler.removeClient(i);
+			// }
+			// else if (evList[i].flags & EV_EOF) //removeClient()
+			// {
+			// 	this->_socketHandler.removeClient(i);
 // start _removeClient
 				// remove_client(evList[i].ident);
 				// EV_SET(&ev, evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
@@ -171,9 +175,9 @@ void Server::run_event_loop(int kq)
 				// 	std::cout << GREEN << "Client " << evList[i].ident << " disconnected" << RESET << std::endl;
 				// #endif
 // end _removeClient
-			}
-			else if (evList[i].flags & EVFILT_READ) // turn this into function that returns fd or -1
-			{
+			// }
+			// else if (evList[i].flags & EVFILT_READ) // turn this into function that returns fd or -1
+			// {
 // start _readFromClient
 			// 	int fd = evList[i].ident;
 			// 	int i = get_client(fd);
@@ -199,18 +203,19 @@ void Server::run_event_loop(int kq)
 			// 	#ifdef SHOW_LOG
 			// 		std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
 			// 	#endif
-				if (this->_socketHandler.readFromClient() == false)
-					continue ;
+				// if (this->_socketHandler.readFromClient() == false)
+				// 	continue ;
 // end _readFromClient
 
-				handleRequest(this->_socketHandler.getBuffer(), this->_socketHandler.getFD());
-			}
+				// handleRequest(this->_socketHandler.getBuffer(), this->_socketHandler.getFD());
+			// }
 		}
 	}
 }
 
 void Server::run()
 {
+	// this->_socketHandler = SocketHandler(this->_config);
 // start _listenMainSockets
 	// if (listen(_server_fd, 5))
 	// {
@@ -243,7 +248,7 @@ void Server::run()
 	// 	return;
 	// }
 // end _initEventLoop
-	run_event_loop(kq);
+	run_event_loop();
 }
 
 void Server::handleGET(const std::string& status, int fd, const std::string& uri)

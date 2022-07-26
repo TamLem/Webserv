@@ -251,7 +251,7 @@ void Server::handleRequest(const std::string& buffer, int fd)
 	this->_response.clear();
 	try
 	{
-		Request newRequest(buffer, fd);
+		Request newRequest(buffer);
 		if (buffer.find("/cgi/") != std::string::npos)
 			cgi_handle(newRequest, buffer, fd);
 		else if (newRequest.getMethod() == "POST")

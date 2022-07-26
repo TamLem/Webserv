@@ -265,7 +265,7 @@ std::ostream& operator<<(std::ostream& out, const Response& response)
 		out << it->first << ": "
 		<< it->second << "\n";
 	}
-	// out << response.getBody() << std::endl;
+	out << response.getBody() << std::endl;
 	return (out);
 }
 

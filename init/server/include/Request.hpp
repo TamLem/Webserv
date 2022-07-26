@@ -40,7 +40,7 @@ class Request : public Message
 		void addMethods(void);
 	public:
 		// Request(const std::string&);
-		Request(const std::string&, int fd);
+		Request(const std::string&);
 		// Request(const std::string&, int fd);
 		~Request(void);
 

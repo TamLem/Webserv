@@ -13,9 +13,8 @@
 // 	parseMessage(message);
 // }
 
-Request::Request(const std::string& message, int fd)
+Request::Request(const std::string& message)
 {
-	this->fd = fd;
 	this->hasBody = false;
 	addMethods();
 	parseMessage(message);
@@ -247,7 +246,7 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 {
 	out << request.getMethod() << " "
 	<< request.getUri() << " "
-	<< request.getProtocol() << "\n";
+	<< request.getProtocol() << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = request.getHeaderFields().begin(); it != request.getHeaderFields().end(); ++it)
 	{
 		out << it->first << ": "

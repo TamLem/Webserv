@@ -28,6 +28,12 @@
 #include "SingleServerConfig.hpp"
 #include "Base.hpp"
 
+#ifdef __APPLE__
+	#include "SocketHandler.hpp"
+#else
+	#include "LinuxSocketHandler.hpp"
+#endif
+
 // Forbidden includes maybe??????
 #include <errno.h>
 
@@ -66,11 +72,12 @@ class Server
 		void handleERROR(const std::string&, int);
 	private:
 		size_t _port;
-		std::set<unsigned short> _ports;
+		// std::set<unsigned short> _ports; // moved to socket handler
 		size_t _server_fd;
 		std::vector <client> _clients;
 		Response _response;
-		Config* _config;
+		SocketHandler _socketHandler;
+		Config* _config; // think about const
 
 		Server();
 		static void handle_signal(int sig);

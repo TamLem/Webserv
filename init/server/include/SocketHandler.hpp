@@ -55,6 +55,8 @@ class SocketHandler
 		std::map<int, int> _serverMap;
 		int _kq;
 		int _numEvents;
+		// char _buffer[1024]; //temp
+		struct kevent _ev; // temp
 		std::string _buffer; //temp
 		int _fd; //temp
 
@@ -69,7 +71,7 @@ class SocketHandler
 		void _initEventLoop();
 		int _addClient(int fd, struct sockaddr_in addr);
 		int _getClient(int fd);
-		bool _isPrintableAscii(char *str);
+		bool _isPrintableAscii(char c);
 
 	public:
 	// Constructors
@@ -88,6 +90,7 @@ class SocketHandler
 
 	// Getter
 		int getNumEvents() const;
+		// const char *getBuffer() const;
 		std::string getBuffer() const;
 		int getFD() const;
 

@@ -4,12 +4,17 @@
 void SocketHandler::_initPorts()
 {
 	// inits this->_ports
-	// std::map<std::string, ConfigStruct>::const_iterator confIt = this->_cluster.begin();
-	// std::map<std::string, ConfigStruct>::const_iterator confEnd = this->_cluster.end();
-	// for (; confIt != confEnd; ++confIt)
-	// {
-
-	// }
+	std::map<std::string, ConfigStruct>::const_iterator confIt = this->_cluster.begin();
+	std::map<std::string, ConfigStruct>::const_iterator confEnd = this->_cluster.end();
+	for (; confIt != confEnd; ++confIt)
+	{
+		std::map<std::string, unsigned short>::const_iterator listenIt = confIt->second.listen.begin();
+		std::map<std::string, unsigned short>::const_iterator listenEnd = confIt->second.listen.end();
+		for (; listenIt != listenEnd; ++listenIt)
+		{
+			this->_ports.insert(listenIt->second);
+		}
+	}
 }
 
 void SocketHandler::_initMainSockets()
@@ -49,6 +54,7 @@ void SocketHandler::_initMainSockets()
 			std::cerr << RESET;
 			exit(EXIT_FAILURE); // maybe change to throw
 		}
+		std::cout << GREEN << "succeccfully bound socket " << *portsIt << RESET << std::endl;
 	}
 
 }
@@ -81,9 +87,9 @@ void SocketHandler::_initEventLoop()
 	}
 	for (std::vector<int>::const_iterator it = this->_serverFds.begin(); it != this->_serverFds.end(); ++it)
 	{
-		struct kevent ev;
-		EV_SET(&ev, *it, EVFILT_READ, EV_ADD, 0, 0, NULL);
-		if (kevent(this->_kq, &ev, 1, NULL, 0, NULL) == -1)
+		// struct kevent ev;
+		EV_SET(&this->_ev, *it, EVFILT_READ, EV_ADD, 0, 0, NULL);
+		if (kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL) == -1)
 		{
 			std::cerr << RED << "Error adding server socket to kqueue" << std::endl;
 			perror(NULL);
@@ -119,11 +125,11 @@ bool SocketHandler::acceptConnection(int i)
 				std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
 			#endif
 			int set = 1;
-			struct kevent ev;
+			// struct kevent ev; // maybe this ev is not only needed here, check removeClient
 			setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
 			this->_addClient(fd, *(struct sockaddr_in *)&addr);
-			EV_SET(&ev, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-			kevent(this->_kq, &ev, 1, NULL, 0, NULL);
+			EV_SET(&this->_ev, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+			kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL);
 			this->_fd = fd;
 			return (true);
 		}
@@ -141,16 +147,25 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	return (this->_clients.size() - 1); // is this return value ever used??????
 }
 
-int SocketHandler::removeClient(int i)
+int SocketHandler::removeClient(int i) // can be void maybe
 {
 	if (this->_evList[i].flags & EV_EOF)
 	{
-		int i = this->_getClient(this->_fd);
-		if (i == -1)
-			return (-1);
+		int status = this->_getClient(this->_fd);
+		if (status == -1)
+		{
+			EV_SET(&this->_ev, this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL); // where do we get ev from ?????
+			kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL);
+			return (-1); // never used
+		}
 		this->_clients.erase(this->_clients.begin() + i);
-		return (0);
+		EV_SET(&this->_ev, this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL); // where do we get ev from ?????
+		kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL);
+		return (0); // never used
 	}
+	EV_SET(&this->_ev, this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL); // where do we get ev from ?????
+	kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL);
+	return (-1); // never used
 }
 
 bool SocketHandler::readFromClient(int i)
@@ -158,8 +173,8 @@ bool SocketHandler::readFromClient(int i)
 	if (this->_evList[i].flags & EVFILT_READ)
 	{
 		this->_fd = this->_evList[i].ident;
-		int i = this->_getClient(this->_fd);
-		if (i == -1)
+		int status = this->_getClient(this->_fd);
+		if (status == -1)
 		{
 			std::cerr << RED << "Error getting client" << std::endl;
 			perror(NULL);
@@ -170,13 +185,18 @@ bool SocketHandler::readFromClient(int i)
 
 
 	// this should happen inside request object
-		char buf[1024];
+		char buf[2];
 		int n = 0;
 		this->_buffer.clear();
-		while ((n = read(this->_fd, buf, 1024)) > 0)
+		while ((n = read(this->_fd, buf, 1)) > 0)
 		{
-			if (this->_isPrintableAscii(buf) == true)
+			if (this->_isPrintableAscii(buf[0]) == true)
+			{
+				buf[1] = '\0';
 				this->_buffer.append(buf);
+			}
+			// else
+				// throw NotAsciiException();
 		}
 		if (n < 0)
 		{
@@ -185,8 +205,10 @@ bool SocketHandler::readFromClient(int i)
 			std::cerr << RESET;
 			return (false); // throw exception
 		}
+		// buf[0] = '\0';
+		// this->_buffer.append(buf);
 		#ifdef SHOW_LOG
-			std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
+			std::cout << YELLOW << "Received->" << RESET << this->_buffer << YELLOW << "<-Received" << RESET << std::endl;
 		#endif
 		return (true);
 	}
@@ -194,19 +216,12 @@ bool SocketHandler::readFromClient(int i)
 		return (false);
 }
 
-bool SocketHandler::_isPrintableAscii(char *str)
+bool SocketHandler::_isPrintableAscii(char c)
 {
-	int i = 0;
-	while (str && str[i])
-	{
-		if (str[i] < 32 || str[i] > 126)
-			break ;
-		++i;
-	}
-	if (str && str[i] == NULL)
-		return (true);
-	else
+	if (c > 126 || c < 0)
 		return (false);
+	else
+		return (true);
 }
 
 int SocketHandler::_getClient(int fd)
@@ -220,15 +235,22 @@ int SocketHandler::_getClient(int fd)
 }
 
 // Constructors
-SocketHandler::SocketHandler(Config *config): _cluster(config->getCluster())
+SocketHandler::SocketHandler(Config *config)
 {
 	#ifdef SHOW_LOG
 		std::cout << GREEN << "SocketHandler Default Constructor called for " << this << RESET << std::endl;
 	#endif
+	this->_cluster = config->getCluster();
 	this->_initPorts();
 	this->_initMainSockets();
+	this->_listenMainSockets();
 	this->_initEventLoop();
 }
+
+// SocketHandler::SocketHandler(const SocketHandler &src)
+// {
+// 	this = src;
+// }
 
 // Deconstructors
 SocketHandler::~SocketHandler()
@@ -241,6 +263,18 @@ SocketHandler::~SocketHandler()
 }
 
 // Overloaded Operators
+// SocketHandler &SocketHandler::operator=(const SocketHandler &src)
+// {
+// 	this->_cluster = src._cluster;
+// 	this->_ports = src._ports;
+// 	this->_clients = src._clients;
+// 	this->_serverFds = src._serverFds;
+// 	this->_serverMap = src._serverMap;
+// 	this->_kq = src._kq;
+// 	this->_numEvents = src._numEvents;
+// 	this->_
+// }
+
 
 // Public Methods
 
@@ -250,10 +284,21 @@ int SocketHandler::getNumEvents() const
 	return (this->_numEvents);
 }
 
+// const char *SocketHandler::getBuffer() const
+// {
+// 	// check buffer for non ascii maybe? or do that in the read loop
+// 	return (this->_buffer);
+// }
+
 std::string SocketHandler::getBuffer() const
 {
 	// check buffer for non ascii maybe? or do that in the read loop
 	return (this->_buffer);
+}
+
+int SocketHandler::getFD() const
+{
+	return (this->_fd);
 }
 
 // Setter

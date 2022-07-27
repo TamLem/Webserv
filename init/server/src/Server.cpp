@@ -8,7 +8,7 @@
 // 	handle_signals();
 // }
 
-Server::Server(Config* config) : _config(config), _socketHandler(SocketHandler(config))
+Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
 {
 	#ifdef SHOW_LOG
 		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
@@ -50,7 +50,7 @@ Server::Server(Config* config) : _config(config), _socketHandler(SocketHandler(c
 
 Server::~Server(void)
 {
-	// close(this->_server_fd);
+	delete _socketHandler;
 	#ifdef SHOW_LOG
 		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
 	#endif
@@ -81,37 +81,35 @@ void	Server::handle_signals(void)
 	// signal(SIGPIPE, handle_signal);
 }
 
-void Server::stop(void){}
+// int Server::get_client(int fd)
+// {
+// // 	for (size_t i = 0; i < _clients.size(); i++)
+// // 	{
+// // 		if (_clients[i].fd == fd)
+// // 			return (i);
+// // 	}
+// // 	return (-1);
+// }
 
-int Server::get_client(int fd)
-{
-// 	for (size_t i = 0; i < _clients.size(); i++)
-// 	{
-// 		if (_clients[i].fd == fd)
-// 			return (i);
-// 	}
-// 	return (-1);
-}
+// int Server::add_client(int fd, struct sockaddr_in addr)
+// {
+// 	// struct client c;
+// 	// c.fd = fd;
+// 	// c.addr = addr;
+// 	// _clients.push_back(c);
+// 	// return (_clients.size() - 1);
+// }
 
-int Server::add_client(int fd, struct sockaddr_in addr)
-{
-	// struct client c;
-	// c.fd = fd;
-	// c.addr = addr;
-	// _clients.push_back(c);
-	// return (_clients.size() - 1);
-}
+// int Server::remove_client(int fd)
+// {
+// 	// int i = get_client(fd);
+// 	// if (i == -1)
+// 	// 	return (-1);
+// 	// _clients.erase(_clients.begin() + i);
+// 	// return (0);
+// }
 
-int Server::remove_client(int fd)
-{
-	// int i = get_client(fd);
-	// if (i == -1)
-	// 	return (-1);
-	// _clients.erase(_clients.begin() + i);
-	// return (0);
-}
-
-void Server::run_event_loop()
+void Server::runEventLoop()
 {
 // add those to private members
 	// struct kevent ev;
@@ -123,15 +121,21 @@ void Server::run_event_loop()
 	{
 // start _getEvents
 		// int num_events = kevent(kq, NULL, 0, evList, MAX_EVENTS, NULL);
-		this->_socketHandler.getEvents();
+		this->_socketHandler->getEvents();
 // end _getEvents
-		for (int i = 0; i < this->_socketHandler.getNumEvents() ; i++)
+		for (int i = 0; i < this->_socketHandler->getNumEvents() ; i++)
 		{
-			this->_socketHandler.acceptConnection(i);
-			this->_socketHandler.removeClient(i);
-			if (this->_socketHandler.readFromClient(i) == true)
+			this->_socketHandler->acceptConnection(i);
+			this->_socketHandler->removeClient(i);
+			/*if (this->_socketHandler->acceptConnection(i) == false)
+				continue ;
+			else if (this->_socketHandler->removeClient(i) == true)
+				continue ;
+			else */if (this->_socketHandler->readFromClient(i) == true)
 			{
-				handleRequest(this->_socketHandler.getBuffer(), this->_socketHandler.getFD());
+				// read into buffer
+
+				handleRequest(this->_socketHandler->getBuffer(), this->_socketHandler->getFD());
 			}
 			// this->_socketHandler.acceptConnection(i);
 			// this->_socketHandler.removeClient(i);
@@ -203,8 +207,6 @@ void Server::run_event_loop()
 			// 	#ifdef SHOW_LOG
 			// 		std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
 			// 	#endif
-				// if (this->_socketHandler.readFromClient() == false)
-				// 	continue ;
 // end _readFromClient
 
 				// handleRequest(this->_socketHandler.getBuffer(), this->_socketHandler.getFD());
@@ -213,8 +215,8 @@ void Server::run_event_loop()
 	}
 }
 
-void Server::run()
-{
+// void Server::run()
+// {
 	// this->_socketHandler = SocketHandler(this->_config);
 // start _listenMainSockets
 	// if (listen(_server_fd, 5))
@@ -248,8 +250,8 @@ void Server::run()
 	// 	return;
 	// }
 // end _initEventLoop
-	run_event_loop();
-}
+	// run_event_loop();
+// }
 
 void Server::handleGET(const std::string& status, int fd, const std::string& uri)
 {

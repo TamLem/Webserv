@@ -56,28 +56,28 @@ class Server
 
 		// void stop(void);
 
-		int get_client(int fd);
+		// int get_client(int fd);
 
-		int add_client(int fd, struct sockaddr_in addr);
+		// int add_client(int fd, struct sockaddr_in addr);
 
-		int remove_client(int fd);
+		// int remove_client(int fd);
 
-		void run_event_loop(void);
+		void runEventLoop(void);
 
-		void run(void);
+		// void run(void);
 
 		void handleRequest(const std::string&, int);
 		void handleGET(const std::string&, int, const std::string&);
 		void handlePOST(const std::string&, int, const Request&);
 		void handleERROR(const std::string&, int);
 	private:
+		Config *_config; // think about const
+		SocketHandler *_socketHandler;
 		// size_t _port;
 		// std::set<unsigned short> _ports; // moved to socket handler
 		// size_t _server_fd;
 		std::vector <client> _clients;
 		Response _response;
-		SocketHandler _socketHandler;
-		Config* _config; // think about const
 
 		Server();
 		static void handle_signal(int sig);

@@ -57,7 +57,7 @@ void Request::parseStartLine(std::istringstream& stream)
 	// if (this->uri == "/")
 	// 	this->uri = INDEX_PATH;
 	// else
-		this->uri = "." + this->uri;
+		// this->uri = "." + this->uri;
 	// std::cerr << RED << "uri: " << this->uri << "\nquery: " << this->query << "\nfragment: " << this->fragment << RESET << std::endl;
 	if (!isValidProtocol(protocol))
 		throw Request::InvalidProtocol();

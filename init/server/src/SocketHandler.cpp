@@ -87,9 +87,9 @@ void SocketHandler::_initEventLoop()
 	}
 	for (std::vector<int>::const_iterator it = this->_serverFds.begin(); it != this->_serverFds.end(); ++it)
 	{
-		// struct kevent ev;
-		EV_SET(&this->_ev, *it, EVFILT_READ, EV_ADD, 0, 0, NULL);
-		if (kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL) == -1)
+		struct kevent ev;
+		EV_SET(&ev, *it, EVFILT_READ, EV_ADD, 0, 0, NULL);
+		if (kevent(this->_kq, &ev, 1, NULL, 0, NULL) == -1)
 		{
 			std::cerr << RED << "Error adding server socket to kqueue" << std::endl;
 			perror(NULL);
@@ -135,7 +135,7 @@ bool SocketHandler::acceptConnection(int i)
 		}
 	}
 	else
-		return (false);
+		return (true);
 }
 
 int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
@@ -154,17 +154,21 @@ int SocketHandler::removeClient(int i) // can be void maybe
 		int status = this->_getClient(this->_fd);
 		if (status == -1)
 		{
-			EV_SET(&this->_ev, this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL); // where do we get ev from ?????
+			EV_SET(&this->_ev, this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 			kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL);
+			#ifdef SHOW_LOG
+				std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
+			#endif
 			return (-1); // never used
 		}
 		this->_clients.erase(this->_clients.begin() + i);
-		EV_SET(&this->_ev, this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL); // where do we get ev from ?????
+		EV_SET(&this->_ev, this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 		kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL);
+		#ifdef SHOW_LOG
+			std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
+		#endif
 		return (0); // never used
 	}
-	EV_SET(&this->_ev, this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL); // where do we get ev from ?????
-	kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL);
 	return (-1); // never used
 }
 
@@ -173,14 +177,15 @@ bool SocketHandler::readFromClient(int i)
 	if (this->_evList[i].flags & EVFILT_READ)
 	{
 		this->_fd = this->_evList[i].ident;
-		int status = this->_getClient(this->_fd);
-		if (status == -1)
-		{
-			std::cerr << RED << "Error getting client" << std::endl;
-			perror(NULL);
-			std::cerr << RESET;
-			return (false); // throw exception
-		}
+		// int status =
+		this->_getClient(this->_fd);
+		// if (status == -1)
+		// {
+		// 	std::cerr << RED << "Error getting client" << std::endl;
+		// 	perror(NULL);
+		// 	std::cerr << RESET;
+		// 	return (false); // throw exception
+		// }
 		// return (true);
 
 
@@ -198,6 +203,7 @@ bool SocketHandler::readFromClient(int i)
 			// else
 				// throw NotAsciiException();
 		}
+		std::cout << "finished reading from buffer" << std::endl;
 		if (n < 0)
 		{
 			std::cerr << RED << "Error reading from client" << std::endl;

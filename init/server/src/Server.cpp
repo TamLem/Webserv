@@ -129,13 +129,14 @@ void Server::runEventLoop()
 			this->_socketHandler->removeClient(i);
 			/*if (this->_socketHandler->acceptConnection(i) == false)
 				continue ;
-			else if (this->_socketHandler->removeClient(i) == true)
+			else if (this->_socketHandler->removeClient(i) != -1)
 				continue ;
 			else */if (this->_socketHandler->readFromClient(i) == true)
 			{
 				// read into buffer
 
 				handleRequest(this->_socketHandler->getBuffer(), this->_socketHandler->getFD());
+				// close (this->_socketHandler->getFD());
 			}
 			// this->_socketHandler.acceptConnection(i);
 			// this->_socketHandler.removeClient(i);
@@ -170,7 +171,6 @@ void Server::runEventLoop()
 			// }
 			// else if (evList[i].flags & EV_EOF) //removeClient()
 			// {
-			// 	this->_socketHandler.removeClient(i);
 // start _removeClient
 				// remove_client(evList[i].ident);
 				// EV_SET(&ev, evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);

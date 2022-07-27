@@ -76,6 +76,7 @@ class Server
 		void _initPorts();
 		
 		void applyCurrentConfig(const Request&);
+		void matchLocation(Request&);
 		void handleGET(const Request&);
 		void handlePOST(const Request&);
 		void handleERROR(const std::string&);

@@ -54,9 +54,9 @@ void Request::parseStartLine(std::istringstream& stream)
 	if (!isValidMethod(method))
 		throw InvalidMethod();
 	this->method = method;
-	if (this->uri == "/")
-		this->uri = INDEX_PATH;
-	else
+	// if (this->uri == "/")
+	// 	this->uri = INDEX_PATH;
+	// else
 		this->uri = "." + this->uri;
 	// std::cerr << RED << "uri: " << this->uri << "\nquery: " << this->query << "\nfragment: " << this->fragment << RESET << std::endl;
 	if (!isValidProtocol(protocol))
@@ -265,6 +265,11 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 // {
 // 	this->protocol = protocol;
 // }
+
+void Request::setUri(const std::string& uri)
+{
+	this->uri = uri;
+}
 
 const std::string& Request::getMethod(void) const
 {

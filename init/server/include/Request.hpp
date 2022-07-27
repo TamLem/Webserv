@@ -45,7 +45,7 @@ class Request : public Message
 		~Request(void);
 
 		// void setMethod(const std::string&);
-		// void setProtocol(const std::string&);
+		void setUri(const std::string&);
 
 		const std::string& getMethod(void) const;
 		const std::string& getUrl(void) const;

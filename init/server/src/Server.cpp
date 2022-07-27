@@ -266,6 +266,97 @@ void Server::applyCurrentConfig(const Request& request)
 	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.location["images/large_ones/"].indexPage << ">>>>>>>>>>>" << RESET << std::endl;
 }
 
+static std::string removeTrailingSlash(std::string string)
+{
+	if (*string.rbegin() == '/')
+		string = string.substr(0, string.length() - 1);
+	return (string);
+}
+
+void Server::matchLocation(Request& request)
+{
+	(void)request;
+	int max_cout = 0;
+	std::map<std::string, LocationStruct>::const_iterator winner;
+	int i;
+	std::string result;
+	std::string path;
+	std::string extension;
+	size_t ext_len;
+	std::string uri = request.getUri();
+	size_t uri_len = uri.length();
+	std::string example1 = "/pages/";
+	std::string example2 = "/other/";
+	std::string example3 = "/pages/more/";
+	example1 = removeTrailingSlash(example1);
+	//important get rid of '/'s
+	//for files
+	std::cout  << RED << "uri: " << uri << std::endl;
+	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
+	{
+		// std::cout  << RED << "FOR FILE..." << std::endl;
+		// std::cout  << RED << "isDir: " << it->second.isDir << std::endl;
+		//filecheck
+		if (it->second.isDir == false)
+		{
+			ext_len = it->first.length() - 1;
+			extension = it->first.substr(1, ext_len);
+			if (uri.compare(uri_len - ext_len, ext_len, extension) == 0)
+			{
+				std::cout  << YELLOW << "WE GOT A WINNER!: " << extension << std::endl;
+				result = this->_currentConfig.root + it->second.root + uri.substr(uri.find_last_of('/') + 1);
+				std::cout  << YELLOW << "FINAL FILE RESULT!: " << result << std::endl;
+				request.setUri(result);
+				return ;
+			}
+		}
+		//dir check
+		if (it->second.isDir == true)
+		{
+			path = it->first;
+			std::cout  << BLUE << "path: " << path << std::endl;
+			i = 0;
+			while (uri[i + 2] == path[i])
+				i++;
+			if (i > max_cout)
+			{
+				max_cout = i;
+				winner = it;
+			}
+		}
+
+		// std::cout << RED << it->first << ": "
+		// << it->second.root << " is dir: " << it->second.isDir << RESET << "\n";
+	}
+	//for directories
+	// std::cout  << RED << "FOR DIR..." << std::endl;
+	// for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
+	// {
+	// 	//dir check
+	// 	if (it->second.isDir == true)
+	// 	{
+	// 		path = it->first;
+	// 		// path = path.substr(2);
+	// 		std::cout  << BLUE << "path: " << path << std::endl;
+	// 		i = 0;
+	// 		while (uri[i + 2] == path[i])
+	// 			i++;
+	// 		if (i > max_cout)
+	// 		{
+	// 			max_cout = i;
+	// 			// result = path;
+	// 			winner = it;
+	// 		}
+	// 		// std::cout << RED << it->first << ": "
+	// 		// << it->second.root << " is dir: " << it->second.isDir << RESET << "\n";
+	// 	}
+	// }
+	// std::cout  << YELLOW << "WE GOT A RESULT!: " << result << std::endl;
+	result = this->_currentConfig.root + winner->first + "index.html";
+	std::cout  << YELLOW << "FINAL DIR RESULT!: " << result << std::endl;
+	request.setUri(result);
+}
+
 void Server::handleRequest(const std::string& buffer, int fd)
 {
 	this->_response.clear();
@@ -275,6 +366,7 @@ void Server::handleRequest(const std::string& buffer, int fd)
 		this->applyCurrentConfig(newRequest);
 		//normalize uri (in Request)
 		//determine location
+		this->matchLocation(newRequest);
 		//check method
 		//
 		if (buffer.find("/cgi/") != std::string::npos)

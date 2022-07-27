@@ -109,7 +109,7 @@ bool SocketHandler::acceptConnection(int i)
 	if (this->_serverMap.count(this->_evList[i].ident) == 1)
 	{
 		struct sockaddr_storage addr; // temp
-
+		
 		socklen_t addrlen = sizeof(addr); //temp
 		int fd = accept(this->_evList[i].ident, (struct sockaddr *)&addr, &addrlen);
 		if (fd < 0)
@@ -117,6 +117,7 @@ bool SocketHandler::acceptConnection(int i)
 			std::cerr << RED << "Error accepting connection" << std::endl;
 			perror(NULL);
 			std::cerr << RESET;
+			exit(1);
 			return (false); // throw exception here
 		}
 		else
@@ -124,18 +125,17 @@ bool SocketHandler::acceptConnection(int i)
 			#ifdef SHOW_LOG
 				std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
 			#endif
+			struct kevent ev; // maybe this ev is not only needed here, check removeClient
 			int set = 1;
-			// struct kevent ev; // maybe this ev is not only needed here, check removeClient
 			setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
 			this->_addClient(fd, *(struct sockaddr_in *)&addr);
-			EV_SET(&this->_ev, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-			kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL);
+			EV_SET(&ev, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+			kevent(this->_kq, &ev, 1, NULL, 0, NULL);
 			this->_fd = fd;
 			return (true);
 		}
 	}
-	else
-		return (true);
+	return (false);
 }
 
 int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
@@ -151,19 +151,10 @@ int SocketHandler::removeClient(int i) // can be void maybe
 {
 	if (this->_evList[i].flags & EV_EOF)
 	{
-		int status = this->_getClient(this->_fd);
-		if (status == -1)
-		{
-			EV_SET(&this->_ev, this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-			kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL);
-			#ifdef SHOW_LOG
-				std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
-			#endif
-			return (-1); // never used
-		}
-		this->_clients.erase(this->_clients.begin() + i);
-		EV_SET(&this->_ev, this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-		kevent(this->_kq, &this->_ev, 1, NULL, 0, NULL);
+		int index = this->_getClient(this->_fd);
+		this->_clients.erase(this->_clients.begin() + index);
+		EV_SET(&this->_evList[i], this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+		kevent(this->_kq, &this->_evList[i], 1, NULL, 0, NULL);
 		#ifdef SHOW_LOG
 			std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
 		#endif
@@ -177,42 +168,26 @@ bool SocketHandler::readFromClient(int i)
 	if (this->_evList[i].flags & EVFILT_READ)
 	{
 		this->_fd = this->_evList[i].ident;
-		// int status =
-		this->_getClient(this->_fd);
-		// if (status == -1)
-		// {
-		// 	std::cerr << RED << "Error getting client" << std::endl;
-		// 	perror(NULL);
-		// 	std::cerr << RESET;
-		// 	return (false); // throw exception
-		// }
-		// return (true);
-
-
-	// this should happen inside request object
-		char buf[2];
-		int n = 0;
-		this->_buffer.clear();
-		while ((n = read(this->_fd, buf, 1)) > 0)
+		int status = this->_getClient(this->_fd);
+		if (status == -1)
 		{
-			if (this->_isPrintableAscii(buf[0]) == true)
-			{
-				buf[1] = '\0';
-				this->_buffer.append(buf);
-			}
-			// else
-				// throw NotAsciiException();
+			std::cerr << RED << "Error getting client" << std::endl;
+			perror(NULL);
+			std::cerr << RESET;
+			return (false); // throw exception
 		}
-		std::cout << "finished reading from buffer" << std::endl;
+		char buf[1024]; // probably needs to be an ifstream to not overflow with enormous requests !!!!!!!!!!!
+		int n = read(this->_fd, buf, 1023);
 		if (n < 0)
 		{
 			std::cerr << RED << "Error reading from client" << std::endl;
 			perror(NULL);
 			std::cerr << RESET;
-			return (false); // throw exception
+			return false;
 		}
-		// buf[0] = '\0';
-		// this->_buffer.append(buf);
+		buf[n] = '\0';
+		this->_buffer = std::string(buf);
+		std::cout << "message: " << this->_buffer << std::endl;
 		#ifdef SHOW_LOG
 			std::cout << YELLOW << "Received->" << RESET << this->_buffer << YELLOW << "<-Received" << RESET << std::endl;
 		#endif

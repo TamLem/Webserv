@@ -300,6 +300,7 @@ void Server::matchLocation(Request& request)
 	(void)request;
 	int max_count = 0;
 	int i;
+	int segments;
 	std::string result;
 	std::string path;
 	std::string extension;
@@ -339,11 +340,26 @@ void Server::matchLocation(Request& request)
 				path = "/" + path;
 			std::cout  << BLUE << "path: " << path << std::endl;
 			i = 0;
-			while (uri[i] == path[i] && uri[i] != '\0') //path has to be checked until the end and segments need to be counted
-				i++;
-			if (i > max_count)
+			segments = 0;
+			if (uri_len >= path.length()) //path has to be checked until the end and segments need to be counted
 			{
-				max_count = i;
+				while (path[i] != '\0')
+				{
+					if (path[i] != uri[i])
+					{
+						segments = 0;
+						break ;
+					}
+					if (path[i] == '/')
+						segments++;
+					i++;
+				}
+				if (uri[i - 1] != '\0' && uri[i - 1] != '/') // carefull with len = 0!
+					segments = 0;
+			}
+			if (segments > max_count)
+			{
+				max_count = segments;
 				result = this->_currentConfig.root + it->second.root + uri.substr(i);
 				// if (*result.rbegin() != '/')
 				// 	result += "/";
@@ -360,6 +376,11 @@ void Server::matchLocation(Request& request)
 			}
 		}
 
+	}
+	//if no dir was found add default index.html
+	if (max_count == 0 && *result.rbegin() == '/')
+	{
+		request.setUri(request.getUri() + DEFAULT_INDEX);
 	}
 	std::cout  << YELLOW << "FINAL DIR RESULT!: " << request.getUri() << std::endl;
 }

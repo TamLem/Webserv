@@ -8,7 +8,7 @@
 #include <vector> //std::vector
 #include "Message.hpp"
 
-#define INDEX_PATH "./pages/index.html"
+#define DEFAULT_INDEX "index.html"
 #define BAD_PATH "./pages/404.html"
 #define INTERNAL_PATH "./pages/500.html"
 

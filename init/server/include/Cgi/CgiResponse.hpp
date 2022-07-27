@@ -8,6 +8,7 @@ class CgiResponse: public Response
 {
 private:
 	int	_responseFd;
+
 public:
 	CgiResponse(int fd);
 	~CgiResponse();
@@ -15,6 +16,8 @@ public:
 	void parseCgiHeaders(std::string buf);
 	string& readline(int fd);
 	bool checkForMandatoryHeaders(string& headerLine);
+	void parseSingleHeaderField(string& headerLine);
+
 };
 
 CgiResponse::CgiResponse(int fd): _responseFd(fd)
@@ -37,15 +40,11 @@ string& CgiResponse::readline(int fd)
 		line = line + string(buf);
 }
 
-
-void CgiResponse::parseCgiHeaders(std::string buf)
+void CgiResponse::parseSingleHeaderField(string& headerLine)
 {
-	string line = readline(_responseFd);
-	if (!checkForMandatoryHeaders(line))
-		throw ERROR_404();
-	if (line.find("Location") != string::npos)
+	if (headerLine.find("Location") != string::npos)
 	{
-		if (line.find("http://") || line.find("localhost")) //treat as absolute request
+		if (headerLine.find("http://") || headerLine.find("localhost")) //treat as absolute request
 		{
 
 		}
@@ -54,16 +53,33 @@ void CgiResponse::parseCgiHeaders(std::string buf)
 			//relative redirect url
 		}
 	}
-	if (line.find("Status") != string::npos)
+	if (headerLine.find("Status") != string::npos)
 	{
 
 	}
 	else
 	{
 	}
-	if (line.find("Content-Type") != string::npos)
+	if (headerLine.find("Content-Type") != string::npos)
 	{
+		string value = headerLine.substr(headerLine.find(":") + 1, string::npos);
+		addHeaderField("Content-Type", value);
 	}
+}
+
+
+void CgiResponse::parseCgiHeaders(std::string buf)
+{
+	string line = readline(_responseFd);
+	if (!checkForMandatoryHeaders(line))
+		throw ERROR_404();
+	
+	while (line != CRLF && line.empty())
+	{
+		parseSingleHeaderField(line);
+		line =  readline(_responseFd);
+	}
+	
 }
 
 bool CgiResponse::checkForMandatoryHeaders(string& headerLine)
@@ -78,6 +94,7 @@ bool CgiResponse::checkForMandatoryHeaders(string& headerLine)
 	}
 	return (false);
 }
+
 
 
 #endif

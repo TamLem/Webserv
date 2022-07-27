@@ -86,7 +86,7 @@ class SocketHandler
 		void getEvents();
 		bool acceptConnection(int i);
 		bool readFromClient(int i);
-		int removeClient(int fd);
+		void removeClient(int fd);
 
 	// Getter
 		int getNumEvents() const;

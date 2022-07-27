@@ -147,7 +147,7 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	return (this->_clients.size() - 1); // is this return value ever used??????
 }
 
-int SocketHandler::removeClient(int i) // can be void maybe
+void SocketHandler::removeClient(int i) // can be void maybe
 {
 	if (this->_evList[i].flags & EV_EOF)
 	{
@@ -158,9 +158,7 @@ int SocketHandler::removeClient(int i) // can be void maybe
 		#ifdef SHOW_LOG
 			std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
 		#endif
-		return (0); // never used
 	}
-	return (-1); // never used
 }
 
 bool SocketHandler::readFromClient(int i)

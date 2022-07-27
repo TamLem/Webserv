@@ -104,7 +104,7 @@ void SocketHandler::getEvents()
 	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, NULL);
 }
 
-bool SocketHandler::acceptConnection(int i)
+void SocketHandler::acceptConnection(int i)
 {
 	if (this->_serverMap.count(this->_evList[i].ident) == 1)
 	{
@@ -118,7 +118,7 @@ bool SocketHandler::acceptConnection(int i)
 			perror(NULL);
 			std::cerr << RESET;
 			exit(1);
-			return (false); // throw exception here
+			return; // throw exception here
 		}
 		else
 		{
@@ -132,10 +132,9 @@ bool SocketHandler::acceptConnection(int i)
 			EV_SET(&ev, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 			kevent(this->_kq, &ev, 1, NULL, 0, NULL);
 			this->_fd = fd;
-			return (true);
+			return;
 		}
 	}
-	return (false);
 }
 
 int SocketHandler::_addClient(int fd, struct sockaddr_in addr)

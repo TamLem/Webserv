@@ -169,7 +169,7 @@ void Response::createBody(const std::string& uri)
 void Response::addDefaultHeaderFields(void)
 {
 	std::stringstream contentLength;
-	addHeaderField("Server", "localhost:8080");
+	// addHeaderField("Server", "localhost:8080");
 	if (headerFields.count("Transfer-Encoding") == 0)
 	{
 		contentLength << this->body.length();

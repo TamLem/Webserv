@@ -20,10 +20,10 @@ class Message
 		Message& operator=(const Message&);
 		Message(void);
 		bool isValidProtocol(const std::string&) const;
-		void addHeaderField(const std::string&, const std::string&);
 		std::map<std::string, std::string> headerFields;
 		int fd;
 	public:
+		void addHeaderField(const std::string&, const std::string&);
 		virtual ~Message(void) = 0;
 		const std::string& getProtocol(void) const;
 		const std::string& getBody(void) const;

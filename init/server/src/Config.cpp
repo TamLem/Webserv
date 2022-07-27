@@ -307,7 +307,7 @@ void Config::printCluster()
 }
 
 // Getter
-ConfigStruct Config::getConfigStruct(std::string hostName) // use this function if you want to have access to the ConfigStruct of a server
+const ConfigStruct& Config::getConfigStruct(std::string hostName) // use this function if you want to have access to the ConfigStruct of a server
 {
 	std::string defaultConfig = "default";
 	if (this->applyConfig(hostName) == true)

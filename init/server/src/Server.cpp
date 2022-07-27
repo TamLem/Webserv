@@ -218,6 +218,7 @@ void Server::handleGET(const Request& request)
 	_response.setFd(request.getFd());
 	_response.setProtocol(PROTOCOL);
 	_response.createBody(request.getUri());
+	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
 }
@@ -234,6 +235,7 @@ void Server::handlePOST(const Request& request)
 	_response.setFd(request.getFd());
 	_response.setProtocol(PROTOCOL);
 	_response.createBody("./pages/post_test.html");
+	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
 }
@@ -243,7 +245,25 @@ void Server::handleERROR(const std::string& status)
 	_response.setStatus(status);
 	_response.setProtocol(PROTOCOL);
 	_response.createErrorBody();
+	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
+}
+
+void Server::applyCurrentConfig(const Request& request)
+{
+	std::map<std::string, std::string> headerFields;
+	headerFields = request.getHeaderFields();
+	std::string host = headerFields["host"];
+	// std::cout << RED << "<<<<<<<<<<" << host << ">>>>>>>>>>>" << RESET << std::endl;
+	// std::cout << RED << "<<<<<<<<<<" << this->_config->getConfigStruct(host).serverName << ">>>>>>>>>>>" << RESET << std::endl;
+	this->_currentConfig = this->_config->getConfigStruct(host);
+	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.serverName << ">>>>>>>>>>>" << RESET << std::endl;
+	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.root << ">>>>>>>>>>>" << RESET << std::endl;
+	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.errorPage["404"] << ">>>>>>>>>>>" << RESET << std::endl;
+	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.errorPage["405"] << ">>>>>>>>>>>" << RESET << std::endl;
+	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.errorPage["405"] << ">>>>>>>>>>>" << RESET << std::endl;
+	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.listen["8000"] << ">>>>>>>>>>>" << RESET << std::endl;
+	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.location["images/large_ones/"].indexPage << ">>>>>>>>>>>" << RESET << std::endl;
 }
 
 void Server::handleRequest(const std::string& buffer, int fd)
@@ -252,10 +272,11 @@ void Server::handleRequest(const std::string& buffer, int fd)
 	try
 	{
 		Request newRequest(buffer);
-		std::map<std::string, std::string> headerFields;
-		headerFields = newRequest.getHeaderFields();
-		std::cout << RED << "<<<<<<<<<<" << headerFields["host"] << ">>>>>>>>>>>" << RESET << std::endl;
-		std::cout << RED << "<<<<<<<<<<" << this->_config->getConfigStruct(headerFields["host"]).serverName << ">>>>>>>>>>>" << RESET << std::endl;
+		this->applyCurrentConfig(newRequest);
+		//normalize uri (in Request)
+		//determine location
+		//check method
+		//
 		if (buffer.find("/cgi/") != std::string::npos)
 			cgi_handle(newRequest, buffer, fd);
 		else if (newRequest.getMethod() == "POST")

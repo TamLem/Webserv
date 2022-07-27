@@ -68,12 +68,14 @@ class Server
 		std::vector <client> _clients;
 		Response _response;
 		Config* _config;
+		ConfigStruct _currentConfig;
 
 		Server();
 		static void handle_signal(int sig);
 		void handle_signals(void);
 		void _initPorts();
 		
+		void applyCurrentConfig(const Request&);
 		void handleGET(const Request&);
 		void handlePOST(const Request&);
 		void handleERROR(const std::string&);

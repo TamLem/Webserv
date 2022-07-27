@@ -255,7 +255,7 @@ std::ostream& operator<<(std::ostream& out, const Response& response)
 
 const char* Response::InvalidStatus::what() const throw()
 {
-	return ("Exception: invalid status");
+	return ("400");
 }
 
 const char* Response::ERROR_404::what() const throw()

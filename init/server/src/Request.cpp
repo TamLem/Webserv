@@ -308,7 +308,7 @@ const char* Request::EmptyMessage::what() const throw()
 
 const char* Request::InvalidMethod::what() const throw()
 {
-	return ("Exception: invalid method");
+	return ("501");
 }
 
 const char* Request::InvalidHeaderField::what() const throw()
@@ -333,5 +333,5 @@ const char* Request::InvalidHeaderFieldValue::what() const throw()
 
 const char* Request::InvalidProtocol::what() const throw()
 {
-	return ("Exception: invalid protocol");
+	return ("505");
 }

@@ -18,6 +18,7 @@
 #include <fstream>
 #include <sys/event.h>
 #include <map>
+#include <set>
 #include <csignal> // check if forbidden !!!!!!!!!!
 
 /* our includes */
@@ -25,10 +26,9 @@
 #include "Response.hpp"
 #include "Request.hpp"
 #include "SingleServerConfig.hpp"
-
 #include "Base.hpp"
 
-// Forbidden includes
+// Forbidden includes maybe??????
 #include <errno.h>
 
 struct client
@@ -60,13 +60,13 @@ class Server
 
 		void run(void);
 
-		void handle_static_request(const std::string&, int);
+		void handleRequest(const std::string&, int);
 		void handleGET(const std::string&, int, const std::string&);
 		void handlePOST(const std::string&, int, const Request&);
 		void handleERROR(const std::string&, int);
 	private:
 		size_t _port;
-		PortStruct _ports;
+		std::set<unsigned short> _ports;
 		size_t _server_fd;
 		std::vector <client> _clients;
 		Response _response;

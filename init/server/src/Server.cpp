@@ -10,7 +10,9 @@
 
 Server::Server(Config* config) : _config(config)
 {
-	std::cout << "Server constructor called for " << this << std::endl;
+	#ifdef SHOW_LOG
+		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
+	#endif
 	handle_signals();
 	_port = 8080;
 
@@ -24,7 +26,7 @@ Server::Server(Config* config) : _config(config)
 
 // Set socket reusable from Time-Wait state
 	int val = 1;
-	setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // how to implement | SO_NOSIGPIPE
+	setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
 
 // initialize server address struct
 	struct sockaddr_in serv_addr;
@@ -39,14 +41,16 @@ Server::Server(Config* config) : _config(config)
 		std::cerr << RED << "Error binding socket" << std::endl;
 		perror(NULL);
 		std::cerr << RESET;
-		exit(EXIT_FAILURE);
+		exit(EXIT_FAILURE); // maybe change to return or throw
 	}
 }
 
 Server::~Server(void)
 {
 	close(this->_server_fd);
-	std::cout << "server deconstructor called for " << this << std::endl;
+	#ifdef SHOW_LOG
+		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
+	#endif
 }
 
 
@@ -59,7 +63,7 @@ void Server::handle_signal(int sig)
 	}
 	// else if (sig == SIGPIPE)
 	// {
-	// 	std::cerr << RED << "SIGPIPE detected, will crash now" << RESET << std::endl;
+	// 	std::cerr << RED << "SIGPIPE detected, will end now" << RESET << std::endl;
 	// 	keep_running = 0;
 	// }
 }
@@ -126,8 +130,10 @@ void Server::run_event_loop(int kq)
 					std::cerr << RESET;
 					continue;
 				}
-				else
-					std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
+				#ifdef SHOW_LOG
+					else
+						std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
+				#endif
 				int set = 1;
 				setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
 				add_client(fd, *(struct sockaddr_in *)&addr);
@@ -139,7 +145,9 @@ void Server::run_event_loop(int kq)
 				remove_client(evList[i].ident);
 				EV_SET(&ev, evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 				kevent(kq, &ev, 1, NULL, 0, NULL);
-				std::cout << GREEN << "Client " << evList[i].ident << " disconnected" << RESET << std::endl;
+				#ifdef SHOW_LOG
+					std::cout << GREEN << "Client " << evList[i].ident << " disconnected" << RESET << std::endl;
+				#endif
 			}
 			else if (evList[i].flags & EVFILT_READ) //handle client read event
 			{
@@ -153,7 +161,7 @@ void Server::run_event_loop(int kq)
 					continue;
 				}
 				char buf[1024]; // probably needs to be an ifstream to not overflow with enormous requests !!!!!!!!!!!
-				int n = read(fd, buf, 1024);
+				int n = read(fd, buf, 1023);
 				if (n < 0)
 				{
 					std::cerr << RED << "Error reading from client" << std::endl;
@@ -161,10 +169,12 @@ void Server::run_event_loop(int kq)
 					std::cerr << RESET;
 					continue;
 				}
-				buf[n - 1] = '\0';
-				std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
+				buf[n] = '\0';
+				#ifdef SHOW_LOG
+					std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
+				#endif
 
-				handle_static_request(buf, fd);
+				handleRequest(buf, fd);
 			}
 		}
 	}
@@ -233,7 +243,7 @@ void Server::handleERROR(const std::string& status, int fd)
 	_response.sendResponse();
 }
 
-void Server::handle_static_request(const std::string& buffer, int fd) // function name is wrong, since it also handles cgi !!!!!!!!
+void Server::handleRequest(const std::string& buffer, int fd)
 {
 	try
 	{
@@ -245,22 +255,6 @@ void Server::handle_static_request(const std::string& buffer, int fd) // functio
 		else
 			handleGET("200", fd, newRequest.getUri());
 	}
-	// catch (Request::InvalidMethod& e)
-	// {
-	// 	handleERROR("501", fd);
-	// }
-	// catch (Request::InvalidProtocol& e)
-	// {
-	// 	handleERROR("505", fd);
-	// }
-	// catch (Response::ERROR_404& e)
-	// {
-	// 	handleERROR("404", fd);
-	// }
-	// catch (Message::BadRequest& e)
-	// {
-	// 	handleERROR("400", fd);
-	// }
 	catch (std::exception& exception)
 	{
 		std::string code = exception.what();

@@ -126,6 +126,7 @@ void Server::runEventLoop()
 			this->_socketHandler->removeClient(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
+				// readFromFD; // read 512 charackters or if less until /r/n/r/n is found
 				handleRequest(this->_socketHandler->getBuffer(), this->_socketHandler->getFD());
 				continue;
 			}

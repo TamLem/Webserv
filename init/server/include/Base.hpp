@@ -25,6 +25,10 @@
 #define CR '\r'
 #define TCHAR "!#$%&'*+-.^_`|~"
 
+// defines for reading from client
+#define MAX_REQUEST_HEADER_SIZE 1024
+#define MAX_REQUEST_LINE_SIZE 512
+
 // LocationStruct
 struct LocationStruct
 {

@@ -109,7 +109,7 @@ void SocketHandler::acceptConnection(int i)
 	if (this->_serverMap.count(this->_evList[i].ident) == 1)
 	{
 		struct sockaddr_storage addr; // temp
-		
+
 		socklen_t addrlen = sizeof(addr); //temp
 		int fd = accept(this->_evList[i].ident, (struct sockaddr *)&addr, &addrlen);
 		if (fd < 0)
@@ -181,6 +181,10 @@ bool SocketHandler::readFromClient(int i)
 			perror(NULL);
 			std::cerr << RESET;
 			return false;
+		}
+		if (n == 1024 /*&& !found("/r/n/r/n"*/)
+		{
+			// addToChunkedList(fd);
 		}
 		buf[n] = '\0';
 		this->_buffer = std::string(buf);

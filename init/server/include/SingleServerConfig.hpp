@@ -27,6 +27,7 @@ class SingleServerConfig
 		void _setVariables(std::string config);
 		void _parseKeyValue(std::string);
 
+		void _handleListen(std::string keyValue);
 		unsigned short _checkListen(std::string value);
 		// void _handleCgi(std::string line); // only needed if we do bonus
 		void _handleLocation(std::string line);

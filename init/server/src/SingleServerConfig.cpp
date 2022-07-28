@@ -288,6 +288,12 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 	#endif
 }
 
+void SingleServerConfig::_handleListen(std::string keyValue)
+{
+	(void)keyValue;
+	// put code from switch case
+}
+
 unsigned short SingleServerConfig::_checkListen(std::string value)
 {
 	size_t buffer = this->_strToSizeT(value);

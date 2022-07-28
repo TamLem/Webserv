@@ -342,7 +342,11 @@ void Server::matchLocation(Request& request)
 			extension = it->first.substr(1, ext_len);
 			if (uri_len > ext_len && uri.compare(uri_len - ext_len, ext_len, extension) == 0)
 			{
-				result = this->_currentConfig.root + it->second.root + uri.substr(uri.find_last_of('/') + 1);
+				if (it->second.root.empty())
+					result = this->_currentConfig.root;
+				else
+					result = "/" + it->second.root;
+				result += uri.substr(uri.find_last_of('/') + 1);
 				request.setUri(result);
 				#ifdef SHOW_LOG
 					std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getUri() << std::endl;
@@ -382,7 +386,11 @@ void Server::matchLocation(Request& request)
 			if (segments > max_count)
 			{
 				max_count = segments;
-				result = this->_currentConfig.root + it->second.root + uri.substr(i);
+				if (it->second.root.empty())
+					result = this->_currentConfig.root;
+				else
+					result = "/" + it->second.root;
+				result += uri.substr(i);
 				if (*result.rbegin() == '/')
 				{
 					if (it->second.autoIndex == false)
@@ -428,6 +436,7 @@ void Server::handleRequest(const std::string& buffer, int fd)
 		//resolve relative paths
 		//determine location
 		this->matchLocation(newRequest);
+		newRequest.setUri("." + newRequest.getUri());
 		//check method
 		//
 		if (buffer.find("/cgi/") != std::string::npos)

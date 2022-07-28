@@ -121,7 +121,7 @@ void Server::runEventLoop()
 		this->_socketHandler->getEvents();
 		for (int i = 0; i < this->_socketHandler->getNumEvents() ; i++)
 		{
-			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << "ev:" << i << std::endl;
+			// std::cout << "no. events: " << this->_socketHandler->getNumEvents() << "ev:" << i << std::endl;
 			if (this->_socketHandler->acceptConnection(i))
 				continue;
 			if (this->_socketHandler->removeClient(i))

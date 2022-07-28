@@ -265,7 +265,7 @@ Config::Config()
 Config::~Config()
 {
 	std::map<std::string, ConfigStruct>::iterator it;
-	// for (it = this->_cluster.begin(); it != this->_cluster.end(); ++it)
+	// for (it = this->_cluster.begin(); it != this->_cluster.end(); ++it) // check if needed
 	// {
 	// 	this->applyConfig(it->first);
 	// 	this->_freeConfigStruct();

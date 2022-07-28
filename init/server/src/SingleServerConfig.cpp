@@ -520,6 +520,11 @@ void SingleServerConfig::_handleLocation(std::string block)
 			std::cout << RED << key << RESET << std::endl;
 			throw SingleServerConfig::DuplicateLocationException();
 		}
+		if (key.find(".") != std::string::npos && key.find("*") == std::string::npos)
+		{
+			std::cout << RED << key << RESET << std::endl;
+			throw SingleServerConfig::InvalidLocationException();
+		}
 		bool openBrackets = true;
 		std::stringstream blockStream;
 		while (bufferStream.good() && openBrackets == true)
@@ -778,7 +783,7 @@ const char* SingleServerConfig::NoValueFoundException::what(void) const throw()
 
 const char* SingleServerConfig::InvalidLocationBlockException::what(void) const throw()
 {
-	std::cout << RED << "wrong syntax, has to be like >\n" << BLUE << "location *.filetype {\n\troot path/to/the/real/location\n\tmethod ALLOWED_METHOD/S\n\tautoindex off\n}\n" << RED << "< or >" << BLUE << "location /path/to/location/ {\n\troot path/to/the/real/location\n\tmethod ALLOWED_METHOD/S\n\tindex index_to_show\n\tautoindex off\n}\n" << std::endl;
+	std::cout << RED << "wrong syntax, has to be like >\n" << BLUE << "location *.filetype {\n\troot path/to/the/real/location\n\tmethod ALLOWED_METHOD/S\n\tautoindex off\n}\n" << RED << "< or >\n" << BLUE << "location /path/to/location/ {\n\troot path/to/the/real/location\n\tmethod ALLOWED_METHOD/S\n\tindex index_to_show\n\tautoindex off\n}\n" << RED << std::endl;
 	return ("↑↑↑ invalid location-block found, please provide like shown");
 }
 

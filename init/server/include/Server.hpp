@@ -78,11 +78,13 @@ class Server
 		// size_t _server_fd;
 		std::vector <client> _clients;
 		Response _response;
+		std::string _requestHead;
 
 		Server();
 		static void handle_signal(int sig);
 		void handle_signals(void);
 		void _initPorts();
+		void _readRequestHead(int fd);
 };
 
 void cgi_handle(Request& request, std::string buf, int fd);

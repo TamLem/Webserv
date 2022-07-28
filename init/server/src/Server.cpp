@@ -126,8 +126,8 @@ void Server::runEventLoop()
 			this->_socketHandler->removeClient(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
-				// readFromFD; // read 512 charackters or if less until /r/n/r/n is found
-				handleRequest(this->_socketHandler->getBuffer(), this->_socketHandler->getFD());
+				this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
+				handleRequest(this->_requestHead, this->_socketHandler->getFD());
 				continue;
 			}
 		}
@@ -221,6 +221,11 @@ void Server::handleRequest(const std::string& buffer, int fd)
 			code = "500";
 		handleERROR(code, fd);
 	}
+}
+
+void Server::_readRequestHead(int fd)
+{
+	// read 1024 charackters or if less until /r/n/r/n is found
 }
 
 void cgi_handle(Request& request, std::string buf, int fd)

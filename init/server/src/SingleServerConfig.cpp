@@ -16,6 +16,7 @@ SingleServerConfig::SingleServerConfig(std::string config, ConfigStruct *conf): 
 		std::cout << "This content reached the SingleServerConfigConstructor:\n>" << BLUE << config << RESET << "<" << std::endl;
 	#endif
 	this->_setVariables(config);
+	this->_checkConfigStruct();
 }
 
 // Deconstructors
@@ -58,6 +59,16 @@ std::string configVariables[]=
 };
 
 // Private Methods
+void SingleServerConfig::_checkConfigStruct()
+{
+	if (this->_conf->listen.size() == 0)
+		throw SingleServerConfig::NoPortException();
+	if (this->_conf->autoIndex == false && this->_conf->indexPage.length() == 0)
+		throw SingleServerConfig::NoIndexException();
+	if (this->_conf->root.length() == 0)
+		throw SingleServerConfig::NoRootException();
+}
+
 void SingleServerConfig::_setVariables(std::string config)
 {
 	#ifdef SHOW_LOG_2
@@ -163,6 +174,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (autoindex):
 	{
+		if (this->_conf->indexPage.length() > 0)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::InvalidIndexCombinationException();
+		}
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -180,7 +196,12 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (index_page):
 	{
-		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		if (this->_conf->autoIndex == true)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::InvalidIndexCombinationException();
+		}
+		else if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
 			throw SingleServerConfig::InvalidWhitespaceException();
@@ -338,12 +359,20 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 		std::getline(blockStream, keyValue);
 		if (keyValue.length() <= 0)
 			continue ;
-		if (keyValue.find_first_of(WHITESPACE) == std::string::npos)
+		key = keyValue.substr(0, keyValue.find_first_of(WHITESPACE));
+		if (key == "method" && keyValue.find_first_of(WHITESPACE) == std::string::npos)
+		{
+			foundMethod = true;
+			locationStruct.getAllowed = false;
+			locationStruct.postAllowed = false;
+			locationStruct.deleteAllowed = false;
+			continue ;
+		}
+		else if (keyValue.find_first_of(WHITESPACE) == std::string::npos)
 		{
 			std::cout << RED << keyValue << RESET << std::endl;
 			throw SingleServerConfig::InvalidKeyValueException();
 		}
-		key = keyValue.substr(0, keyValue.find_first_of(WHITESPACE));
 		size_t foundKey = location_root;
 
 		for (; foundKey < location_auto_index + 1; ++foundKey)
@@ -544,6 +573,8 @@ void SingleServerConfig::_handleLocation(std::string block)
 		LocationStruct locationStruct = this->_fillLocationStruct(blockStream.str());
 		if (key.substr(key.length() - 1) == "/" && key.find("*") == std::string::npos && key.substr(0, 1) != "/") // to find out if it is a dir or not
 			locationStruct.isDir = true;
+		else if (key == "/")
+			locationStruct.isDir = true;
 		else if (key.substr(0, 2) == "*." && key.find("/") == std::string::npos)
 			locationStruct.isDir = false;
 		else
@@ -718,7 +749,7 @@ const char* SingleServerConfig::NoRootException::what(void) const throw()
 
 const char* SingleServerConfig::NoIndexException::what(void) const throw()
 {
-	return ("'index_page' is mandatory for config file");
+	return ("'index_page' or 'autoindex true' is mandatory for config file");
 }
 
 const char* SingleServerConfig::NoPortException::what(void) const throw()

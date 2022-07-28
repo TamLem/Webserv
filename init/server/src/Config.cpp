@@ -196,7 +196,7 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 	confStruct.listen = std::map<std::string, unsigned short>();
 	confStruct.root = "";
 	confStruct.autoIndex = false;
-	confStruct.indexPage = "index.html";
+	confStruct.indexPage = "";
 	// confStruct.chunkedTransfer = false; // maybe not needed because it is always chunked ????????
 	confStruct.clientBodyBufferSize = 64000;
 	confStruct.clientMaxBodySize = 256000;

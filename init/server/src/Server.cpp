@@ -255,16 +255,7 @@ void Server::applyCurrentConfig(const Request& request)
 	std::map<std::string, std::string> headerFields;
 	headerFields = request.getHeaderFields();
 	std::string host = headerFields["host"];
-	// std::cout << RED << "<<<<<<<<<<" << host << ">>>>>>>>>>>" << RESET << std::endl;
-	// std::cout << RED << "<<<<<<<<<<" << this->_config->getConfigStruct(host).serverName << ">>>>>>>>>>>" << RESET << std::endl;
 	this->_currentConfig = this->_config->getConfigStruct(host);
-	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.serverName << ">>>>>>>>>>>" << RESET << std::endl;
-	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.root << ">>>>>>>>>>>" << RESET << std::endl;
-	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.errorPage["404"] << ">>>>>>>>>>>" << RESET << std::endl;
-	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.errorPage["405"] << ">>>>>>>>>>>" << RESET << std::endl;
-	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.errorPage["405"] << ">>>>>>>>>>>" << RESET << std::endl;
-	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.listen["8000"] << ">>>>>>>>>>>" << RESET << std::endl;
-	// std::cout << RED << "<<<<<<<<<<" << this->_currentConfig.location["images/large_ones/"].indexPage << ">>>>>>>>>>>" << RESET << std::endl;
 }
 
 // static std::string removeTrailingSlash(std::string string)
@@ -309,12 +300,14 @@ void Server::matchLocation(Request& request)
 	size_t uri_len = uri.length();
 	// example1 = removeTrailingSlash(example1);
 	//for files
+	#ifdef SHOW_LOG_2
 	std::cout  << RED << "uri: " << uri << std::endl;
 	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
 	{
 		std::cout << RED << it->first << ": "
 		<< it->second.root << " is dir: " << it->second.isDir << RESET << "\n";
 	}
+	#endif
 	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
 	{
 		//filecheck
@@ -326,7 +319,9 @@ void Server::matchLocation(Request& request)
 			{
 				result = this->_currentConfig.root + it->second.root + uri.substr(uri.find_last_of('/') + 1);
 				request.setUri(result);
-				std::cout  << YELLOW << "FINAL FILE RESULT!: " << request.getUri() << std::endl;
+				#ifdef SHOW_LOG_2
+					std::cout  << YELLOW << "FINAL FILE RESULT!: " << request.getUri() << std::endl;
+				#endif
 				return ;
 			}
 		}
@@ -338,7 +333,9 @@ void Server::matchLocation(Request& request)
 				path = "/"; // AE workaround while config takes ./ for root
 			else
 				path = "/" + path;
-			std::cout  << BLUE << "path: " << path << std::endl;
+			#ifdef SHOW_LOG_2
+				std::cout  << BLUE << "path: " << path << std::endl;
+			#endif
 			i = 0;
 			segments = 0;
 			if (uri_len >= path.length()) //path has to be checked until the end and segments need to be counted
@@ -361,28 +358,37 @@ void Server::matchLocation(Request& request)
 			{
 				max_count = segments;
 				result = this->_currentConfig.root + it->second.root + uri.substr(i);
-				// if (*result.rbegin() != '/')
-				// 	result += "/";
-				// result += "index.html";
 				if (*result.rbegin() == '/')
 				{
 					if (it->second.autoIndex == false)
 						result += it->second.indexPage;
-					// else
-						//autoindex
+					else
+						std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 				}
 				request.setUri(result);
-				std::cout  << YELLOW << "DIR MATCH!: " << request.getUri() << std::endl;
+				#ifdef SHOW_LOG_2
+					std::cout  << YELLOW << "DIR MATCH!: " << request.getUri() << std::endl;
+				#endif
 			}
 		}
 
 	}
 	//if no dir was found add default index.html
-	if (max_count == 0 && *result.rbegin() == '/')
+	if (max_count == 0)
 	{
-		request.setUri(request.getUri() + DEFAULT_INDEX);
+		result = this->_currentConfig.root + request.getUri().substr(1);
+		if (*result.rbegin() == '/')
+		{
+			if (this->_currentConfig.autoIndex == false)
+				result += this->_currentConfig.indexPage;
+			else
+				std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
+		}
+		request.setUri(result);
 	}
-	std::cout  << YELLOW << "FINAL DIR RESULT!: " << request.getUri() << std::endl;
+	#ifdef SHOW_LOG_2
+		std::cout  << YELLOW << "FINAL DIR RESULT!: " << request.getUri() << std::endl;
+	#endif
 }
 
 void Server::handleRequest(const std::string& buffer, int fd)

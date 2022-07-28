@@ -417,7 +417,7 @@ void Server::handleRequest(const std::string& buffer, int fd)
 			code = "500";
 		handleERROR(code);
 	}
-	std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
+	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 	this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
 }
 

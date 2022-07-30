@@ -61,9 +61,6 @@ class Server
 		void run(void);
 
 		void handleRequest(const std::string&, int);
-		void handleGET(const std::string&, int, const std::string&);
-		void handlePOST(const std::string&, int, const Request&);
-		void handleERROR(const std::string&, int);
 	private:
 		size_t _port;
 		std::set<unsigned short> _ports;
@@ -71,11 +68,18 @@ class Server
 		std::vector <client> _clients;
 		Response _response;
 		Config* _config;
+		ConfigStruct _currentConfig;
 
 		Server();
 		static void handle_signal(int sig);
 		void handle_signals(void);
 		void _initPorts();
+		
+		void applyCurrentConfig(const Request&);
+		void matchLocation(Request&);
+		void handleGET(const Request&);
+		void handlePOST(const Request&);
+		void handleERROR(const std::string&);
 };
 
 void cgi_handle(Request& request, std::string buf, int fd);

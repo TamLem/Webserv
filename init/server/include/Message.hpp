@@ -1,3 +1,5 @@
+#ifndef MESSAGE_HPP
+#define MESSAGE_HPP
 #pragma once
 
 #include <exception>
@@ -17,12 +19,16 @@ class Message
 		Message(const Message&);
 		Message& operator=(const Message&);
 		Message(void);
-		void addHeaderField(const std::string&, const std::string&);
+		bool isValidProtocol(const std::string&) const;
 		std::map<std::string, std::string> headerFields;
+		int fd;
 	public:
+		void addHeaderField(const std::string&, const std::string&);
 		virtual ~Message(void) = 0;
 		const std::string& getProtocol(void) const;
 		const std::string& getBody(void) const;
+		int getFd(void) const;
+
 		const std::map<std::string, std::string>& getHeaderFields(void) const;
 
 	class BadRequest : public std::exception
@@ -40,3 +46,5 @@ class Message
 		const char* what() const throw();
 	};
 };
+
+#endif

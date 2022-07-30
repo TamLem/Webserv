@@ -21,46 +21,56 @@ bool Response::isValidStatus(const std::string& status)
 	return (false);
 }
 
-Response::Response(void)// : status(status), fd(fd), uri(uri)
+Response::Response(void)
 {
 	this->createMessageMap();
-
-	// this->init(status, fd, uri);
-
-	// this->createBody();
-	// this->createHeaderFields();
-	// this->sendResponse();
 }
 
-// Response::Response(int status, int fd)// : status(status), fd(fd)
-// {
-// 	this->createMessageMap();
-
-// 	// std::string placeholder = "";
-// 	// this->init(status, fd, placeholder);
-
-// 	// this->createErrorBody();
-// 	// this->createHeaderFields();
-// 	// this->sendResponse();
-// }
-
-void Response::init(const std::string& status, int fd, const std::string& uri)
+void Response::clear(void)
 {
+	this->protocol = "";
+	this->body = "";
+	hasBody = false;
 	this->headerFields.clear();
-
-	if (!isValidStatus(status))
-		throw InvalidStatus();
-	this->status = status;
-	this->fd = fd;
-	this->uri = uri;
-	this->protocol = PROTOCOL;
-	this->statusMessage = this->messageMap[this->status];
-	this->hasBody = true;
+	this->status = "";
+	this->statusMessage = "";
+	fd = -1;
+	uri = "";
 }
 
 Response::~Response(void)
 {
 
+}
+
+void Response::setStatus(const std::string& status)
+{
+	if (!isValidStatus(status))
+		throw InvalidStatus();
+	this->status = status;
+	this->statusMessage = this->messageMap[this->status];
+}
+
+void Response::setBody(const std::string& body)
+{
+	this->body = body;
+}
+
+void Response::setUri(const std::string& uri)
+{
+	this->uri = uri;
+}
+
+void Response::setProtocol(const std::string& protocol)
+{
+	if (!isValidProtocol(protocol))
+		throw Response::InvalidProtocol();
+	this->protocol = protocol;
+}
+
+void Response::setFd(int fd)
+{
+	this->fd = fd;
 }
 
 const std::string& Response::getStatus(void) const
@@ -138,10 +148,10 @@ void Response::createErrorBody(void)
 	this->body = body.str();
 }
 
-void Response::createBody(void)
+void Response::createBody(const std::string& uri)
 {
 	std::stringstream body;
-	std::ifstream file(this->uri.c_str(), std::ios::binary);
+	std::ifstream file(uri.c_str(), std::ios::binary);
 	if (file.is_open())
 	{
 		body << file.rdbuf();
@@ -156,10 +166,10 @@ void Response::createBody(void)
 	}
 }
 
-void Response::createHeaderFields(void)
+void Response::addDefaultHeaderFields(void)
 {
 	std::stringstream contentLength;
-	addHeaderField("Server", "localhost:8080");
+	// addHeaderField("Server", "localhost:8080");
 	if (headerFields.count("Transfer-Encoding") == 0)
 	{
 		contentLength << this->body.length();
@@ -167,10 +177,10 @@ void Response::createHeaderFields(void)
 	}
 }
 
-void Response::sendResponse(void)
+void Response::sendResponse(int fd)
 {
-	std::string message = this->constructHeader() + this->body;
-	sendall(this->fd, (char *)message.c_str(), message.length());
+	std::string response = this->constructHeader() + this->body;
+	sendall(fd, (char *)response.c_str(), response.length());
 }
 
 void Response::createMessageMap(void)
@@ -249,7 +259,13 @@ std::ostream& operator<<(std::ostream& out, const Response& response)
 {
 	out << response.getProtocol() << " "
 	<< response.getStatus() << " "
-	<< response.getStatusMessage();
+	<< response.getStatusMessage() << std::endl;
+	for (std::map<std::string, std::string>::const_iterator it = response.getHeaderFields().begin(); it != response.getHeaderFields().end(); ++it)
+	{
+		out << it->first << ": "
+		<< it->second << "\n";
+	}
+	out << response.getBody() << std::endl;
 	return (out);
 }
 
@@ -261,4 +277,9 @@ const char* Response::InvalidStatus::what() const throw()
 const char* Response::ERROR_404::what() const throw()
 {
 	return ("404");
+}
+
+const char* Response::InvalidProtocol::what() const throw() //AE is it good to have different codes for request/response?
+{
+	return ("500");
 }

@@ -48,6 +48,7 @@ SRC_FILES	=	Linux_server.cpp \
 				Message.cpp \
 				Response.cpp \
 				Cgi.cpp		\
+				CgiResoponse.cpp \
 				Request.cpp \
 				Config.cpp \
 				SingleServerConfig.cpp

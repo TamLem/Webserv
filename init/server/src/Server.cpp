@@ -403,8 +403,8 @@ void Server::handleRequest(const std::string& buffer, int fd)
 		this->matchLocation(newRequest);
 		//check method
 		//
-		if (buffer.find("/cgi/") != std::string::npos)
-			cgi_handle(newRequest, buffer, fd);
+		if (buffer.find("/cgi/") != std::string::npos || buffer.find(".php") != std::string::npos)
+			cgi_handle(newRequest, fd);
 		else if (newRequest.getMethod() == "POST")
 			handlePOST(newRequest);
 		else
@@ -421,10 +421,10 @@ void Server::handleRequest(const std::string& buffer, int fd)
 	this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
 }
 
-void cgi_handle(Request& request, std::string buf, int fd)
+void cgi_handle(Request& request, int fd)
 {
 	Cgi newCgi(request);
 
 	newCgi.printEnv();
-	newCgi.cgi_response(buf, fd);
+	newCgi.cgi_response(fd);
 }

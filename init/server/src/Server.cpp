@@ -127,8 +127,8 @@ void Server::runEventLoop()
 			this->_socketHandler->removeClient(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
-				this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
-				handleRequest(this->_requestHead, this->_socketHandler->getFD());
+				// this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
+				handleRequest(/*this->_requestHead, */this->_socketHandler->getFD());
 				continue;
 			}
 		}
@@ -237,12 +237,37 @@ void Server::applyCurrentConfig(const Request& request)
 // 	// else
 // 	// 	return (false);
 
+// 	// error will return false
 // 	if (stat(target.c_str(), &statStruct) == 0)
 // 	{
 // 		if (statStruct.st_mode & S_IFREG)
 // 			return (true);
 // 	}
 // 	return (false);
+// }
+
+// static bool targetIsDir(const std::string& target)
+// {
+// 	struct stat statStruct;
+
+// 	// error will return false
+// 	if (stat(target.c_str(), &statStruct) == 0)
+// 	{
+// 		if (statStruct.st_mode & S_IFDIR)
+// 			return (true);
+// 	}
+// 	return (false);
+// }
+
+//https://stackoverflow.com/questions/29310166/check-if-a-fstream-is-either-a-file-or-directory
+// static bool isFile(const std::string& fileName)
+// {
+// 	std::ifstream fileOrDir(fileName);
+// 	//This will set the fail bit if fileName is a directory (or do nothing if it is already set
+// 	fileOrDir.seekg(0, std::ios::end);
+// 	if( !fileOrDir.good())
+// 		return (false);
+// 	return (true);
 // }
 
 void Server::matchLocation(Request& request)
@@ -276,10 +301,14 @@ void Server::matchLocation(Request& request)
 			extension = it->first.substr(1, ext_len);
 			if (uri_len > ext_len && uri.compare(uri_len - ext_len, ext_len, extension) == 0)
 			{
-				result = this->_currentConfig.root + it->second.root + uri.substr(uri.find_last_of('/') + 1);
+				if (it->second.root.empty())
+					result = this->_currentConfig.root;
+				else
+					result = "/" + it->second.root;
+				result += uri.substr(uri.find_last_of('/') + 1);
 				request.setUri(result);
-				#ifdef SHOW_LOG_2
-					std::cout  << YELLOW << "FINAL FILE RESULT!: " << request.getUri() << std::endl;
+				#ifdef SHOW_LOG
+					std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getUri() << std::endl;
 				#endif
 				return ;
 			}
@@ -288,9 +317,9 @@ void Server::matchLocation(Request& request)
 		if (it->second.isDir == true)
 		{
 			path = it->first;
-			if (path == "./")
-				path = "/"; // AE workaround while config takes ./ for root
-			else
+			// if (path == "./")
+			// 	path = "/"; // AE workaround while config takes ./ for root
+			if (path != "/")
 				path = "/" + path;
 			#ifdef SHOW_LOG_2
 				std::cout  << BLUE << "path: " << path << std::endl;
@@ -316,7 +345,11 @@ void Server::matchLocation(Request& request)
 			if (segments > max_count)
 			{
 				max_count = segments;
-				result = this->_currentConfig.root + it->second.root + uri.substr(i);
+				if (it->second.root.empty())
+					result = this->_currentConfig.root;
+				else
+					result = "/" + it->second.root;
+				result += uri.substr(i);
 				if (*result.rbegin() == '/')
 				{
 					if (it->second.autoIndex == false)
@@ -345,22 +378,25 @@ void Server::matchLocation(Request& request)
 		}
 		request.setUri(result);
 	}
-	#ifdef SHOW_LOG_2
-		std::cout  << YELLOW << "FINAL DIR RESULT!: " << request.getUri() << std::endl;
+	#ifdef SHOW_LOG
+		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getUri() << std::endl;
 	#endif
 }
 
-void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks here
+void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe breaks here
 {
 	this->_response.clear();
 	try
 	{
-		// std::cout << "Buffer contains >" << buffer << "<" << std::endl;
-		Request newRequest(buffer);
+		this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
+		Request newRequest(this->_requestHead);
 		this->applyCurrentConfig(newRequest);
 		//normalize uri (in Request)
+		//compression (merge slashes)
+		//resolve relative paths
 		//determine location
 		this->matchLocation(newRequest);
+		newRequest.setUri("." + newRequest.getUri());
 		//check method
 		//
 		if (buffer.find("/cgi/") != std::string::npos || buffer.find(".php") != std::string::npos)
@@ -368,7 +404,10 @@ void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks he
 		else if (newRequest.getMethod() == "POST")
 			handlePOST(newRequest);
 		else
+		{
 			handleGET(newRequest);
+			lseek(fd, 0, SEEK_END); // sets the filedescriptor to EOF so that
+		}
 	}
 	catch (std::exception& exception)
 	{
@@ -397,9 +436,9 @@ bool Server::_isPrintableAscii(char c)
 		return (true);
 }
 
+// read 1024 charackters or if less until /r/n/r/n is found
 void Server::_readRequestHead(int fd)
 {
-	// read 1024 charackters or if less until /r/n/r/n is found
 	this->_requestHead.clear();
 	size_t charsRead = 0;
 	bool firstLineBreak = false;
@@ -408,24 +447,22 @@ void Server::_readRequestHead(int fd)
 	while (charsRead < MAX_REQUEST_HEADER_SIZE)
 	{
 		n = read(fd, buffer, 1);
-		if (n < 0)
+		if (n < 0) // read had an error reading from fd
 		{
 			std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
-			perror(NULL);
+			perror(NULL); // check if forbidden!!!!!!!!
 			std::cerr << RESET << std::endl;
-			// throw InternatServerErrorException(); ?? send some error page to client
-			exit(EXIT_FAILURE);
+			throw Server::InternatServerErrorException();
 		}
-		else if (n == 0)
+		else if (n == 0) // read reached eof
 			break ;
-		else // append one character from client request a
+		else // append one character from client request if it is an ascii-char
 		{
 			buffer[1] = '\0';
 			if (!this->_isPrintableAscii(buffer[0]))
 			{
 				std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;
-				// throw NonAsciiFoundException(); ?? send some error page to client
-				exit(EXIT_FAILURE);
+				throw Server::BadRequestException();
 			}
 			this->_requestHead.append(buffer);
 			++charsRead;
@@ -439,8 +476,7 @@ void Server::_readRequestHead(int fd)
 		if (firstLineBreak == false && charsRead >= MAX_REQUEST_LINE_SIZE)
 		{
 			std::cout << RED << "FIRST LINE TOO LONG" << RESET << std::endl;
-			// throw FirstLineTooLongException(); ?? send some error page to client
-			exit(EXIT_FAILURE);
+			throw Server::FirstLineTooLongException();
 		}
 	}
 	if (charsRead <= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == true)
@@ -452,9 +488,24 @@ void Server::_readRequestHead(int fd)
 	else /*if (charsRead >= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == false)*/
 	{
 		std::cout << RED << "HEAD BIGGER THAN " << MAX_REQUEST_HEADER_SIZE << " OR NO CRLFTWO FOUND (incomplete request)" << RESET << std::endl;
-		// throw HeadTooBigException(); ?? send some error page to client
-		exit(EXIT_FAILURE);
+		throw Server::BadRequestException();
 	}
+}
+
+// Exceptions
+const char* Server::InternatServerErrorException::what(void) const throw()
+{
+	return ("500");
+}
+
+const char* Server::BadRequestException::what(void) const throw()
+{
+	return ("400");
+}
+
+const char* Server::FirstLineTooLongException::what(void) const throw()
+{
+	return ("414");
 }
 
 void cgi_handle(Request& request, int fd)

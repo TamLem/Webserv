@@ -106,7 +106,7 @@ re: fclean all
 
 #run rule
 run: all
-	./$(NAME) config/www.conf
+	./$(NAME) config/ae.conf
 
 #phony
 .PHONY: all clean fclean re run

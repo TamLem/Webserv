@@ -12,6 +12,14 @@ Message::~Message(void)
 	
 }
 
+
+bool Message::isValidProtocol(const std::string& protocol) const
+{
+	if (protocol == PROTOCOL)
+		return (true);
+	return (false);
+}
+
 void Message::addHeaderField(const std::string& key, const std::string& value)
 {
 	if (this->headerFields.count(key))
@@ -27,6 +35,11 @@ const std::string& Message::getProtocol(void) const
 const std::string& Message::getBody(void) const
 {
 	return (this->body);
+}
+
+int Message::getFd(void) const
+{
+	return (this->fd);
 }
 
 const std::map<std::string, std::string>& Message::getHeaderFields(void) const

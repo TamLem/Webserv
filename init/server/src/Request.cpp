@@ -6,6 +6,13 @@
 #include <ios> //ios::eof
 #include <cctype> // isalnum isprint isspace
 
+// Request::Request(const std::string& message)
+// {
+// 	this->hasBody = false;
+// 	addMethods();
+// 	parseMessage(message);
+// }
+
 Request::Request(const std::string& message)
 {
 	this->hasBody = false;
@@ -47,13 +54,13 @@ void Request::parseStartLine(std::istringstream& stream)
 	if (!isValidMethod(method))
 		throw InvalidMethod();
 	this->method = method;
-	if (this->uri == "/")
-		this->uri = INDEX_PATH;
-	else
-		this->uri = "." + this->uri;
+	// if (this->uri == "/")
+	// 	this->uri = INDEX_PATH;
+	// else
+		// this->uri = "." + this->uri;
 	// std::cerr << RED << "uri: " << this->uri << "\nquery: " << this->query << "\nfragment: " << this->fragment << RESET << std::endl;
 	if (!isValidProtocol(protocol))
-		throw InvalidProtocol();
+		throw Request::InvalidProtocol();
 	this->protocol = protocol;
 }
 
@@ -103,13 +110,6 @@ void Request::breakUpUri(const std::string& token)
 bool Request::isValidMethod(const std::string method) const
 {
 	if (this->validMethods.count(method))
-		return (true);
-	return (false);
-}
-
-bool Request::isValidProtocol(const std::string& protocol) const
-{
-	if (protocol == PROTOCOL)
 		return (true);
 	return (false);
 }
@@ -246,7 +246,7 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 {
 	out << request.getMethod() << " "
 	<< request.getUri() << " "
-	<< request.getProtocol() << "\n";
+	<< request.getProtocol() << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = request.getHeaderFields().begin(); it != request.getHeaderFields().end(); ++it)
 	{
 		out << it->first << ": "
@@ -265,6 +265,11 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 // {
 // 	this->protocol = protocol;
 // }
+
+void Request::setUri(const std::string& uri)
+{
+	this->uri = uri;
+}
 
 const std::string& Request::getMethod(void) const
 {

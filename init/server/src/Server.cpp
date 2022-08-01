@@ -1,6 +1,7 @@
 #include "Server.hpp"
 #include "Config.hpp"
 #include "Cgi/Cgi.hpp"
+#include <sys/stat.h> // stat
 
 // Server::Server(void)
 // {
@@ -172,56 +173,212 @@ void Server::runEventLoop()
 	// run_event_loop();
 // }
 
-void Server::handleGET(const std::string& status, int fd, const std::string& uri)
+void Server::handleGET(const Request& request)
 {
-	_response.init(status, fd, uri);
-	_response.createBody();
-	_response.createHeaderFields();
-	_response.sendResponse();
+	_response.setFd(request.getFd());
+	_response.setProtocol(PROTOCOL);
+	_response.createBody(request.getUri());
+	_response.addHeaderField("Server", this->_currentConfig.serverName);
+	_response.addDefaultHeaderFields();
+	_response.setStatus("200");
 }
 
-void Server::handlePOST(const std::string& status, int fd, const Request& newRequest)
+void Server::handlePOST(const Request& request)
 {
 	std::ofstream outFile;
-	outFile.open("./uploads/" + newRequest.getBody());
+	outFile.open("./uploads/" + request.getBody());
 	if (outFile.is_open() == false)
 		throw std::exception();
-	outFile << newRequest.getBody() << "'s content. Server: " << this->_config->getConfigStruct("weebserv").serverName;
+	outFile << request.getBody() << "'s content. Server: " << this->_config->getConfigStruct("weebserv").serverName;
 	outFile.close();
-	_response.init(status, fd, "./pages/post_test.html");
-	_response.createBody();
-	_response.createHeaderFields();
-	_response.sendResponse();
+
+	_response.setFd(request.getFd());
+	_response.setProtocol(PROTOCOL);
+	_response.createBody("./pages/post_test.html");
+	_response.addHeaderField("Server", this->_currentConfig.serverName);
+	_response.addDefaultHeaderFields();
+	_response.setStatus("200");
 }
 
-void Server::handleERROR(const std::string& status, int fd)
+void Server::handleERROR(const std::string& status)
 {
-	_response.init(status, fd, ""); //AE make overload instead of passing ""
+	_response.setStatus(status);
+	_response.setProtocol(PROTOCOL);
 	_response.createErrorBody();
-	_response.createHeaderFields();
-	_response.sendResponse();
+	_response.addHeaderField("Server", this->_currentConfig.serverName);
+	_response.addDefaultHeaderFields();
+}
+
+void Server::applyCurrentConfig(const Request& request)
+{
+	std::map<std::string, std::string> headerFields;
+	headerFields = request.getHeaderFields();
+	std::string host = headerFields["host"];
+	this->_currentConfig = this->_config->getConfigStruct(host);
+}
+
+// static std::string removeTrailingSlash(std::string string)
+// {
+// 	if (*string.rbegin() == '/')
+// 		string = string.substr(0, string.length() - 1);
+// 	return (string);
+// }
+
+// static bool targetIsFile(const std::string& target)
+// {
+// 	struct stat statStruct;
+
+// 	// if (stat(target.c_str(), &statStruct) != 0)
+// 	// 	throw InternalServerError();
+// 	// if (statStruct.st_mode & S_IFREG == 0 && statStruct.st_mode & S_IFDIR == 0)
+// 	// 	throw InternalServerError();
+// 	// else if (statStruct.st_mode & S_IFREG)
+// 	// 	return (true);
+// 	// else
+// 	// 	return (false);
+
+// 	if (stat(target.c_str(), &statStruct) == 0)
+// 	{
+// 		if (statStruct.st_mode & S_IFREG)
+// 			return (true);
+// 	}
+// 	return (false);
+// }
+
+void Server::matchLocation(Request& request)
+{
+	(void)request;
+	int max_count = 0;
+	int i;
+	int segments;
+	std::string result;
+	std::string path;
+	std::string extension;
+	size_t ext_len;
+	std::string uri = request.getUri();
+	size_t uri_len = uri.length();
+	// example1 = removeTrailingSlash(example1);
+	//for files
+	#ifdef SHOW_LOG_2
+	std::cout  << RED << "uri: " << uri << std::endl;
+	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
+	{
+		std::cout << RED << it->first << ": "
+		<< it->second.root << " is dir: " << it->second.isDir << RESET << "\n";
+	}
+	#endif
+	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
+	{
+		//filecheck
+		if (it->second.isDir == false)
+		{
+			ext_len = it->first.length() - 1;
+			extension = it->first.substr(1, ext_len);
+			if (uri_len > ext_len && uri.compare(uri_len - ext_len, ext_len, extension) == 0)
+			{
+				result = this->_currentConfig.root + it->second.root + uri.substr(uri.find_last_of('/') + 1);
+				request.setUri(result);
+				#ifdef SHOW_LOG_2
+					std::cout  << YELLOW << "FINAL FILE RESULT!: " << request.getUri() << std::endl;
+				#endif
+				return ;
+			}
+		}
+		//dir check
+		if (it->second.isDir == true)
+		{
+			path = it->first;
+			if (path == "./")
+				path = "/"; // AE workaround while config takes ./ for root
+			else
+				path = "/" + path;
+			#ifdef SHOW_LOG_2
+				std::cout  << BLUE << "path: " << path << std::endl;
+			#endif
+			i = 0;
+			segments = 0;
+			if (uri_len >= path.length()) //path has to be checked until the end and segments need to be counted
+			{
+				while (path[i] != '\0')
+				{
+					if (path[i] != uri[i])
+					{
+						segments = 0;
+						break ;
+					}
+					if (path[i] == '/')
+						segments++;
+					i++;
+				}
+				if (uri[i - 1] != '\0' && uri[i - 1] != '/') // carefull with len = 0!
+					segments = 0;
+			}
+			if (segments > max_count)
+			{
+				max_count = segments;
+				result = this->_currentConfig.root + it->second.root + uri.substr(i);
+				if (*result.rbegin() == '/')
+				{
+					if (it->second.autoIndex == false)
+						result += it->second.indexPage;
+					else
+						std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
+				}
+				request.setUri(result);
+				#ifdef SHOW_LOG_2
+					std::cout  << YELLOW << "DIR MATCH!: " << request.getUri() << std::endl;
+				#endif
+			}
+		}
+
+	}
+	//if no dir was found add default index.html
+	if (max_count == 0)
+	{
+		result = this->_currentConfig.root + request.getUri().substr(1);
+		if (*result.rbegin() == '/')
+		{
+			if (this->_currentConfig.autoIndex == false)
+				result += this->_currentConfig.indexPage;
+			else
+				std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
+		}
+		request.setUri(result);
+	}
+	#ifdef SHOW_LOG_2
+		std::cout  << YELLOW << "FINAL DIR RESULT!: " << request.getUri() << std::endl;
+	#endif
 }
 
 void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks here
 {
+	this->_response.clear();
 	try
 	{
 		// std::cout << "Buffer contains >" << buffer << "<" << std::endl;
 		Request newRequest(buffer);
+		this->applyCurrentConfig(newRequest);
+		//normalize uri (in Request)
+		//determine location
+		this->matchLocation(newRequest);
+		//check method
+		//
 		if (buffer.find("/cgi/") != std::string::npos)
 			cgi_handle(newRequest, buffer, fd);
 		else if (newRequest.getMethod() == "POST")
-			handlePOST("200", fd, newRequest);
+			handlePOST(newRequest);
 		else
-			handleGET("200", fd, newRequest.getUri());
+			handleGET(newRequest);
 	}
 	catch (std::exception& exception)
 	{
 		std::string code = exception.what();
 		if (_response.getMessageMap().count(code) != 1)
 			code = "500";
-		handleERROR(code, fd);
+		handleERROR(code);
 	}
+	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
+	this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
 }
 
 bool Server::_crlftwoFound()

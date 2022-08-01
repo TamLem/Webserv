@@ -49,7 +49,7 @@ void SocketHandler::_initMainSockets()
 		// bind socket to address
 		if((bind(tempFD, (struct sockaddr *)&servAddr, sizeof(servAddr))) < 0)
 		{
-			std::cerr << RED << "Error binding socket" << std::endl;
+			std::cerr << RED << "Error binding socket: " << tempFD << std::endl;
 			perror(NULL);
 			std::cerr << RESET;
 			exit(EXIT_FAILURE); // maybe change to throw
@@ -164,7 +164,7 @@ bool SocketHandler::readFromClient(int i)
 {
 	if (this->_evList[i].flags & EVFILT_READ)
 	{
-		this->_fd = this->_evList[i].ident;
+		// this->_fd = this->_evList[i].ident; // maybe this breaks it
 		int status = this->_getClient(this->_fd);
 		if (status == -1)
 		{
@@ -173,37 +173,29 @@ bool SocketHandler::readFromClient(int i)
 			std::cerr << RESET;
 			return (false); // throw exception
 		}
-		char buf[1024]; // probably needs to be an ifstream to not overflow with enormous requests !!!!!!!!!!!
-		int n = read(this->_fd, buf, 1023);
-		if (n < 0)
-		{
-			std::cerr << RED << "Error reading from client" << std::endl;
-			perror(NULL);
-			std::cerr << RESET;
-			return false;
-		}
-		if (n == 1024 /*&& !found("/r/n/r/n"*/)
-		{
-			// addToChunkedList(fd);
-		}
-		buf[n] = '\0';
-		this->_buffer = std::string(buf);
-		std::cout << "message: " << this->_buffer << std::endl;
-		#ifdef SHOW_LOG
-			std::cout << YELLOW << "Received->" << RESET << this->_buffer << YELLOW << "<-Received" << RESET << std::endl;
-		#endif
+		// char buf[1024]; // probably needs to be an ifstream to not overflow with enormous requests !!!!!!!!!!!
+		// int n = read(this->_fd, buf, 1023);
+		// if (n < 0)
+		// {
+		// 	std::cerr << RED << "Error reading from client" << std::endl;
+		// 	perror(NULL);
+		// 	std::cerr << RESET;
+		// 	return false;
+		// }
+		// if (n == 1024 /*&& !found("/r/n/r/n"*/)
+		// {
+		// 	// addToChunkedList(fd);
+		// }
+		// buf[n] = '\0';
+		// this->_buffer = std::string(buf);
+		// std::cout << "message: " << this->_buffer << std::endl;
+		// #ifdef SHOW_LOG
+		// 	std::cout << YELLOW << "Received->" << RESET << this->_buffer << YELLOW << "<-Received" << RESET << std::endl;
+		// #endif
 		return (true);
 	}
 	else
 		return (false);
-}
-
-bool SocketHandler::_isPrintableAscii(char c)
-{
-	if (c > 126 || c < 0)
-		return (false);
-	else
-		return (true);
 }
 
 int SocketHandler::_getClient(int fd)

@@ -6,13 +6,6 @@
 #include <ios> //ios::eof
 #include <cctype> // isalnum isprint isspace
 
-// Request::Request(const std::string& message)
-// {
-// 	this->hasBody = false;
-// 	addMethods();
-// 	parseMessage(message);
-// }
-
 Request::Request(const std::string& message)
 {
 	this->hasBody = false;

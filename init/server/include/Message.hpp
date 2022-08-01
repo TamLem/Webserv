@@ -21,13 +21,11 @@ class Message
 		Message(void);
 		bool isValidProtocol(const std::string&) const;
 		std::map<std::string, std::string> headerFields;
-		int fd;
 	public:
 		void addHeaderField(const std::string&, const std::string&);
 		virtual ~Message(void) = 0;
 		const std::string& getProtocol(void) const;
 		const std::string& getBody(void) const;
-		int getFd(void) const;
 
 		const std::map<std::string, std::string>& getHeaderFields(void) const;
 

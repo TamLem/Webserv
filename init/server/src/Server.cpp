@@ -127,8 +127,8 @@ void Server::runEventLoop()
 			this->_socketHandler->removeClient(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
-				this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
-				handleRequest(this->_requestHead, this->_socketHandler->getFD());
+				// this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
+				handleRequest(/*this->_requestHead, */this->_socketHandler->getFD());
 				continue;
 			}
 		}
@@ -383,13 +383,13 @@ void Server::matchLocation(Request& request)
 	#endif
 }
 
-void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks here
+void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe breaks here
 {
 	this->_response.clear();
 	try
 	{
-		// std::cout << "Buffer contains >" << buffer << "<" << std::endl;
-		Request newRequest(buffer);
+		this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
+		Request newRequest(this->_requestHead);
 		this->applyCurrentConfig(newRequest);
 		//normalize uri (in Request)
 		//compression (merge slashes)
@@ -399,12 +399,15 @@ void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks he
 		newRequest.setUri("." + newRequest.getUri());
 		//check method
 		//
-		if (buffer.find("/cgi/") != std::string::npos)
-			cgi_handle(newRequest, buffer, fd);
+		if (this->_requestHead.find("/cgi/") != std::string::npos)
+			cgi_handle(newRequest, this->_requestHead, fd);
 		else if (newRequest.getMethod() == "POST")
 			handlePOST(newRequest);
 		else
+		{
 			handleGET(newRequest);
+			lseek(fd, 0, SEEK_END); // sets the filedescriptor to EOF so that
+		}
 	}
 	catch (std::exception& exception)
 	{
@@ -433,9 +436,9 @@ bool Server::_isPrintableAscii(char c)
 		return (true);
 }
 
+// read 1024 charackters or if less until /r/n/r/n is found
 void Server::_readRequestHead(int fd)
 {
-	// read 1024 charackters or if less until /r/n/r/n is found
 	this->_requestHead.clear();
 	size_t charsRead = 0;
 	bool firstLineBreak = false;
@@ -444,24 +447,22 @@ void Server::_readRequestHead(int fd)
 	while (charsRead < MAX_REQUEST_HEADER_SIZE)
 	{
 		n = read(fd, buffer, 1);
-		if (n < 0)
+		if (n < 0) // read had an error reading from fd
 		{
 			std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
-			perror(NULL);
+			perror(NULL); // check if forbidden!!!!!!!!
 			std::cerr << RESET << std::endl;
-			// throw InternatServerErrorException(); ?? send some error page to client
-			exit(EXIT_FAILURE);
+			throw Server::InternatServerErrorException();
 		}
-		else if (n == 0)
+		else if (n == 0) // read reached eof
 			break ;
-		else // append one character from client request a
+		else // append one character from client request if it is an ascii-char
 		{
 			buffer[1] = '\0';
 			if (!this->_isPrintableAscii(buffer[0]))
 			{
 				std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;
-				// throw NonAsciiFoundException(); ?? send some error page to client
-				exit(EXIT_FAILURE);
+				throw Server::BadRequestException();
 			}
 			this->_requestHead.append(buffer);
 			++charsRead;
@@ -475,8 +476,7 @@ void Server::_readRequestHead(int fd)
 		if (firstLineBreak == false && charsRead >= MAX_REQUEST_LINE_SIZE)
 		{
 			std::cout << RED << "FIRST LINE TOO LONG" << RESET << std::endl;
-			// throw FirstLineTooLongException(); ?? send some error page to client
-			exit(EXIT_FAILURE);
+			throw Server::FirstLineTooLongException();
 		}
 	}
 	if (charsRead <= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == true)
@@ -488,9 +488,24 @@ void Server::_readRequestHead(int fd)
 	else /*if (charsRead >= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == false)*/
 	{
 		std::cout << RED << "HEAD BIGGER THAN " << MAX_REQUEST_HEADER_SIZE << " OR NO CRLFTWO FOUND (incomplete request)" << RESET << std::endl;
-		// throw HeadTooBigException(); ?? send some error page to client
-		exit(EXIT_FAILURE);
+		throw Server::BadRequestException();
 	}
+}
+
+// Exceptions
+const char* Server::InternatServerErrorException::what(void) const throw()
+{
+	return ("500");
+}
+
+const char* Server::BadRequestException::what(void) const throw()
+{
+	return ("400");
+}
+
+const char* Server::FirstLineTooLongException::what(void) const throw()
+{
+	return ("414");
 }
 
 void cgi_handle(Request& request, std::string buf, int fd)

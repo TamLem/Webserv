@@ -52,17 +52,17 @@ class SingleServerConfig
 	// Public Methods
 
 	// Exceptions
-		class NoRootException : public std::exception
-		{
-			public:
-				virtual const char* what() const throw();
-		};
+		// class NoRootException : public std::exception
+		// {
+		// 	public:
+		// 		virtual const char* what() const throw();
+		// };
 
-		class NoIndexException : public std::exception
-		{
-			public:
-				virtual const char* what() const throw();
-		};
+		// class NoIndexException : public std::exception
+		// {
+		// 	public:
+		// 		virtual const char* what() const throw();
+		// };
 
 		class NoPortException : public std::exception
 		{
@@ -191,6 +191,12 @@ class SingleServerConfig
 		};
 
 		class MissingIndexException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class InvalidPathException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

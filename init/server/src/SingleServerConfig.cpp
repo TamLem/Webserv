@@ -63,10 +63,10 @@ void SingleServerConfig::_checkConfigStruct()
 {
 	if (this->_conf->listen.size() == 0)
 		throw SingleServerConfig::NoPortException();
-	if (this->_conf->autoIndex == false && this->_conf->indexPage.length() == 0)
-		throw SingleServerConfig::NoIndexException();
+	if (this->_conf->indexPage.length() == 0)
+		this->_conf->indexPage = "index.html";
 	if (this->_conf->root.length() == 0)
-		throw SingleServerConfig::NoRootException();
+		this->_conf->root = "/";
 }
 
 void SingleServerConfig::_setVariables(std::string config)
@@ -154,6 +154,16 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 			throw SingleServerConfig::InvalidWhitespaceException();
 		}
 		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+		if (value.find(".") != std::string::npos)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::InvalidPathException();
+		}
+		else if (value[0] != '/' || value[value.length() - 1] != '/')
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::InvalidPathException();
+		}
 		this->_conf->root = value;
 		break ;
 	}
@@ -174,11 +184,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (autoindex):
 	{
-		if (this->_conf->indexPage.length() > 0)
-		{
-			std::cout << RED << keyValue << RESET << std::endl;
-			throw SingleServerConfig::InvalidIndexCombinationException();
-		}
+		// if (this->_conf->indexPage.length() > 0)
+		// {
+		// 	std::cout << RED << keyValue << RESET << std::endl;
+		// 	throw SingleServerConfig::InvalidIndexCombinationException();
+		// }
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -196,12 +206,12 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (index_page):
 	{
-		if (this->_conf->autoIndex == true)
-		{
-			std::cout << RED << keyValue << RESET << std::endl;
-			throw SingleServerConfig::InvalidIndexCombinationException();
-		}
-		else if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
+		// if (this->_conf->autoIndex == true)
+		// {
+		// 	std::cout << RED << keyValue << RESET << std::endl;
+		// 	throw SingleServerConfig::InvalidIndexCombinationException();
+		// }
+		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
 			throw SingleServerConfig::InvalidWhitespaceException();
@@ -399,6 +409,16 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 				throw SingleServerConfig::InvalidWhitespaceException();
 			}
 			value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+			if (value.find(".") != std::string::npos)
+			{
+				std::cout << RED << keyValue << RESET << std::endl;
+				throw SingleServerConfig::InvalidPathException();
+			}
+			else if (value[0] != '/' || value[value.length() - 1] != '/')
+			{
+				std::cout << RED << keyValue << RESET << std::endl;
+				throw SingleServerConfig::InvalidPathException();
+			}
 			locationStruct.root = value;
 			foundRoot = true;
 			break ;
@@ -492,16 +512,16 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 
 		throw SingleServerConfig::InvalidLocationException();
 	}
-	if (foundIndex == true && locationStruct.autoIndex == true)
-	{
-		std::cout << RED << "location " << key << RESET << std::endl;
-		throw SingleServerConfig::InvalidIndexCombinationException();
-	}
-	else if ((!foundIndex && !foundAutoIndex) || (!foundIndex && locationStruct.autoIndex == false))
-	{
-		std::cout << RED << "location " << key << RESET << std::endl;
-		throw SingleServerConfig::MissingIndexException();
-	}
+	// if (foundIndex == true && locationStruct.autoIndex == true)
+	// {
+	// 	std::cout << RED << "location " << key << RESET << std::endl;
+	// 	throw SingleServerConfig::InvalidIndexCombinationException();
+	// }
+	// else if ((!foundIndex && !foundAutoIndex) || (!foundIndex && locationStruct.autoIndex == false))
+	// {
+	// 	std::cout << RED << "location " << key << RESET << std::endl;
+	// 	throw SingleServerConfig::MissingIndexException();
+	// }
 
 
 	return (locationStruct);
@@ -748,15 +768,15 @@ size_t SingleServerConfig::_strToSizeT(std::string str)
 // Setter
 
 // Exceptions
-const char* SingleServerConfig::NoRootException::what(void) const throw()
-{
-	return ("'root' is mandatory for config file");
-}
+// const char* SingleServerConfig::NoRootException::what(void) const throw()
+// {
+// 	return ("'root' is mandatory for config file");
+// }
 
-const char* SingleServerConfig::NoIndexException::what(void) const throw()
-{
-	return ("'index_page' or 'autoindex true' is mandatory for config file");
-}
+// const char* SingleServerConfig::NoIndexException::what(void) const throw()
+// {
+// 	return ("'index_page' or 'autoindex true' is mandatory for config file");
+// }
 
 const char* SingleServerConfig::NoPortException::what(void) const throw()
 {
@@ -867,4 +887,9 @@ const char* SingleServerConfig::InvalidIndexCombinationException::what(void) con
 const char* SingleServerConfig::MissingIndexException::what(void) const throw()
 {
 	return ("↑↑↑ autoindex can not be false if no index_page defined");
+}
+
+const char* SingleServerConfig::InvalidPathException::what(void) const throw()
+{
+	return ("↑↑↑ this path is invalid, no use of '.' and has to be like : \"/path/\"");
 }

@@ -83,7 +83,9 @@ class Server
 		Server();
 		static void handle_signal(int sig);
 		void handle_signals(void);
-		void _initPorts();
+		// void _initPorts();
+		bool _crlftwoFound();
+		bool _isPrintableAscii(char c);
 		void _readRequestHead(int fd);
 };
 

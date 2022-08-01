@@ -119,7 +119,7 @@ void Server::runEventLoop()
 	while(keep_running)
 	{
 		this->_socketHandler->getEvents();
-		for (int i = 0; i < this->_socketHandler->getNumEvents() ; i++)
+		for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
 		{
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
 			this->_socketHandler->acceptConnection(i);
@@ -202,10 +202,11 @@ void Server::handleERROR(const std::string& status, int fd)
 	_response.sendResponse();
 }
 
-void Server::handleRequest(const std::string& buffer, int fd)
+void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks here
 {
 	try
 	{
+		// std::cout << "Buffer contains >" << buffer << "<" << std::endl;
 		Request newRequest(buffer);
 		if (buffer.find("/cgi/") != std::string::npos)
 			cgi_handle(newRequest, buffer, fd);
@@ -223,9 +224,80 @@ void Server::handleRequest(const std::string& buffer, int fd)
 	}
 }
 
+bool Server::_crlftwoFound()
+{
+	if (this->_requestHead.find(CRLFTWO) != std::string::npos)
+		return (true);
+	else
+		return (false);
+}
+
+bool Server::_isPrintableAscii(char c)
+{
+	if (c > 126 || c < 0)
+		return (false);
+	else
+		return (true);
+}
+
 void Server::_readRequestHead(int fd)
 {
 	// read 1024 charackters or if less until /r/n/r/n is found
+	this->_requestHead.clear();
+	size_t charsRead = 0;
+	bool firstLineBreak = false;
+	int n = 0;
+	char buffer[2];
+	while (charsRead < MAX_REQUEST_HEADER_SIZE)
+	{
+		n = read(fd, buffer, 1);
+		if (n < 0)
+		{
+			std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
+			perror(NULL);
+			std::cerr << RESET << std::endl;
+			// throw InternatServerErrorException(); ?? send some error page to client
+			exit(EXIT_FAILURE);
+		}
+		else if (n == 0)
+			break ;
+		else // append one character from client request a
+		{
+			buffer[1] = '\0';
+			if (!this->_isPrintableAscii(buffer[0]))
+			{
+				std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;
+				// throw NonAsciiFoundException(); ?? send some error page to client
+				exit(EXIT_FAILURE);
+			}
+			this->_requestHead.append(buffer);
+			++charsRead;
+			if (this->_crlftwoFound() == true)
+				break ;
+		}
+		if (firstLineBreak == false && this->_requestHead.find(CRLF) != std::string::npos)
+		{
+			firstLineBreak = true;
+		}
+		if (firstLineBreak == false && charsRead >= MAX_REQUEST_LINE_SIZE)
+		{
+			std::cout << RED << "FIRST LINE TOO LONG" << RESET << std::endl;
+			// throw FirstLineTooLongException(); ?? send some error page to client
+			exit(EXIT_FAILURE);
+		}
+	}
+	if (charsRead <= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == true)
+	{
+		#ifdef SHOW_LOG
+			std::cout << YELLOW << "Received->" << RESET << this->_requestHead << YELLOW << "<-Received" << RESET << std::endl;
+		#endif
+	}
+	else /*if (charsRead >= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == false)*/
+	{
+		std::cout << RED << "HEAD BIGGER THAN " << MAX_REQUEST_HEADER_SIZE << " OR NO CRLFTWO FOUND (incomplete request)" << RESET << std::endl;
+		// throw HeadTooBigException(); ?? send some error page to client
+		exit(EXIT_FAILURE);
+	}
 }
 
 void cgi_handle(Request& request, std::string buf, int fd)

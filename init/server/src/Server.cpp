@@ -457,7 +457,7 @@ void Server::_readRequestHead(int fd)
 	}
 }
 
-void cgi_handle(Request& request, std::string buf, int fd)
+void cgi_handle(Request& request, int fd)
 {
 	Cgi newCgi(request);
 

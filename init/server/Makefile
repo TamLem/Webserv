@@ -35,6 +35,7 @@ CUT			=	\033[K
 #				automaticly decides which Sources to use depending on the OS
 ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be different on other Macs)
 SRC_FILES	=	main.cpp \
+				SocketHandler.cpp \
 				Server.cpp \
 				Message.cpp \
 				Response.cpp \

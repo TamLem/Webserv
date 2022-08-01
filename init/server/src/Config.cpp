@@ -196,7 +196,7 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 	confStruct.listen = std::map<std::string, unsigned short>();
 	confStruct.root = "";
 	confStruct.autoIndex = false;
-	confStruct.indexPage = "index.html";
+	confStruct.indexPage = "";
 	// confStruct.chunkedTransfer = false; // maybe not needed because it is always chunked ????????
 	confStruct.clientBodyBufferSize = 64000;
 	confStruct.clientMaxBodySize = 256000;
@@ -265,7 +265,7 @@ Config::Config()
 Config::~Config()
 {
 	std::map<std::string, ConfigStruct>::iterator it;
-	// for (it = this->_cluster.begin(); it != this->_cluster.end(); ++it)
+	// for (it = this->_cluster.begin(); it != this->_cluster.end(); ++it) // check if needed
 	// {
 	// 	this->applyConfig(it->first);
 	// 	this->_freeConfigStruct();
@@ -307,6 +307,11 @@ void Config::printCluster()
 }
 
 // Getter
+std::map<std::string, ConfigStruct> Config::getCluster()
+{
+	return (this->_cluster);
+}
+
 const ConfigStruct& Config::getConfigStruct(std::string hostName) // use this function if you want to have access to the ConfigStruct of a server
 {
 	std::string defaultConfig = "default";

@@ -9,46 +9,49 @@
 // 	handle_signals();
 // }
 
-Server::Server(Config* config) : _config(config)
+Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
 {
 	#ifdef SHOW_LOG
 		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
 	#endif
 	handle_signals();
-	_port = 8080;
+	// _port = 8080;
 
-	if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		std::cerr << RED << "Error creating socket" << std::endl;
-		perror(NULL);
-		std::cerr << RESET;
-		return;
-	}
+// start _initMainPorts
+	// if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	// {
+	// 	std::cerr << RED << "Error creating socket" << std::endl;
+	// 	perror(NULL);
+	// 	std::cerr << RESET;
+	// 	return;
+	// }
 
-// Set socket reusable from Time-Wait state
-	int val = 1;
-	setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
 
-// initialize server address struct
-	struct sockaddr_in serv_addr;
-	memset(&serv_addr, '0', sizeof(serv_addr)); // is memset allowed? !!!!!!!!!!!!!!!!!!!!
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(_port);
-	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	// // Set socket reusable from Time-Wait state
+	// int val = 1;
+	// setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
 
-// bind socket to address
-	if((bind(_server_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) < 0)
-	{
-		std::cerr << RED << "Error binding socket" << std::endl;
-		perror(NULL);
-		std::cerr << RESET;
-		exit(EXIT_FAILURE); // maybe change to return or throw
-	}
+	// // initialize server address struct
+	// struct sockaddr_in serv_addr;
+	// memset(&serv_addr, '0', sizeof(serv_addr)); // is memset allowed? !!!!!!!!!!!!!!!!!!!!
+	// serv_addr.sin_family = AF_INET;
+	// serv_addr.sin_port = htons(_port);
+	// serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	// // bind socket to address
+	// if((bind(_server_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) < 0)
+	// {
+	// 	std::cerr << RED << "Error binding socket" << std::endl;
+	// 	perror(NULL);
+	// 	std::cerr << RESET;
+	// 	exit(EXIT_FAILURE); // maybe change to return or throw
+	// }
+// end _initMainPorts
 }
 
 Server::~Server(void)
 {
-	close(this->_server_fd);
+	delete _socketHandler;
 	#ifdef SHOW_LOG
 		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
 	#endif
@@ -79,140 +82,96 @@ void	Server::handle_signals(void)
 	// signal(SIGPIPE, handle_signal);
 }
 
-void Server::stop(void){}
+// int Server::get_client(int fd)
+// {
+// // 	for (size_t i = 0; i < _clients.size(); i++)
+// // 	{
+// // 		if (_clients[i].fd == fd)
+// // 			return (i);
+// // 	}
+// // 	return (-1);
+// }
 
-int Server::get_client(int fd)
-{
-	for (size_t i = 0; i < _clients.size(); i++)
-	{
-		if (_clients[i].fd == fd)
-			return (i);
-	}
-	return (-1);
-}
+// int Server::add_client(int fd, struct sockaddr_in addr)
+// {
+// 	// struct client c;
+// 	// c.fd = fd;
+// 	// c.addr = addr;
+// 	// _clients.push_back(c);
+// 	// return (_clients.size() - 1);
+// }
 
-int Server::add_client(int fd, struct sockaddr_in addr)
-{
-	struct client c;
-	c.fd = fd;
-	c.addr = addr;
-	_clients.push_back(c);
-	return (_clients.size() - 1);
-}
+// int Server::remove_client(int fd)
+// {
+// 	// int i = get_client(fd);
+// 	// if (i == -1)
+// 	// 	return (-1);
+// 	// _clients.erase(_clients.begin() + i);
+// 	// return (0);
+// }
 
-int Server::remove_client(int fd)
+void Server::runEventLoop()
 {
-	int i = get_client(fd);
-	if (i == -1)
-		return (-1);
-	_clients.erase(_clients.begin() + i);
-	return (0);
-}
-
-void Server::run_event_loop(int kq)
-{
-	struct kevent ev;
-	struct kevent evList[MAX_EVENTS];
-	struct sockaddr_storage addr;
+// add those to private members
+	// struct kevent ev;
+	// struct kevent evList[MAX_EVENTS];
+	// struct sockaddr_storage addr; // temp
 
 	while(keep_running)
 	{
-		int num_events = kevent(kq, NULL, 0, evList, MAX_EVENTS, NULL);
-		for (int i = 0; i < num_events; i++)
+		this->_socketHandler->getEvents();
+		for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
 		{
-			if (evList[i].ident == _server_fd)
+			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
+			this->_socketHandler->acceptConnection(i);
+			this->_socketHandler->removeClient(i);
+			if (this->_socketHandler->readFromClient(i) == true)
 			{
-				socklen_t addrlen = sizeof(addr);
-				int fd = accept(_server_fd, (struct sockaddr *)&addr, &addrlen);
-				if (fd < 0)
-				{
-					std::cerr << RED << "Error accepting connection" << std::endl;
-					perror(NULL);
-					std::cerr << RESET;
-					continue;
-				}
-				#ifdef SHOW_LOG
-					else
-						std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
-				#endif
-				int set = 1;
-				setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
-				add_client(fd, *(struct sockaddr_in *)&addr);
-				EV_SET(&ev, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-				kevent(kq, &ev, 1, NULL, 0, NULL);
-			}
-			else if (evList[i].flags & EV_EOF) //handle client disconnect event
-			{
-				remove_client(evList[i].ident);
-				EV_SET(&ev, evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-				kevent(kq, &ev, 1, NULL, 0, NULL);
-				#ifdef SHOW_LOG
-					std::cout << GREEN << "Client " << evList[i].ident << " disconnected" << RESET << std::endl;
-				#endif
-			}
-			else if (evList[i].flags & EVFILT_READ) //handle client read event
-			{
-				int fd = evList[i].ident;
-				int i = get_client(fd);
-				if (i == -1)
-				{
-					std::cerr << RED << "Error getting client" << std::endl;
-					perror(NULL);
-					std::cerr << RESET;
-					continue;
-				}
-				char buf[1024]; // probably needs to be an ifstream to not overflow with enormous requests !!!!!!!!!!!
-				int n = read(fd, buf, 1024);
-				if (n < 0)
-				{
-					std::cerr << RED << "Error reading from client" << std::endl;
-					perror(NULL);
-					std::cerr << RESET;
-					continue;
-				}
-				buf[n] = '\0';
-				#ifdef SHOW_LOG
-					std::cout << YELLOW << "Received->" << RESET << buf << YELLOW << "<-Received" << RESET << std::endl;
-				#endif
-
-				handleRequest(buf, fd);
+				this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
+				handleRequest(this->_requestHead, this->_socketHandler->getFD());
+				continue;
 			}
 		}
 	}
 }
 
-void Server::run()
-{
-	if (listen(_server_fd, 5))
-	{
-		std::cerr << RED << "Error listening" << std::endl;
-		perror(NULL);
-		std::cerr << RESET;
-		return;
-	}
-	else
-		std::cout << "Listening on port " << _port << std::endl;
-// create a kqueue
-	int kq = kqueue();
-	if (kq == -1)
-	{
-		std::cerr << RED << "Error creating kqueue" << std::endl;
-		perror(NULL);
-		std::cerr << RESET;
-		return;
-	}
-	struct kevent ev;
-	EV_SET(&ev, _server_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	int ret = kevent(kq, &ev, 1, NULL, 0, NULL);
-	if (ret == -1)
-	{
-		std::cerr << RED << "Error adding server socket to kqueue" << std::endl;
-		perror(NULL);
-		std::cerr << RESET;
-		return;
-	}
-	run_event_loop(kq);
-}
+// void Server::run()
+// {
+	// this->_socketHandler = SocketHandler(this->_config);
+// start _listenMainSockets
+	// if (listen(_server_fd, 5))
+	// {
+	// 	std::cerr << RED << "Error listening" << std::endl;
+	// 	perror(NULL);
+	// 	std::cerr << RESET;
+	// 	return;
+	// }
+	// else
+	// 	std::cout << "Listening on port " << _port << std::endl;
+// end _listenMainSockets
+
+// start _initEventLoop
+	// int kq = kqueue();
+	// if (kq == -1)
+	// {
+	// 	std::cerr << RED << "Error creating kqueue" << std::endl;
+	// 	perror(NULL);
+	// 	std::cerr << RESET;
+	// 	return;
+	// }
+	// struct kevent ev;
+	// EV_SET(&ev, _server_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	// int ret = kevent(kq, &ev, 1, NULL, 0, NULL);
+	// if (ret == -1)
+	// {
+	// 	std::cerr << RED << "Error adding server socket to kqueue" << std::endl;
+	// 	perror(NULL);
+	// 	std::cerr << RESET;
+	// 	return;
+	// }
+// end _initEventLoop
+	// run_event_loop();
+// }
 
 void Server::handleGET(const Request& request)
 {
@@ -304,7 +263,7 @@ void Server::applyCurrentConfig(const Request& request)
 // static bool isFile(const std::string& fileName)
 // {
 // 	std::ifstream fileOrDir(fileName);
-// 	//This will set the fail bit if fileName is a directory (or do nothing if it is already set  
+// 	//This will set the fail bit if fileName is a directory (or do nothing if it is already set
 // 	fileOrDir.seekg(0, std::ios::end);
 // 	if( !fileOrDir.good())
 // 		return (false);
@@ -358,9 +317,9 @@ void Server::matchLocation(Request& request)
 		if (it->second.isDir == true)
 		{
 			path = it->first;
-			if (path == "./")
-				path = "/"; // AE workaround while config takes ./ for root
-			else
+			// if (path == "./")
+			// 	path = "/"; // AE workaround while config takes ./ for root
+			if (path != "/")
 				path = "/" + path;
 			#ifdef SHOW_LOG_2
 				std::cout  << BLUE << "path: " << path << std::endl;
@@ -424,11 +383,12 @@ void Server::matchLocation(Request& request)
 	#endif
 }
 
-void Server::handleRequest(const std::string& buffer, int fd)
+void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks here
 {
 	this->_response.clear();
 	try
 	{
+		// std::cout << "Buffer contains >" << buffer << "<" << std::endl;
 		Request newRequest(buffer);
 		this->applyCurrentConfig(newRequest);
 		//normalize uri (in Request)
@@ -455,6 +415,82 @@ void Server::handleRequest(const std::string& buffer, int fd)
 	}
 	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 	this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
+}
+
+bool Server::_crlftwoFound()
+{
+	if (this->_requestHead.find(CRLFTWO) != std::string::npos)
+		return (true);
+	else
+		return (false);
+}
+
+bool Server::_isPrintableAscii(char c)
+{
+	if (c > 126 || c < 0)
+		return (false);
+	else
+		return (true);
+}
+
+void Server::_readRequestHead(int fd)
+{
+	// read 1024 charackters or if less until /r/n/r/n is found
+	this->_requestHead.clear();
+	size_t charsRead = 0;
+	bool firstLineBreak = false;
+	int n = 0;
+	char buffer[2];
+	while (charsRead < MAX_REQUEST_HEADER_SIZE)
+	{
+		n = read(fd, buffer, 1);
+		if (n < 0)
+		{
+			std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
+			perror(NULL);
+			std::cerr << RESET << std::endl;
+			// throw InternatServerErrorException(); ?? send some error page to client
+			exit(EXIT_FAILURE);
+		}
+		else if (n == 0)
+			break ;
+		else // append one character from client request a
+		{
+			buffer[1] = '\0';
+			if (!this->_isPrintableAscii(buffer[0]))
+			{
+				std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;
+				// throw NonAsciiFoundException(); ?? send some error page to client
+				exit(EXIT_FAILURE);
+			}
+			this->_requestHead.append(buffer);
+			++charsRead;
+			if (this->_crlftwoFound() == true)
+				break ;
+		}
+		if (firstLineBreak == false && this->_requestHead.find(CRLF) != std::string::npos)
+		{
+			firstLineBreak = true;
+		}
+		if (firstLineBreak == false && charsRead >= MAX_REQUEST_LINE_SIZE)
+		{
+			std::cout << RED << "FIRST LINE TOO LONG" << RESET << std::endl;
+			// throw FirstLineTooLongException(); ?? send some error page to client
+			exit(EXIT_FAILURE);
+		}
+	}
+	if (charsRead <= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == true)
+	{
+		#ifdef SHOW_LOG
+			std::cout << YELLOW << "Received->" << RESET << this->_requestHead << YELLOW << "<-Received" << RESET << std::endl;
+		#endif
+	}
+	else /*if (charsRead >= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == false)*/
+	{
+		std::cout << RED << "HEAD BIGGER THAN " << MAX_REQUEST_HEADER_SIZE << " OR NO CRLFTWO FOUND (incomplete request)" << RESET << std::endl;
+		// throw HeadTooBigException(); ?? send some error page to client
+		exit(EXIT_FAILURE);
+	}
 }
 
 void cgi_handle(Request& request, std::string buf, int fd)

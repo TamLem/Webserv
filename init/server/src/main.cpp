@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 	#ifdef SHOW_LOG_2
 		config->printCluster();
 	#endif
-	test->run();
+	test->runEventLoop();
 	delete config;
 	delete test;
 	config = NULL;

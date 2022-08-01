@@ -28,6 +28,12 @@
 #include "SingleServerConfig.hpp"
 #include "Base.hpp"
 
+#ifdef __APPLE__
+	#include "SocketHandler.hpp"
+#else
+	#include "LinuxSocketHandler.hpp"
+#endif
+
 // Forbidden includes maybe??????
 #include <errno.h>
 
@@ -48,33 +54,37 @@ class Server
 		Server(Config* config);
 		~Server(void);
 
-		void stop(void);
+		// void stop(void);
 
-		int get_client(int fd);
+		// int get_client(int fd);
 
-		int add_client(int fd, struct sockaddr_in addr);
+		// int add_client(int fd, struct sockaddr_in addr);
 
-		int remove_client(int fd);
+		// int remove_client(int fd);
 
-		void run_event_loop(int kq);
+		void runEventLoop(void);
 
-		void run(void);
+		// void run(void);
 
 		void handleRequest(const std::string&, int);
 	private:
-		size_t _port;
-		std::set<unsigned short> _ports;
-		size_t _server_fd;
+		Config *_config;
+		SocketHandler *_socketHandler;
+		// size_t _port;
+		// std::set<unsigned short> _ports; // moved to socket handler
+		// size_t _server_fd;
 		std::vector <client> _clients;
 		Response _response;
-		Config* _config;
+		std::string _requestHead;
 		ConfigStruct _currentConfig;
 
 		Server();
 		static void handle_signal(int sig);
 		void handle_signals(void);
-		void _initPorts();
-		
+		bool _crlftwoFound();
+		bool _isPrintableAscii(char c);
+		void _readRequestHead(int fd);
+
 		void applyCurrentConfig(const Request&);
 		void matchLocation(Request&);
 		void handleGET(const Request&);

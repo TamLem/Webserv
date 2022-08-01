@@ -51,6 +51,7 @@ class Config
 		void printCluster();
 
 	// Getter
+		std::map<std::string, ConfigStruct> getCluster();
 		const ConfigStruct& getConfigStruct(std::string hostName);
 
 		const std::map<std::string, unsigned short> getListen() const;

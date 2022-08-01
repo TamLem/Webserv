@@ -23,9 +23,11 @@ class SingleServerConfig
 		ConfigStruct *_conf;
 
 	// Private Methods
+		void _checkConfigStruct();
 		void _setVariables(std::string config);
 		void _parseKeyValue(std::string);
 
+		void _handleListen(std::string keyValue);
 		unsigned short _checkListen(std::string value);
 		// void _handleCgi(std::string line); // only needed if we do bonus
 		void _handleLocation(std::string line);
@@ -36,6 +38,8 @@ class SingleServerConfig
 		std::string _printLocationStruct(LocationStruct locationStruct);
 		LocationStruct _fillLocationStruct(std::string block);
 		LocationStruct _initLocationStruct();
+		// void _handleMethod();
+		// void _handle
 
 	public:
 	// Constructors

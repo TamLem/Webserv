@@ -381,10 +381,10 @@ void Server::matchLocation(Request& request)
 	#endif
 }
 
-void Server::percentDecoding(Request& request)
+std::string Server::percentDecoding(const std::string& str)
 {
 	std::stringstream tmp;
-	std::string str = request.getUri();
+	// std::string str = request.getUri();
 	char c;
 	int i = 0;
 	while (str[i] != '\0')
@@ -407,7 +407,8 @@ void Server::percentDecoding(Request& request)
 			i++;
 		}
 	}
-	request.setUri(tmp.str());
+	// request.setUri(tmp.str());
+	return(tmp.str());
 }
 
 void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe breaks here
@@ -423,7 +424,9 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		//resolve relative paths
 		//determine location
 		this->matchLocation(newRequest);
-		this->percentDecoding(newRequest);
+		newRequest.setUri(this->percentDecoding(newRequest.getUri()));
+		newRequest.setQuery(this->percentDecoding(newRequest.getQuery()));
+		// newRequest.setUri(this->percentDecoding(newRequest.getUri()));
 		#ifdef SHOW_LOG
 			std::cout  << YELLOW << "URI after percent-decoding: " << newRequest.getUri() << std::endl;
 		#endif

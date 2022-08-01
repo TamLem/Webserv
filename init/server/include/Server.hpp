@@ -87,7 +87,7 @@ class Server
 
 		void applyCurrentConfig(const Request&);
 		void matchLocation(Request&);
-		void percentDecoding(Request&);
+		std::string percentDecoding(const std::string&);
 		void handleGET(const Request&);
 		void handlePOST(const Request&);
 		void handleERROR(const std::string&);

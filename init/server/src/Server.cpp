@@ -127,8 +127,8 @@ void Server::runEventLoop()
 			this->_socketHandler->removeClient(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
-				this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
-				handleRequest(this->_requestHead, this->_socketHandler->getFD());
+				// this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
+				handleRequest(/*this->_requestHead, */this->_socketHandler->getFD());
 				continue;
 			}
 		}
@@ -383,13 +383,13 @@ void Server::matchLocation(Request& request)
 	#endif
 }
 
-void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks here
+void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe breaks here
 {
 	this->_response.clear();
 	try
 	{
-		// std::cout << "Buffer contains >" << buffer << "<" << std::endl;
-		Request newRequest(buffer);
+		this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
+		Request newRequest(this->_requestHead);
 		this->applyCurrentConfig(newRequest);
 		//normalize uri (in Request)
 		//compression (merge slashes)
@@ -399,12 +399,15 @@ void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks he
 		newRequest.setUri("." + newRequest.getUri());
 		//check method
 		//
-		if (buffer.find("/cgi/") != std::string::npos)
-			cgi_handle(newRequest, buffer, fd);
+		if (this->_requestHead.find("/cgi/") != std::string::npos)
+			cgi_handle(newRequest, this->_requestHead, fd);
 		else if (newRequest.getMethod() == "POST")
 			handlePOST(newRequest);
 		else
+		{
 			handleGET(newRequest);
+			lseek(fd, 0, SEEK_END); // sets the filedescriptor to EOF so that
+		}
 	}
 	catch (std::exception& exception)
 	{

@@ -66,7 +66,7 @@ class Server
 
 		// void run(void);
 
-		void handleRequest(const std::string&, int);
+		void handleRequest(/*const std::string&, */int);
 	private:
 		Config *_config;
 		SocketHandler *_socketHandler;

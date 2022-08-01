@@ -39,9 +39,7 @@ class Request : public Message
 		void parseBody(std::istringstream&);
 		void addMethods(void);
 	public:
-		// Request(const std::string&);
 		Request(const std::string&);
-		// Request(const std::string&, int fd);
 		~Request(void);
 
 		// void setMethod(const std::string&);

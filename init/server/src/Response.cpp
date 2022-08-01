@@ -34,7 +34,6 @@ void Response::clear(void)
 	this->headerFields.clear();
 	this->status = "";
 	this->statusMessage = "";
-	fd = -1;
 	uri = "";
 }
 
@@ -66,11 +65,6 @@ void Response::setProtocol(const std::string& protocol)
 	if (!isValidProtocol(protocol))
 		throw Response::InvalidProtocol();
 	this->protocol = protocol;
-}
-
-void Response::setFd(int fd)
-{
-	this->fd = fd;
 }
 
 const std::string& Response::getStatus(void) const
@@ -123,7 +117,10 @@ int Response::sendall(const int sock_fd, char *buffer, const int len) const
 		bytesleft -= n;
 		buffer += n;
 	}
-	close(this->fd);
+	close(sock_fd);
+	#ifdef SHOW_LOG
+		std::cout << RED << "fd: " << sock_fd << " was closed after sending response" << RESET << std::endl;
+	#endif
 	return (0);
 }
 

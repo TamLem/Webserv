@@ -237,12 +237,37 @@ void Server::applyCurrentConfig(const Request& request)
 // 	// else
 // 	// 	return (false);
 
+// 	// error will return false
 // 	if (stat(target.c_str(), &statStruct) == 0)
 // 	{
 // 		if (statStruct.st_mode & S_IFREG)
 // 			return (true);
 // 	}
 // 	return (false);
+// }
+
+// static bool targetIsDir(const std::string& target)
+// {
+// 	struct stat statStruct;
+
+// 	// error will return false
+// 	if (stat(target.c_str(), &statStruct) == 0)
+// 	{
+// 		if (statStruct.st_mode & S_IFDIR)
+// 			return (true);
+// 	}
+// 	return (false);
+// }
+
+//https://stackoverflow.com/questions/29310166/check-if-a-fstream-is-either-a-file-or-directory
+// static bool isFile(const std::string& fileName)
+// {
+// 	std::ifstream fileOrDir(fileName);
+// 	//This will set the fail bit if fileName is a directory (or do nothing if it is already set  
+// 	fileOrDir.seekg(0, std::ios::end);
+// 	if( !fileOrDir.good())
+// 		return (false);
+// 	return (true);
 // }
 
 void Server::matchLocation(Request& request)
@@ -276,10 +301,14 @@ void Server::matchLocation(Request& request)
 			extension = it->first.substr(1, ext_len);
 			if (uri_len > ext_len && uri.compare(uri_len - ext_len, ext_len, extension) == 0)
 			{
-				result = this->_currentConfig.root + it->second.root + uri.substr(uri.find_last_of('/') + 1);
+				if (it->second.root.empty())
+					result = this->_currentConfig.root;
+				else
+					result = "/" + it->second.root;
+				result += uri.substr(uri.find_last_of('/') + 1);
 				request.setUri(result);
-				#ifdef SHOW_LOG_2
-					std::cout  << YELLOW << "FINAL FILE RESULT!: " << request.getUri() << std::endl;
+				#ifdef SHOW_LOG
+					std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getUri() << std::endl;
 				#endif
 				return ;
 			}
@@ -316,7 +345,11 @@ void Server::matchLocation(Request& request)
 			if (segments > max_count)
 			{
 				max_count = segments;
-				result = this->_currentConfig.root + it->second.root + uri.substr(i);
+				if (it->second.root.empty())
+					result = this->_currentConfig.root;
+				else
+					result = "/" + it->second.root;
+				result += uri.substr(i);
 				if (*result.rbegin() == '/')
 				{
 					if (it->second.autoIndex == false)
@@ -345,8 +378,8 @@ void Server::matchLocation(Request& request)
 		}
 		request.setUri(result);
 	}
-	#ifdef SHOW_LOG_2
-		std::cout  << YELLOW << "FINAL DIR RESULT!: " << request.getUri() << std::endl;
+	#ifdef SHOW_LOG
+		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getUri() << std::endl;
 	#endif
 }
 
@@ -359,8 +392,11 @@ void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks he
 		Request newRequest(buffer);
 		this->applyCurrentConfig(newRequest);
 		//normalize uri (in Request)
+		//compression (merge slashes)
+		//resolve relative paths
 		//determine location
 		this->matchLocation(newRequest);
+		newRequest.setUri("." + newRequest.getUri());
 		//check method
 		//
 		if (buffer.find("/cgi/") != std::string::npos)

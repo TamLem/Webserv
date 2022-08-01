@@ -20,8 +20,6 @@ class Response : public Message
 		int sendall(const int sock_fd, char *buffer, const int len) const;
 	public:
 		Response(void);
-		// Response(int, int, const std::string&);
-		// Response(int, int);
 		~Response(void);
 
 		// void setProtocol(const std::string&);

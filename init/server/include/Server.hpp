@@ -90,6 +90,25 @@ class Server
 		void handleGET(const Request&);
 		void handlePOST(const Request&);
 		void handleERROR(const std::string&);
+
+	// Exceptions
+		class InternatServerErrorException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class BadRequestException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class FirstLineTooLongException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
 };
 
 void cgi_handle(Request& request, std::string buf, int fd);

@@ -126,7 +126,7 @@ void Cgi::cgi_response(int fd)
 	}
 	wait(NULL);
 	dup2(stdout_init, STDOUT_FILENO);
-	std::string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+	std::string header = "HTTP/1.1 200 OK\r\n";
 	send(fd, header.c_str(), header.size(), 0);
 	char buf[1024];
 	buf[1023] = '\0';
@@ -137,5 +137,5 @@ void Cgi::cgi_response(int fd)
 		send(fd, buf, n, 0);
 	}
 	close(pipefd[0]);
-	close(fd);
+	// close(fd);
 }

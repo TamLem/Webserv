@@ -399,7 +399,7 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		newRequest.setUri("." + newRequest.getUri());
 		//check method
 		//
-		if (buffer.find("/cgi/") != std::string::npos || buffer.find(".php") != std::string::npos)
+		if (this->_requestHead.find("/cgi/") != std::string::npos || this->_requestHead.find(".php") != std::string::npos)
 			cgi_handle(newRequest, fd);
 		else if (newRequest.getMethod() == "POST")
 			handlePOST(newRequest);

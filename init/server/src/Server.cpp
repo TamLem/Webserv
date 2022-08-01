@@ -263,7 +263,7 @@ void Server::applyCurrentConfig(const Request& request)
 // static bool isFile(const std::string& fileName)
 // {
 // 	std::ifstream fileOrDir(fileName);
-// 	//This will set the fail bit if fileName is a directory (or do nothing if it is already set  
+// 	//This will set the fail bit if fileName is a directory (or do nothing if it is already set
 // 	fileOrDir.seekg(0, std::ios::end);
 // 	if( !fileOrDir.good())
 // 		return (false);
@@ -317,9 +317,9 @@ void Server::matchLocation(Request& request)
 		if (it->second.isDir == true)
 		{
 			path = it->first;
-			if (path == "./")
-				path = "/"; // AE workaround while config takes ./ for root
-			else
+			// if (path == "./")
+			// 	path = "/"; // AE workaround while config takes ./ for root
+			if (path != "/")
 				path = "/" + path;
 			#ifdef SHOW_LOG_2
 				std::cout  << BLUE << "path: " << path << std::endl;

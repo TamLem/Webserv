@@ -383,6 +383,35 @@ void Server::matchLocation(Request& request)
 	#endif
 }
 
+void Server::percentDecoding(Request& request)
+{
+	std::stringstream tmp;
+	std::string str = request.getUri();
+	char c;
+	int i = 0;
+	while (str[i] != '\0')
+	{
+		if (str[i] == '%')
+		{
+			// valid ascii check
+			if (str[i + 1] == '\0' || str[i + 2] == '\0')
+				throw InvalidHex();
+			c = char(strtol(str.substr(i + 1, 2).c_str(), NULL, 16));
+			if (c == 0)
+				throw InvalidHex();
+			tmp << c;
+			// std::cerr << RED << str.substr(i + 1, 2) << RESET << std::endl;
+			i += 3;
+		}
+		else
+		{
+			tmp << str[i];
+			i++;
+		}
+	}
+	request.setUri(tmp.str());
+}
+
 void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks here
 {
 	this->_response.clear();
@@ -396,6 +425,10 @@ void Server::handleRequest(const std::string& buffer, int fd) // maybe breaks he
 		//resolve relative paths
 		//determine location
 		this->matchLocation(newRequest);
+		this->percentDecoding(newRequest);
+		#ifdef SHOW_LOG
+			std::cout  << YELLOW << "URI after percent-decoding: " << newRequest.getUri() << std::endl;
+		#endif
 		newRequest.setUri("." + newRequest.getUri());
 		//check method
 		//
@@ -499,4 +532,9 @@ void cgi_handle(Request& request, std::string buf, int fd)
 
 	newCgi.printEnv();
 	newCgi.cgi_response(buf, fd);
+}
+
+const char* Server::InvalidHex::what() const throw()
+{
+	return ("400");
 }

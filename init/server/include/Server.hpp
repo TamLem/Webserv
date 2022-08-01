@@ -87,9 +87,15 @@ class Server
 
 		void applyCurrentConfig(const Request&);
 		void matchLocation(Request&);
+		void percentDecoding(Request&);
 		void handleGET(const Request&);
 		void handlePOST(const Request&);
 		void handleERROR(const std::string&);
+
+	class InvalidHex : public std::exception
+	{
+		const char* what() const throw();
+	};
 };
 
 void cgi_handle(Request& request, std::string buf, int fd);

@@ -597,7 +597,7 @@ void SingleServerConfig::_handleLocation(std::string block)
 		}
 
 		LocationStruct locationStruct = this->_fillLocationStruct(blockStream.str());
-		if (key.substr(key.length() - 1) == "/" && key.find("*") == std::string::npos && key.substr(0, 1) != "/") // to find out if it is a dir or not
+		if (key.substr(key.length() - 1) == "/" && key.find("*") == std::string::npos && key.substr(0, 1) == "/") // to find out if it is a dir or not
 			locationStruct.isDir = true;
 		else if (key == "/")
 			locationStruct.isDir = true;

@@ -175,7 +175,6 @@ void Server::runEventLoop()
 
 void Server::handleGET(const Request& request)
 {
-	_response.setFd(request.getFd());
 	_response.setProtocol(PROTOCOL);
 	_response.createBody(request.getUri());
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
@@ -192,7 +191,6 @@ void Server::handlePOST(const Request& request)
 	outFile << request.getBody() << "'s content. Server: " << this->_config->getConfigStruct("weebserv").serverName;
 	outFile.close();
 
-	_response.setFd(request.getFd());
 	_response.setProtocol(PROTOCOL);
 	_response.createBody("./pages/post_test.html");
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
@@ -304,7 +302,7 @@ void Server::matchLocation(Request& request)
 				if (it->second.root.empty())
 					result = this->_currentConfig.root;
 				else
-					result = "/" + it->second.root;
+					result = it->second.root;
 				result += uri.substr(uri.find_last_of('/') + 1);
 				request.setUri(result);
 				#ifdef SHOW_LOG
@@ -348,7 +346,7 @@ void Server::matchLocation(Request& request)
 				if (it->second.root.empty())
 					result = this->_currentConfig.root;
 				else
-					result = "/" + it->second.root;
+					result = it->second.root;
 				result += uri.substr(i);
 				if (*result.rbegin() == '/')
 				{
@@ -406,7 +404,7 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		else
 		{
 			handleGET(newRequest);
-			lseek(fd, 0, SEEK_END); // sets the filedescriptor to EOF so that
+			// lseek(fd, 0, SEEK_END); // sets the filedescriptor to EOF so that, check this again!!!!!!!!!
 		}
 	}
 	catch (std::exception& exception)
@@ -482,7 +480,7 @@ void Server::_readRequestHead(int fd)
 	if (charsRead <= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == true)
 	{
 		#ifdef SHOW_LOG
-			std::cout << YELLOW << "Received->" << RESET << this->_requestHead << YELLOW << "<-Received" << RESET << std::endl;
+			std::cout << YELLOW << "Received->" << RESET << this->_requestHead << YELLOW << "<-Received on fd: " << fd << RESET << std::endl;
 		#endif
 	}
 	else /*if (charsRead >= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == false)*/

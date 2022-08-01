@@ -71,7 +71,7 @@ void SocketHandler::_listenMainSockets()
 			return; // throw error
 		}
 		else
-			std::cout << "Listening on port " << it->second << std::endl;
+			std::cout << "Listening on port " << it->second << " with fd: " << it->first << std::endl;
 	}
 }
 
@@ -162,13 +162,13 @@ void SocketHandler::removeClient(int i) // can be void maybe
 
 bool SocketHandler::readFromClient(int i)
 {
-	if (this->_evList[i].flags & EVFILT_READ)
+	if (this->_evList[i].ident != 3 && this->_evList[i].flags & EVFILT_READ)
 	{
-		// this->_fd = this->_evList[i].ident; // maybe this breaks it
+		this->_fd = this->_evList[i].ident; // maybe this breaks it
 		int status = this->_getClient(this->_fd);
 		if (status == -1)
 		{
-			std::cerr << RED << "Error getting client" << std::endl;
+			std::cerr << RED << "Error getting client for fd: " << this->_fd << std::endl;
 			perror(NULL);
 			std::cerr << RESET;
 			return (false); // throw exception
@@ -182,15 +182,15 @@ bool SocketHandler::readFromClient(int i)
 		// 	std::cerr << RESET;
 		// 	return false;
 		// }
-		// if (n == 1024 /*&& !found("/r/n/r/n"*/)
-		// {
-		// 	// addToChunkedList(fd);
-		// }
+		// // if (n == 1024 /*&& !found("/r/n/r/n"*/)
+		// // {
+		// // 	// addToChunkedList(fd);
+		// // }
 		// buf[n] = '\0';
 		// this->_buffer = std::string(buf);
-		// std::cout << "message: " << this->_buffer << std::endl;
+		// // std::cout << "message: " << this->_buffer << std::endl;
 		// #ifdef SHOW_LOG
-		// 	std::cout << YELLOW << "Received->" << RESET << this->_buffer << YELLOW << "<-Received" << RESET << std::endl;
+		// 	std::cout << YELLOW << "Received->" << RESET << this->_buffer << YELLOW << "<-Received on socket: " << this->_fd << RESET << std::endl;
 		// #endif
 		return (true);
 	}

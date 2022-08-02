@@ -264,6 +264,11 @@ void Request::setUri(const std::string& uri)
 	this->uri = uri;
 }
 
+void Request::setQuery(const std::string& query)
+{
+	this->query = query;
+}
+
 const std::string& Request::getMethod(void) const
 {
 	return (this->method);

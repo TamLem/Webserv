@@ -16,6 +16,7 @@ class Message
 		std::string protocol;
 		std::string body;
 		bool hasBody;
+		std::string uri;
 		Message(const Message&);
 		Message& operator=(const Message&);
 		Message(void);
@@ -24,6 +25,7 @@ class Message
 	public:
 		void addHeaderField(const std::string&, const std::string&);
 		virtual ~Message(void) = 0;
+
 		const std::string& getProtocol(void) const;
 		const std::string& getBody(void) const;
 

@@ -27,6 +27,11 @@ void Message::addHeaderField(const std::string& key, const std::string& value)
 	this->headerFields[key] = value;
 }
 
+// void Message::setUri(const std::string& uri)
+// {
+// 	this->uri = uri;
+// }
+
 const std::string& Message::getProtocol(void) const
 {
 	return (this->protocol);

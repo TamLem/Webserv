@@ -55,10 +55,10 @@ void Response::setBody(const std::string& body)
 	this->body = body;
 }
 
-void Response::setUri(const std::string& uri)
-{
-	this->uri = uri;
-}
+// void Response::setUri(const std::string& uri)
+// {
+// 	this->uri = uri;
+// }
 
 void Response::setProtocol(const std::string& protocol)
 {

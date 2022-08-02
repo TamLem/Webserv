@@ -2,6 +2,7 @@
 #define BASE_HPP
 
 #include <map>
+#include <set>
 #include <string>
 #include <iostream>
 #include <stdbool.h>
@@ -37,6 +38,7 @@ struct LocationStruct
 	bool getAllowed;
 	bool postAllowed;
 	bool deleteAllowed;
+	std::set<std::string> allowedMethods;
 	std::string root;
 	std::string indexPage;
 };

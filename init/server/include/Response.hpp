@@ -14,7 +14,7 @@ class Response : public Message
 		std::string status;
 		std::string statusMessage;
 		std::map<std::string, std::string> messageMap;
-		std::string uri;
+		// std::string uri;
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
 	protected:
@@ -26,7 +26,7 @@ class Response : public Message
 		// void setProtocol(const std::string&);
 		void setStatus(const std::string&);
 		void setBody(const std::string&);
-		void setUri(const std::string&);
+		// void setUri(const std::string&);
 		void setFd(int);
 		void setProtocol(const std::string&);
 

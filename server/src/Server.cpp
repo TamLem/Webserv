@@ -173,7 +173,7 @@ void Server::runEventLoop()
 	// run_event_loop();
 // }
 
-static bool fileExists(const std::string& target)
+static bool staticFileExists(const std::string& target)
 {
 	struct stat statStruct;
 
@@ -182,19 +182,36 @@ static bool fileExists(const std::string& target)
 	return (false);
 }
 
+// static void staticAutoIndex(const Request& request)
+// {
+// 	DIR *d;
+// 	struct dirent *dir;
+// 	d = opendir(request.getUri());
+// 	if (d)
+// 	{
+// 		while ((dir = readdir(d)) != NULL)
+// 		{
+// 			// printf("%s\n", dir->d_name);
+// 			std::cout << dir->d_name << std::endl
+// 		}
+// 		closedir(d);
+// 	}
+// }
+
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	if (fileExists(request.getUri()) == false)
+	if (staticFileExists(request.getUri()) == false)
 	{
 		if ((this->_currentLocationKey.empty() == false
-			&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
-			|| this->_currentConfig.autoIndex == true)
-			std::cerr << BOLD << RED << "WARNING! autoindex not implemented, yet!" << RESET << std::endl;
+				&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
+				|| this->_currentConfig.autoIndex == true)
+			_response.createIndex(request.getUri());
+		else
+			_response.createBody(request.getUri());
 	}
-	// else
-	// {
-	_response.createBody(request.getUri());
+	else
+		_response.createBody(request.getUri());
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
@@ -233,14 +250,14 @@ void Server::applyCurrentConfig(const Request& request)
 	this->_currentConfig = this->_config->getConfigStruct(host);
 }
 
-// static std::string removeTrailingSlash(std::string string)
+// static std::string staticRemoveTrailingSlash(std::string string)
 // {
 // 	if (*string.rbegin() == '/')
 // 		string = string.substr(0, string.length() - 1);
 // 	return (string);
 // }
 
-// static bool targetIsFile(const std::string& target)
+// static bool staticTargetIsFile(const std::string& target)
 // {
 // 	struct stat statStruct;
 
@@ -262,7 +279,7 @@ void Server::applyCurrentConfig(const Request& request)
 // 	return (false);
 // }
 
-// static bool targetIsDir(const std::string& target)
+// static bool staticTargetIsDir(const std::string& target)
 // {
 // 	struct stat statStruct;
 
@@ -276,7 +293,7 @@ void Server::applyCurrentConfig(const Request& request)
 // }
 
 //https://stackoverflow.com/questions/29310166/check-if-a-fstream-is-either-a-file-or-directory
-// static bool isFile(const std::string& fileName)
+// static bool staticIsFile(const std::string& fileName)
 // {
 // 	std::ifstream fileOrDir(fileName);
 // 	//This will set the fail bit if fileName is a directory (or do nothing if it is already set

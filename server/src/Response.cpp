@@ -6,6 +6,8 @@
 #include <iostream> //std::ios
 #include <fstream> //std::ifstream
 #include <sys/socket.h> // send
+#include <dirent.h> // dirent, opendir
+// #include <sys/types.h>  // opendir
 #include <unistd.h>
 
 #define RESET "\033[0m"
@@ -143,6 +145,49 @@ void Response::createErrorBody(void)
 	</body>\n\
 	</html>";
 	this->body = body.str();
+}
+
+void Response::createIndex(const std::string& uri)
+{
+	std::stringstream body;
+	body <<
+	"<html>\n\
+	<head>\n\
+	<title>Index</title>\n\
+	<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"images/favicon.ico\">\n\
+	</head>\n\
+	<body bgcolor=\"FFFFFF\">\n\
+	<center>\n\
+	<h1 style=\"color:black\">Index\n\
+	</h1>\n\
+	</center>\n\
+	<left>\n\
+	<p style=\"color:blue\">";
+	DIR *d;
+	struct dirent *dir;
+	d = opendir(uri.substr(0, uri.find_last_of('/')).c_str());
+	if (d)
+	{
+		while ((dir = readdir(d)) != NULL)
+		{
+			// if (dir->d_type == DT_REG) //only files
+			// {
+				body << "<p style=\"color:blue\">" << dir->d_name << '\n';
+			// }
+		}
+		body <<
+		"</left>\n\
+		</body>\n\
+		</html>";
+		this->body = body.str();
+		closedir(d);
+	}
+	else
+	{
+		perror(NULL);
+		throw ERROR_404(); // AE exception
+		//AE 500 response
+	}
 }
 
 void Response::createBody(const std::string& uri)

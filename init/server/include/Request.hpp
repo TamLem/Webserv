@@ -15,12 +15,19 @@
 class Request : public Message
 {
 	private:
+	// defines only to not have undefined behaviour
+		Request(const Request&);
+		Request& operator=(const Request&);
+		Request(void);
+
+	// private Members
 		std::set<std::string> validMethods;
 		std::string method;
 		std::string url; // AE remove
 		// std::string uri;
 		std::string query;
 		std::string fragment;
+	// private Methods
 		void parseMessage(const std::string&);
 		void parseStartLine(std::istringstream&);
 		void createStartLineTokens(std::vector<std::string>&, const std::string&) const;
@@ -38,6 +45,7 @@ class Request : public Message
 		void setBodyFlag(void);
 		void parseBody(std::istringstream&);
 		void addMethods(void);
+
 	public:
 		Request(const std::string&);
 		~Request(void);

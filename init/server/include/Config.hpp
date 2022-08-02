@@ -22,6 +22,9 @@
 class Config
 {
 	private:
+		Config(const Config&);
+		Config& operator=(const Config&);
+
 		std::ifstream	_configFile;
 		std::string		_configPath;
 

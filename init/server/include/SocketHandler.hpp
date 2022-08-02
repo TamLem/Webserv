@@ -42,6 +42,11 @@ struct ClientStruct
 class SocketHandler
 {
 	private:
+	// defines only to not have undefined behaviour
+		SocketHandler();
+		SocketHandler(const SocketHandler &src);
+		SocketHandler &operator=(const SocketHandler &src);
+
 	// Private Variables
 		// Config *_config; // maybe not needed
 		std::map<std::string, ConfigStruct> _cluster;
@@ -60,9 +65,6 @@ class SocketHandler
 		std::string _buffer; //temp
 		int _fd; //temp
 
-		// defines only to not have undefined behaviour
-		SocketHandler(const SocketHandler &src);
-		SocketHandler &operator=(const SocketHandler &src);
 
 	// Private Members
 		void _initPorts(); // read from ConfigStruct into _ports

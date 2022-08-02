@@ -173,9 +173,27 @@ void Server::runEventLoop()
 	// run_event_loop();
 // }
 
+static bool fileExists(const std::string& target)
+{
+	struct stat statStruct;
+
+	if (stat(target.c_str(), &statStruct) == 0)
+			return (true);
+	return (false);
+}
+
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
+	if (fileExists(request.getUri()) == false)
+	{
+		if ((this->_currentLocationKey.empty() == false
+			&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
+			|| this->_currentConfig.autoIndex == true)
+			std::cerr << BOLD << RED << "WARNING! autoindex not implemented, yet!" << RESET << std::endl;
+	}
+	// else
+	// {
 	_response.createBody(request.getUri());
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();

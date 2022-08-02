@@ -333,10 +333,12 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 		result += uri.substr(i);
 		if (*result.rbegin() == '/')
 		{
-			if (it->second.autoIndex == false)
+			if (it->second.indexPage.empty() == false)
 				result += it->second.indexPage;
 			else
-				std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
+				result += this->_currentConfig.indexPage;
+			// else
+			// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 		}
 		request.setUri(result);
 		#ifdef SHOW_LOG_2
@@ -352,10 +354,10 @@ void Server::routeDefault(Request& request)
 	result = this->_currentConfig.root + request.getUri().substr(1);
 	if (*result.rbegin() == '/')
 	{
-		if (this->_currentConfig.autoIndex == false)
+		// if (this->_currentConfig.autoIndex == false)
 			result += this->_currentConfig.indexPage;
-		else
-			std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
+		// else
+		// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 	}
 	request.setUri(result);
 	#ifdef SHOW_LOG

@@ -162,14 +162,14 @@ void SocketHandler::removeClient(int i) // can be void maybe
 
 bool SocketHandler::readFromClient(int i)
 {
-	if (this->_evList[i].ident != 3 && this->_evList[i].flags & EVFILT_READ)
+	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].flags & EVFILT_READ)
 	{
-		this->_fd = this->_evList[i].ident; // maybe this breaks it
+		this->_fd = this->_evList[i].ident;
 		int status = this->_getClient(this->_fd);
 		if (status == -1)
 		{
 			std::cerr << RED << "Error getting client for fd: " << this->_fd << std::endl;
-			perror(NULL);
+			perror(NULL); // check if illegal
 			std::cerr << RESET;
 			return (false); // throw exception
 		}

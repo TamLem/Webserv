@@ -20,6 +20,12 @@
 class SingleServerConfig
 {
 	private:
+	// defines only to not have undefined behaviour
+		SingleServerConfig(const SingleServerConfig&);
+		SingleServerConfig& operator=(const SingleServerConfig&);
+		SingleServerConfig(void);
+
+	// private Members
 		ConfigStruct *_conf;
 
 	// Private Methods
@@ -43,7 +49,7 @@ class SingleServerConfig
 
 	public:
 	// Constructors
-		SingleServerConfig();
+		// SingleServerConfig();
 		SingleServerConfig(std::string server, ConfigStruct *conf);
 
 	// Deconstructors

@@ -35,9 +35,9 @@ struct LocationStruct
 {
 	bool isDir;
 	bool autoIndex;
-	bool getAllowed;
-	bool postAllowed;
-	bool deleteAllowed;
+	// bool getAllowed;
+	// bool postAllowed;
+	// bool deleteAllowed;
 	std::set<std::string> allowedMethods;
 	std::string root;
 	std::string indexPage;

@@ -11,10 +11,16 @@
 class Response : public Message
 {
 	private:
+	// defines only to not have undefined behaviour
+		Response(const Response&);
+		Response& operator=(const Response&);
+
+	// private Members
 		std::string status;
 		std::string statusMessage;
 		std::map<std::string, std::string> messageMap;
 		// std::string uri;
+	// private Methods
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
 	protected:

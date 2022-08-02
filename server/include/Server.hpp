@@ -68,18 +68,21 @@ class Server
 
 		void handleRequest(/*const std::string&, */int);
 	private:
+	// defines only to not have undefined behaviour
+		Server(const Server&);
+		Server& operator=(const Server&);
+		Server(void);
+	// private Members
 		Config *_config;
 		SocketHandler *_socketHandler;
-		// size_t _port;
-		// std::set<unsigned short> _ports; // moved to socket handler
-		// size_t _server_fd;
+
 		std::vector <client> _clients;
 		Response _response;
 		std::string _requestHead;
 		ConfigStruct _currentConfig;
 		std::string _currentLocationKey;
 
-		Server();
+	// private Methods
 		static void handle_signal(int sig);
 		void handle_signals(void);
 		bool _crlftwoFound();

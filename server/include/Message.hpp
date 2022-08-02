@@ -12,16 +12,20 @@
 
 class Message
 {
+	private:
+	// defines only to not have undefined behaviour
+		Message& operator=(const Message&);
+		Message(const Message&);
+
 	protected:
 		std::string protocol;
 		std::string body;
 		bool hasBody;
 		std::string uri;
-		Message(const Message&);
-		Message& operator=(const Message&);
-		Message(void);
 		bool isValidProtocol(const std::string&) const;
 		std::map<std::string, std::string> headerFields;
+		Message(void);
+
 	public:
 		void addHeaderField(const std::string&, const std::string&);
 		virtual ~Message(void) = 0;

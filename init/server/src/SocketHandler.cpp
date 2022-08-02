@@ -101,6 +101,7 @@ void SocketHandler::_initEventLoop()
 
 void SocketHandler::getEvents()
 {
+	std::cout << "num clients: " << _clients.size() << std::endl;
 	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, NULL);
 }
 
@@ -129,7 +130,7 @@ void SocketHandler::acceptConnection(int i)
 			int set = 1;
 			setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
 			this->_addClient(fd, *(struct sockaddr_in *)&addr);
-			EV_SET(&ev, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+			EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
 			kevent(this->_kq, &ev, 1, NULL, 0, NULL);
 			this->_fd = fd;
 			return;
@@ -148,9 +149,10 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 
 void SocketHandler::removeClient(int i) // can be void maybe
 {
-	if (this->_evList[i].flags & EV_EOF)
+	if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR)  )
 	{
-		int index = this->_getClient(this->_fd);
+		std::cout << "Removing client with fd: " << this->_fd << std::endl;
+		int index = this->_getClient(this->_evList[i].ident);
 		if (index != -1)
 		{
 			this->_clients.erase(this->_clients.begin() + index);
@@ -160,6 +162,8 @@ void SocketHandler::removeClient(int i) // can be void maybe
 				std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
 			#endif
 		}
+		else
+			std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl; 
 	}
 }
 

@@ -124,13 +124,13 @@ void Server::runEventLoop()
 		{
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
 			this->_socketHandler->acceptConnection(i);
-			this->_socketHandler->removeClient(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
 				// this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
 				handleRequest(/*this->_requestHead, */this->_socketHandler->getFD());
-				continue;
+				// continue;
 			}
+			this->_socketHandler->removeClient(i);
 		}
 	}
 }

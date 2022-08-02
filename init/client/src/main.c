@@ -16,7 +16,7 @@ int main()
 		{
 			while (true)
 			{
-				execlp("nc", "nc", "localhost", "8080", NULL);
+				execlp("nc", "nc", "localhost", "8000", NULL);
 				exit(-1);
 			}
 		}

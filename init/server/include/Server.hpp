@@ -87,6 +87,9 @@ class Server
 
 		void applyCurrentConfig(const Request&);
 		void matchLocation(Request&);
+		int routeFile(Request&, std::map<std::string, LocationStruct>::const_iterator, const std::string&);
+		void routeDir(Request&, std::map<std::string, LocationStruct>::const_iterator, const std::string&, int&);
+		void routeDefault(Request&);
 		std::string percentDecoding(const std::string&);
 		void handleGET(const Request&);
 		void handlePOST(const Request&);

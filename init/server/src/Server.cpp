@@ -268,20 +268,105 @@ void Server::applyCurrentConfig(const Request& request)
 // 	return (true);
 // }
 
-void Server::matchLocation(Request& request)
+int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& uri)
 {
-	(void)request;
-	int max_count = 0;
-	int i;
-	int segments;
-	std::string result;
-	std::string path;
 	std::string extension;
 	size_t ext_len;
+	size_t uri_len;
+	std::string result;
+	
+	uri_len = uri.length();
+	ext_len = it->first.length() - 1;
+	extension = it->first.substr(1, ext_len);
+	if (uri_len > ext_len && uri.compare(uri_len - ext_len, ext_len, extension) == 0)
+	{
+		if (it->second.root.empty())
+			result = this->_currentConfig.root;
+		else
+			result = it->second.root;
+		result += uri.substr(uri.find_last_of('/') + 1);
+		request.setUri(result);
+		#ifdef SHOW_LOG
+			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getUri() << std::endl;
+		#endif
+		return (0);
+	}
+	return (1);
+}
+
+void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& uri, int& max_count)
+{
+	std::string path;
+	std::string result;
+	
+	path = it->first;
+	// if (path != "/")
+	// 	path = "/" + path;
+	#ifdef SHOW_LOG_2
+		std::cout  << BLUE << "path: " << path << std::endl;
+	#endif
+	int i = 0;
+	int segments = 0;
+	if (uri.length() >= path.length()) //path has to be checked until the end and segments need to be counted
+	{
+		while (path[i] != '\0')
+		{
+			if (path[i] != uri[i])
+			{
+				segments = 0;
+				break ;
+			}
+			if (path[i] == '/')
+				segments++;
+			i++;
+		}
+		if (uri[i - 1] != '\0' && uri[i - 1] != '/') // carefull with len = 0!
+			segments = 0;
+	}
+	if (segments > max_count)
+	{
+		max_count = segments;
+		if (it->second.root.empty())
+			result = this->_currentConfig.root;
+		else
+			result = it->second.root;
+		result += uri.substr(i);
+		if (*result.rbegin() == '/')
+		{
+			if (it->second.autoIndex == false)
+				result += it->second.indexPage;
+			else
+				std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
+		}
+		request.setUri(result);
+		#ifdef SHOW_LOG_2
+			std::cout  << YELLOW << "DIR MATCH!: " << request.getUri() << std::endl;
+		#endif
+	}
+}
+
+void Server::routeDefault(Request& request)
+{
+	std::string result;
+
+	result = this->_currentConfig.root + request.getUri().substr(1);
+	if (*result.rbegin() == '/')
+	{
+		if (this->_currentConfig.autoIndex == false)
+			result += this->_currentConfig.indexPage;
+		else
+			std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
+	}
+	request.setUri(result);
+	#ifdef SHOW_LOG
+		std::cout  << YELLOW << "DEFAULT ";
+	#endif
+}
+
+void Server::matchLocation(Request& request)
+{
+	int max_count = 0;
 	std::string uri = request.getUri();
-	size_t uri_len = uri.length();
-	// example1 = removeTrailingSlash(example1);
-	//for files
 	#ifdef SHOW_LOG_2
 	std::cout  << RED << "uri: " << uri << std::endl;
 	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
@@ -292,90 +377,16 @@ void Server::matchLocation(Request& request)
 	#endif
 	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
 	{
-		//filecheck
 		if (it->second.isDir == false)
 		{
-			ext_len = it->first.length() - 1;
-			extension = it->first.substr(1, ext_len);
-			if (uri_len > ext_len && uri.compare(uri_len - ext_len, ext_len, extension) == 0)
-			{
-				if (it->second.root.empty())
-					result = this->_currentConfig.root;
-				else
-					result = it->second.root;
-				result += uri.substr(uri.find_last_of('/') + 1);
-				request.setUri(result);
-				#ifdef SHOW_LOG
-					std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getUri() << std::endl;
-				#endif
+			if (routeFile(request, it, uri) == 0)
 				return ;
-			}
 		}
-		//dir check
 		if (it->second.isDir == true)
-		{
-			path = it->first;
-			// if (path == "./")
-			// 	path = "/"; // AE workaround while config takes ./ for root
-			if (path != "/")
-				path = "/" + path;
-			#ifdef SHOW_LOG_2
-				std::cout  << BLUE << "path: " << path << std::endl;
-			#endif
-			i = 0;
-			segments = 0;
-			if (uri_len >= path.length()) //path has to be checked until the end and segments need to be counted
-			{
-				while (path[i] != '\0')
-				{
-					if (path[i] != uri[i])
-					{
-						segments = 0;
-						break ;
-					}
-					if (path[i] == '/')
-						segments++;
-					i++;
-				}
-				if (uri[i - 1] != '\0' && uri[i - 1] != '/') // carefull with len = 0!
-					segments = 0;
-			}
-			if (segments > max_count)
-			{
-				max_count = segments;
-				if (it->second.root.empty())
-					result = this->_currentConfig.root;
-				else
-					result = it->second.root;
-				result += uri.substr(i);
-				if (*result.rbegin() == '/')
-				{
-					if (it->second.autoIndex == false)
-						result += it->second.indexPage;
-					else
-						std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
-				}
-				request.setUri(result);
-				#ifdef SHOW_LOG_2
-					std::cout  << YELLOW << "DIR MATCH!: " << request.getUri() << std::endl;
-				#endif
-			}
-		}
-
+			routeDir(request, it, uri, max_count);
 	}
-	//if no dir was found add default index.html
 	if (max_count == 0)
-	{
-		result = this->_currentConfig.root + request.getUri().substr(1);
-		if (*result.rbegin() == '/')
-		{
-			if (this->_currentConfig.autoIndex == false)
-				result += this->_currentConfig.indexPage;
-			else
-				std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
-		}
-		request.setUri(result);
-	}
+		routeDefault(request);
 	#ifdef SHOW_LOG
 		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getUri() << std::endl;
 	#endif
@@ -426,7 +437,6 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		this->matchLocation(newRequest);
 		newRequest.setUri(this->percentDecoding(newRequest.getUri()));
 		newRequest.setQuery(this->percentDecoding(newRequest.getQuery()));
-		// newRequest.setUri(this->percentDecoding(newRequest.getUri()));
 		#ifdef SHOW_LOG
 			std::cout  << YELLOW << "URI after percent-decoding: " << newRequest.getUri() << std::endl;
 		#endif

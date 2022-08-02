@@ -18,9 +18,9 @@ CXXFLAGS	+=	-D SHOW_LOG #enables the printing of surface-level logs, server-side
 
 #directories
 PWD			=	$(shell pwd)
-SRC_DIR		=	src/
-OBJ_DIR		=	obj/
-INC_DIR		=	include/
+SRC_DIR		=	server/src/
+OBJ_DIR		=	server/obj/
+INC_DIR		=	server/include/
 
 #controll codes
 RESET		=	\033[0m
@@ -106,7 +106,7 @@ re: fclean all
 
 #run rule
 run: all
-	./$(NAME) config/ae.conf
+	./$(NAME) server/config/ae.conf
 
 #phony
 .PHONY: all clean fclean re run

@@ -343,9 +343,10 @@ LocationStruct SingleServerConfig::_initLocationStruct()
 	LocationStruct locationStruct;
 	locationStruct.isDir = true;
 	locationStruct.autoIndex = false;
-	locationStruct.getAllowed = false;
-	locationStruct.postAllowed = false;
-	locationStruct.deleteAllowed = false;
+	// locationStruct.getAllowed = false;
+	// locationStruct.postAllowed = false;
+	// locationStruct.deleteAllowed = false;
+	// locationStruct.allowedMethods;
 	locationStruct.root = "";
 	locationStruct.indexPage = "";
 
@@ -379,9 +380,9 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 		if (key == "method" && keyValue.find_first_of(WHITESPACE) == std::string::npos)
 		{
 			foundMethod = true;
-			locationStruct.getAllowed = false;
-			locationStruct.postAllowed = false;
-			locationStruct.deleteAllowed = false;
+			// locationStruct.getAllowed = false;
+			// locationStruct.postAllowed = false;
+			// locationStruct.deleteAllowed = false;
 			continue ;
 		}
 		else if (keyValue.find_first_of(WHITESPACE) == std::string::npos)
@@ -440,23 +441,23 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 					throw SingleServerConfig::InvalidWhitespaceException();
 				}
 				std::string tempValue = value.substr(0, value.find_first_of(WHITESPACE));
-				// if(tempValue == "GET" || tempValue == "POST" || tempValue == "DELETE") // AE this section could be like this if bools are not needed. maybe set of allowed methods (from request) can be used for check instead of hardcoded methods
+				if((tempValue == "GET" || tempValue == "POST" || tempValue == "DELETE") && locationStruct.allowedMethods.count(tempValue) == 0) // AE this section could be like this if bools are not needed. maybe set of allowed methods (from request) can be used for check instead of hardcoded methods
+					locationStruct.allowedMethods.insert(tempValue);
+				// if (tempValue == "GET" && locationStruct.getAllowed == false)
+				// {
+				// 	locationStruct.getAllowed = true;
 				// 	locationStruct.allowedMethods.insert(tempValue);
-				if (tempValue == "GET" && locationStruct.getAllowed == false)
-				{
-					locationStruct.getAllowed = true;
-					locationStruct.allowedMethods.insert(tempValue);
-				}
-				else if (tempValue == "POST" && locationStruct.postAllowed == false)
-				{
-					locationStruct.postAllowed = true;
-					locationStruct.allowedMethods.insert(tempValue);
-				}
-				else if (tempValue == "DELETE" && locationStruct.deleteAllowed == false)
-				{
-					locationStruct.deleteAllowed = true;
-					locationStruct.allowedMethods.insert(tempValue);
-				}
+				// }
+				// else if (tempValue == "POST" && locationStruct.postAllowed == false)
+				// {
+				// 	locationStruct.postAllowed = true;
+				// 	locationStruct.allowedMethods.insert(tempValue);
+				// }
+				// else if (tempValue == "DELETE" && locationStruct.deleteAllowed == false)
+				// {
+				// 	locationStruct.deleteAllowed = true;
+				// 	locationStruct.allowedMethods.insert(tempValue);
+				// }
 				else
 				{
 					std::cout << RED << tempValue << RESET << std::endl;
@@ -543,11 +544,11 @@ std::string SingleServerConfig::_printLocationStruct(LocationStruct locationStru
 	std::stringstream outStream;
 	outStream << "\t{\n\t\troot " << locationStruct.root << std::endl \
 	<< "\t\tmethod ";
-	if (locationStruct.getAllowed)
+	if (locationStruct.allowedMethods.count("GET"))
 		outStream << "GET ";
-	if (locationStruct.postAllowed)
+	if (locationStruct.allowedMethods.count("POST"))
 		outStream << "POST ";
-	if (locationStruct.deleteAllowed)
+	if (locationStruct.allowedMethods.count("DELETE"))
 		outStream << "DELETE";
 	outStream << std::endl;
 	if (locationStruct.autoIndex)

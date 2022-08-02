@@ -234,11 +234,11 @@ const std::string Config::_printLocationStruct(LocationStruct locationStruct) co
 	outStream << "\t{\n\t\troot " << locationStruct.root << std::endl;
 
 	outStream << "\t\tmethod ";
-	if (locationStruct.getAllowed)
+	if (locationStruct.allowedMethods.count("GET"))
 		outStream << "GET ";
-	if (locationStruct.postAllowed)
+	if (locationStruct.allowedMethods.count("POST"))
 		outStream << "POST ";
-	if (locationStruct.deleteAllowed)
+	if (locationStruct.allowedMethods.count("DELETE"))
 		outStream << "DELETE";
 	outStream << std::endl;
 

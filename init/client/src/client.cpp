@@ -5,9 +5,9 @@
 #include <unistd.h>
 
 
-int main() 
+int main()
 {
-	
+
 	int sockfd;
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -18,7 +18,7 @@ int main()
 
 	struct sockaddr_in serv_addr;
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(8080);
+	serv_addr.sin_port = htons(8000);
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	memset(serv_addr.sin_zero, '0', sizeof(serv_addr.sin_zero));
 

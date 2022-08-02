@@ -430,8 +430,8 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		newRequest.setUri("." + newRequest.getUri());
 		//check method
 		//
-		if (this->_requestHead.find("/cgi/") != std::string::npos)
-			cgi_handle(newRequest, this->_requestHead, fd);
+		if (this->_requestHead.find("/cgi/") != std::string::npos || this->_requestHead.find(".php") != std::string::npos)
+			cgi_handle(newRequest, fd);
 		else if (newRequest.getMethod() == "POST")
 			handlePOST(newRequest);
 		else
@@ -539,12 +539,12 @@ const char* Server::FirstLineTooLongException::what(void) const throw()
 	return ("414");
 }
 
-void cgi_handle(Request& request, std::string buf, int fd)
+void cgi_handle(Request& request, int fd)
 {
 	Cgi newCgi(request);
 
 	newCgi.printEnv();
-	newCgi.cgi_response(buf, fd);
+	newCgi.cgi_response(fd);
 }
 
 const char* Server::InvalidHex::what() const throw()

@@ -116,6 +116,6 @@ class Server
 		};
 };
 
-void cgi_handle(Request& request, std::string buf, int fd);
+void cgi_handle(Request& request, int fd);
 
 #endif

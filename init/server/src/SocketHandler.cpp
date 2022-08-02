@@ -101,6 +101,7 @@ void SocketHandler::_initEventLoop()
 
 void SocketHandler::getEvents()
 {
+	std::cout << "num clients: " << _clients.size() << std::endl;
 	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, NULL);
 }
 
@@ -129,7 +130,7 @@ void SocketHandler::acceptConnection(int i)
 			int set = 1;
 			setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
 			this->_addClient(fd, *(struct sockaddr_in *)&addr);
-			EV_SET(&ev, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+			EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
 			kevent(this->_kq, &ev, 1, NULL, 0, NULL);
 			this->_fd = fd;
 			return;
@@ -148,28 +149,34 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 
 void SocketHandler::removeClient(int i) // can be void maybe
 {
-	if (this->_evList[i].flags & EV_EOF)
+	if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR)  )
 	{
-		int index = this->_getClient(this->_fd);
-		this->_clients.erase(this->_clients.begin() + index);
-		EV_SET(&this->_evList[i], this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-		kevent(this->_kq, &this->_evList[i], 1, NULL, 0, NULL);
-		#ifdef SHOW_LOG
-			std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
-		#endif
+		std::cout << "Removing client with fd: " << this->_fd << std::endl;
+		int index = this->_getClient(this->_evList[i].ident);
+		if (index != -1)
+		{
+			this->_clients.erase(this->_clients.begin() + index);
+			EV_SET(&this->_evList[i], this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+			kevent(this->_kq, &this->_evList[i], 1, NULL, 0, NULL);
+			#ifdef SHOW_LOG
+				std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
+			#endif
+		}
+		else
+			std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl; 
 	}
 }
 
 bool SocketHandler::readFromClient(int i)
 {
-	if (this->_evList[i].ident != 3 && this->_evList[i].flags & EVFILT_READ)
+	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].flags & EVFILT_READ)
 	{
-		this->_fd = this->_evList[i].ident; // maybe this breaks it
+		this->_fd = this->_evList[i].ident;
 		int status = this->_getClient(this->_fd);
 		if (status == -1)
 		{
 			std::cerr << RED << "Error getting client for fd: " << this->_fd << std::endl;
-			perror(NULL);
+			perror(NULL); // check if illegal
 			std::cerr << RESET;
 			return (false); // throw exception
 		}

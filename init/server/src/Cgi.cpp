@@ -2,20 +2,27 @@
 
 #include <string.h>
 
-Cgi::Cgi(Request &request)
+Cgi::Cgi(Request &request): _isPhp(false)
 {
 	_env = NULL;
 	_method = request.getMethod();
 	string url = request.getUrl();
-	int scriptNameStart = url.find("/cgi/") + 5;
-	int scriptNameEnd = url.find("/", scriptNameStart);
-	if (scriptNameEnd == (int)string::npos)
-		scriptNameEnd = url.find("?", scriptNameStart);
-	int queryStart = url.find("?");
-	_scriptName = url.substr(scriptNameStart, scriptNameEnd - scriptNameStart);
-	_pathInfo = (scriptNameEnd != (int)string::npos ) ? url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";
-	_queryString = (queryStart != (int)string::npos )? url.substr(queryStart + 1, string::npos) : "";
-	setEnv(request);
+	if (url.find(".php") != string::npos)
+	{
+		phpHandler(request);
+	}
+	else
+	{
+		int scriptNameStart = url.find("/cgi/") + 5;
+		int scriptNameEnd = url.find("/", scriptNameStart);
+		if (scriptNameEnd == (int)string::npos)
+			scriptNameEnd = url.find("?", scriptNameStart);
+		int queryStart = url.find("?");
+		_scriptName = url.substr(scriptNameStart, scriptNameEnd - scriptNameStart);
+		_pathInfo = (scriptNameEnd != (int)string::npos ) ? url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";
+		_queryString = (queryStart != (int)string::npos )? url.substr(queryStart + 1, string::npos) : "";
+		setEnv(request);
+	}
 	// "Accept");
 	// "Host");
 	// "Referer");
@@ -69,12 +76,38 @@ void Cgi::setEnv(Request &request) // think about changing this to return a cons
 		_env[i++] = NULL;
 }
 
-void Cgi::cgi_response(std::string buffer, int fd)
+void Cgi::phpHandler(Request &req)
+{
+	string docRoot = "/Users/tlemma/Documents/Webserv/main/init/server/pages";
+	string filePath = req.getUrl();
+	_pathInfo = docRoot + filePath;
+	cout << "url :" << _pathInfo << endl;
+
+	_env = new char*[2];
+	_env[0] = strdup(_pathInfo.data());
+	_env[1] = NULL;
+
+	_isPhp = true;
+}
+
+void Cgi::cgi_response(int fd)
 {
 	std::string file;
+	std::string executable;
+	char **args;
 	int pipefd[2];
 
-	(void)buffer;
+	args = NULL;
+	if (_isPhp)
+	{
+		executable = "php-cgi";
+		args = new char *[3];
+		args[0] = strdup(executable.c_str());
+		args[1] = strdup(_pathInfo.c_str());
+		args[2] = NULL;
+	}
+	else
+		executable = _scriptName.c_str();
 	std::cout << GREEN << "Executing CGI..." << std::endl;
 	file = "index.php";
 	int stdout_init = dup(STDOUT_FILENO);
@@ -84,9 +117,8 @@ void Cgi::cgi_response(std::string buffer, int fd)
 	int pid = fork();
 	if (pid == 0)
 	{
-		// if(execlp("/usr/bin/php", "php", file.c_str(), NULL) == -1)
 		chdir("cgi-bin");
-		if (execve(_scriptName.c_str() , NULL, _env) == -1)
+		if (execve(executable.c_str(), args, _env) == -1)
 		{
 			std::cout << "error executing cgi" << std::endl;
 		}
@@ -94,14 +126,16 @@ void Cgi::cgi_response(std::string buffer, int fd)
 	}
 	wait(NULL);
 	dup2(stdout_init, STDOUT_FILENO);
-	std::string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+	std::string header = "HTTP/1.1 200 OK\r\n";
 	send(fd, header.c_str(), header.size(), 0);
 	char buf[1024];
+	buf[1023] = '\0';
 	int n;
-	while((n = read(pipefd[0], buf, 1024)))
+	while((n = read(pipefd[0], buf, 1023)) > 0)
 	{
+		cout << "cgi output: " << buf << endl;
 		send(fd, buf, n, 0);
 	}
 	close(pipefd[0]);
-	close(fd);
+	// close(fd);
 }

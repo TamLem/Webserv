@@ -7,6 +7,9 @@
 # Unignore all dirs
 !*/
 
+# Unignore php-cgi
+!php-cgi
+
 # Unignore Makefile
 !Makefile
 

@@ -124,13 +124,13 @@ void Server::runEventLoop()
 		{
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
 			this->_socketHandler->acceptConnection(i);
-			this->_socketHandler->removeClient(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
 				// this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
 				handleRequest(/*this->_requestHead, */this->_socketHandler->getFD());
-				continue;
+				// continue;
 			}
+			this->_socketHandler->removeClient(i);
 		}
 	}
 }
@@ -565,12 +565,12 @@ const char* Server::FirstLineTooLongException::what(void) const throw()
 	return ("414");
 }
 
-void cgi_handle(Request& request, std::string buf, int fd)
+void cgi_handle(Request& request, int fd)
 {
 	Cgi newCgi(request);
 
 	newCgi.printEnv();
-	newCgi.cgi_response(buf, fd);
+	newCgi.cgi_response(fd);
 }
 
 const char* Server::InvalidHex::what() const throw()

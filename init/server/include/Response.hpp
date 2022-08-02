@@ -17,6 +17,7 @@ class Response : public Message
 		// std::string uri;
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
+	protected:
 		int sendall(const int sock_fd, char *buffer, const int len) const;
 	public:
 		Response(void);

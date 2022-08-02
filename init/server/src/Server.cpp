@@ -457,7 +457,7 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		//check method
 		checkLocationMethod(request);
 		if (this->_requestHead.find("/cgi/") != std::string::npos)
-			cgi_handle(request, this->_requestHead, fd);
+			cgi_handle(request, fd);
 		else if (request.getMethod() == "POST")
 			handlePOST(request);
 		else

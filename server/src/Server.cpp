@@ -65,11 +65,11 @@ void Server::handle_signal(int sig)
 		std::cerr << BLUE << "SIGINT detected, terminating server now" << RESET << std::endl;
 		keep_running = 0;
 	}
-	// else if (sig == SIGPIPE)
-	// {
-	// 	std::cerr << RED << "SIGPIPE detected, will end now" << RESET << std::endl;
-	// 	keep_running = 0;
-	// }
+	else if (sig == SIGPIPE)
+	{
+		std::cerr << RED << "SIGPIPE detected, will end now" << RESET << std::endl;
+		keep_running = 0;
+	}
 }
 
 // check if signal is forbidden!!!!!!!!!!!!!!!!!
@@ -119,7 +119,12 @@ void Server::runEventLoop()
 
 	while(keep_running)
 	{
-		this->_socketHandler->getEvents();
+		std::cout << "server running " << std::endl;
+		int numEvents = this->_socketHandler->getEvents();
+		if (numEvents == 0)
+		{
+			this->_socketHandler->removeInactiveClients();	// remove inactive clients
+		}
 		for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
 		{
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;

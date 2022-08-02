@@ -286,8 +286,9 @@ int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::c
 			result = it->second.root;
 		result += uri.substr(uri.find_last_of('/') + 1);
 		request.setUri(result);
+		_currentLocationKey = it->first;
 		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getUri() << std::endl;
+			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getUri() << " for location: " << _currentLocationKey  << std::endl;
 		#endif
 		return (0);
 	}
@@ -341,8 +342,9 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 			// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 		}
 		request.setUri(result);
+		_currentLocationKey = it->first;
 		#ifdef SHOW_LOG_2
-			std::cout  << YELLOW << "DIR MATCH!: " << request.getUri() << std::endl;
+			std::cout  << YELLOW << "DIR MATCH!: " << request.getUri() << " for location: " << _currentLocationKey << std::endl;
 		#endif
 	}
 }
@@ -360,6 +362,7 @@ void Server::routeDefault(Request& request)
 		// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 	}
 	request.setUri(result);
+	_currentLocationKey = "";
 	#ifdef SHOW_LOG
 		std::cout  << YELLOW << "DEFAULT ";
 	#endif
@@ -390,7 +393,7 @@ void Server::matchLocation(Request& request)
 	if (max_count == 0)
 		routeDefault(request);
 	#ifdef SHOW_LOG
-		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getUri() << std::endl;
+		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getUri() << " for location: " << _currentLocationKey  << std::endl;
 	#endif
 }
 
@@ -424,34 +427,42 @@ std::string Server::percentDecoding(const std::string& str)
 	return(tmp.str());
 }
 
+void Server::checkLocationMethod(const Request& request) const
+{
+	if (this->_currentLocationKey.empty() == true)
+		return ;
+	if (this->_currentConfig.location.find(_currentLocationKey)->second.allowedMethods.count(request.getMethod()) != 1)
+		throw MethodNotAllowed();
+}
+
 void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe breaks here
 {
 	this->_response.clear();
 	try
 	{
 		this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
-		Request newRequest(this->_requestHead);
-		this->applyCurrentConfig(newRequest);
+		Request request(this->_requestHead);
+		this->applyCurrentConfig(request);
 		//normalize uri (in Request)
 		//compression (merge slashes)
 		//resolve relative paths
 		//determine location
-		this->matchLocation(newRequest);
-		newRequest.setUri(this->percentDecoding(newRequest.getUri()));
-		newRequest.setQuery(this->percentDecoding(newRequest.getQuery()));
+		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
+		request.setUri(this->percentDecoding(request.getUri()));
+		request.setQuery(this->percentDecoding(request.getQuery()));
 		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "URI after percent-decoding: " << newRequest.getUri() << std::endl;
+			std::cout  << YELLOW << "URI after percent-decoding: " << request.getUri() << std::endl;
 		#endif
-		newRequest.setUri("." + newRequest.getUri());
+		request.setUri("." + request.getUri());
 		//check method
-		//
+		checkLocationMethod(request);
 		if (this->_requestHead.find("/cgi/") != std::string::npos)
-			cgi_handle(newRequest, this->_requestHead, fd);
-		else if (newRequest.getMethod() == "POST")
-			handlePOST(newRequest);
+			cgi_handle(request, this->_requestHead, fd);
+		else if (request.getMethod() == "POST")
+			handlePOST(request);
 		else
 		{
-			handleGET(newRequest);
+			handleGET(request);
 			// lseek(fd, 0, SEEK_END); // sets the filedescriptor to EOF so that, check this again!!!!!!!!!
 		}
 	}
@@ -565,4 +576,9 @@ void cgi_handle(Request& request, std::string buf, int fd)
 const char* Server::InvalidHex::what() const throw()
 {
 	return ("400");
+}
+
+const char* Server::MethodNotAllowed::what() const throw()
+{
+	return ("405");
 }

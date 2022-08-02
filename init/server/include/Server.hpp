@@ -77,6 +77,7 @@ class Server
 		Response _response;
 		std::string _requestHead;
 		ConfigStruct _currentConfig;
+		std::string _currentLocationKey;
 
 		Server();
 		static void handle_signal(int sig);
@@ -91,14 +92,11 @@ class Server
 		void routeDir(Request&, std::map<std::string, LocationStruct>::const_iterator, const std::string&, int&);
 		void routeDefault(Request&);
 		std::string percentDecoding(const std::string&);
+		void checkLocationMethod(const Request& request) const;
 		void handleGET(const Request&);
 		void handlePOST(const Request&);
 		void handleERROR(const std::string&);
 
-	class InvalidHex : public std::exception
-	{
-		const char* what() const throw();
-	};
 	// Exceptions
 		class InternatServerErrorException : public std::exception
 		{
@@ -116,6 +114,16 @@ class Server
 		{
 			public:
 				virtual const char* what() const throw();
+		};
+
+		class InvalidHex : public std::exception
+		{
+			const char* what() const throw();
+		};
+
+		class MethodNotAllowed : public std::exception
+		{
+			const char* what() const throw();
 		};
 };
 

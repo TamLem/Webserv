@@ -151,12 +151,15 @@ void SocketHandler::removeClient(int i) // can be void maybe
 	if (this->_evList[i].flags & EV_EOF)
 	{
 		int index = this->_getClient(this->_fd);
-		this->_clients.erase(this->_clients.begin() + index);
-		EV_SET(&this->_evList[i], this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-		kevent(this->_kq, &this->_evList[i], 1, NULL, 0, NULL);
-		#ifdef SHOW_LOG
-			std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
-		#endif
+		if (index != -1)
+		{
+			this->_clients.erase(this->_clients.begin() + index);
+			EV_SET(&this->_evList[i], this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+			kevent(this->_kq, &this->_evList[i], 1, NULL, 0, NULL);
+			#ifdef SHOW_LOG
+				std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
+			#endif
+		}
 	}
 }
 

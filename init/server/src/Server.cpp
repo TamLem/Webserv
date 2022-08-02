@@ -544,7 +544,7 @@ void cgi_handle(Request& request, int fd)
 	Cgi newCgi(request);
 
 	newCgi.printEnv();
-	newCgi.cgi_response(buf, fd);
+	newCgi.cgi_response(fd);
 }
 
 const char* Server::InvalidHex::what() const throw()

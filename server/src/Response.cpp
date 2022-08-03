@@ -9,6 +9,7 @@
 #include <dirent.h> // dirent, opendir
 // #include <sys/types.h>  // opendir
 #include <unistd.h>
+#include <sys/stat.h> // stat
 
 #define RESET "\033[0m"
 #define GREEN "\033[32m"
@@ -147,7 +148,7 @@ void Response::createErrorBody(void)
 	this->body = body.str();
 }
 
-void Response::createIndex(const std::string& uri)
+void Response::createIndex(const std::string& path)
 {
 	std::stringstream body;
 	body <<
@@ -165,7 +166,8 @@ void Response::createIndex(const std::string& uri)
 	<p style=\"color:blue\">";
 	DIR *d;
 	struct dirent *dir;
-	d = opendir(uri.substr(0, uri.find_last_of('/')).c_str()); // AE better keep path and file seperate
+	// d = opendir(uri.substr(0, uri.find_last_of('/')).c_str()); // AE better keep path and file seperate
+	d = opendir(path.c_str()); // AE better keep path and file seperate
 	if (d)
 	{
 		while ((dir = readdir(d)) != NULL)
@@ -190,12 +192,29 @@ void Response::createIndex(const std::string& uri)
 	}
 }
 
-void Response::createBody(const std::string& uri)
+static bool staticTargetIsDir(const std::string& target)
+{
+	struct stat statStruct;
+
+	// error will return false
+	if (stat(target.c_str(), &statStruct) == 0)
+	{
+		if (statStruct.st_mode & S_IFDIR)
+			return (true);
+	}
+	return (false);
+}
+
+void Response::createBodyFromFile(const std::string& uri)
 {
 	std::stringstream body;
 	std::ifstream file(uri.c_str(), std::ios::binary);
+	// std::cerr << BOLD << RED << "uri:" << uri << RESET << std::endl;
+	if (staticTargetIsDir(uri))
+		throw ERROR_404();
 	if (file.is_open())
 	{
+		// std::cerr << BOLD << RED << "open" << RESET << std::endl;
 		body << file.rdbuf();
 		file.close();
 		this->body = body.str();

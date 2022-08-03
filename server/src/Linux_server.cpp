@@ -44,7 +44,7 @@ static Response _response;
 void handleGET(const std::string& status, int fd, const std::string& uri)
 {
 	_response.init(status, fd, uri);
-	_response.createBody();
+	_response.createBodyFromFile();
 	_response.addDefaultHeaderFields();
 	_response.sendResponse();
 }
@@ -58,7 +58,7 @@ void handlePOST(const std::string& status, int fd, const Request& newRequest)
 	outFile << newRequest.getBody() << "'s content. Server: " << _config->getConfigStruct("weebserv").serverName;
 	outFile.close();
 	_response.init(status, fd, "./pages/post_test.html");
-	_response.createBody();
+	_response.createBodyFromFile();
 	_response.addDefaultHeaderFields();
 	_response.sendResponse();
 }

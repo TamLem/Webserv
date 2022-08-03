@@ -48,6 +48,7 @@ class Request : public Message
 
 	public:
 		bool isFile;
+		std::string indexPage;
 		Request(const std::string&);
 		~Request(void);
 

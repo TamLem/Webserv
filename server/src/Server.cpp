@@ -206,17 +206,24 @@ static bool staticFileExists(const std::string& target)
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	if (request.isFile == false && staticFileExists(request.getUri()) == false)
+	if (request.isFile == false && staticFileExists(request.getUri() + request.indexPage) == false)
 	{
 		if ((this->_currentLocationKey.empty() == false
 				&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
 				|| this->_currentConfig.autoIndex == true)
 			_response.createIndex(request.getUri());
 		else
-			_response.createBody(request.getUri());
+		{
+			// std::cerr << BOLD << RED << "uri1:" << request.getUri() << RESET << std::endl;
+			// std::cerr << BOLD << RED << "indexPage:" << request.indexPage << RESET << std::endl;
+			_response.createBodyFromFile(request.getUri() + request.indexPage);
+		}
 	}
 	else
-		_response.createBody(request.getUri());
+	{
+			// std::cerr << BOLD << RED << "uri2:" << request.getUri() << RESET << std::endl;
+		_response.createBodyFromFile(request.getUri() + request.indexPage);
+	}
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
@@ -225,14 +232,14 @@ void Server::handleGET(const Request& request)
 void Server::handlePOST(const Request& request)
 {
 	std::ofstream outFile;
-	outFile.open("./uploads/" + request.getBody());
+	outFile.open(request.getUri() + request.getBody()); // AE define for path
 	if (outFile.is_open() == false)
 		throw std::exception();
-	outFile << request.getBody() << "'s content. Server: " << this->_config->getConfigStruct("weebserv").serverName;
+	outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;
 	outFile.close();
 
 	_response.setProtocol(PROTOCOL);
-	_response.createBody("./pages/post_test.html");
+	_response.createBodyFromFile("./pages/post_test.html");
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
@@ -376,9 +383,11 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 		{
 			request.isFile = false;
 			if (it->second.indexPage.empty() == false)
-				result += it->second.indexPage;
+				request.indexPage = it->second.indexPage;
+				// result += it->second.indexPage;
 			else
-				result += this->_currentConfig.indexPage;
+				request.indexPage = this->_currentConfig.indexPage;
+				// result += this->_currentConfig.indexPage;
 			// else
 			// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 		}
@@ -398,8 +407,9 @@ void Server::routeDefault(Request& request)
 	if (*result.rbegin() == '/')
 	{
 		request.isFile = false;
+		request.indexPage = this->_currentConfig.indexPage;
 		// if (this->_currentConfig.autoIndex == false)
-			result += this->_currentConfig.indexPage;
+			// result += this->_currentConfig.indexPage;
 		// else
 		// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 	}

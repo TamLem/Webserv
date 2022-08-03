@@ -10,6 +10,7 @@ Request::Request(const std::string& message)
 {
 	this->hasBody = false;
 	this->isFile = true;
+	this->indexPage = "";
 	addMethods();
 	parseMessage(message);
 }

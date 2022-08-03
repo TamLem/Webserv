@@ -511,7 +511,7 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		request.setTarget("." + request.getTarget());
 		//check method
 		checkLocationMethod(request);
-		if (this->_requestHead.find("/cgi/") != std::string::npos)
+		if (this->_requestHead.find("/cgi/") != std::string::npos || this->_requestHead.find(".php") != std::string::npos)
 			cgi_handle(request, fd);
 		else if (request.getMethod() == "POST")
 			handlePOST(request);

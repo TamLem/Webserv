@@ -6,7 +6,7 @@ Cgi::Cgi(Request &request): _isPhp(false)
 {
 	_env = NULL;
 	_method = request.getMethod();
-	string url = request.getUrl();
+	string url = request.getTarget();
 	if (url.find(".php") != string::npos)
 	{
 		phpHandler(request);
@@ -117,7 +117,7 @@ void Cgi::cgi_response(int fd)
 	int pid = fork();
 	if (pid == 0)
 	{
-		chdir("cgi-bin");
+		chdir("server/cgi-bin");
 		if (execve(executable.c_str(), args, _env) == -1)
 		{
 			std::cout << "error executing cgi" << std::endl;

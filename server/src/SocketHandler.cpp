@@ -157,7 +157,7 @@ int SocketHandler::getEvents()
 {
 	struct timespec timeout;
 
-	timeout.tv_sec = 10;
+	timeout.tv_sec = 1000;
 	timeout.tv_nsec = 0;
 	std::cout << "num clients: " << _clients.size() << std::endl;
 	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, &timeout);	

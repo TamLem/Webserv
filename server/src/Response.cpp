@@ -165,7 +165,7 @@ void Response::createIndex(const std::string& uri)
 	<p style=\"color:blue\">";
 	DIR *d;
 	struct dirent *dir;
-	d = opendir(uri.substr(0, uri.find_last_of('/')).c_str());
+	d = opendir(uri.substr(0, uri.find_last_of('/')).c_str()); // AE better keep path and file seperate
 	if (d)
 	{
 		while ((dir = readdir(d)) != NULL)

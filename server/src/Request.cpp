@@ -9,6 +9,7 @@
 Request::Request(const std::string& message)
 {
 	this->hasBody = false;
+	this->isFile = true;
 	addMethods();
 	parseMessage(message);
 }

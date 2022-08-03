@@ -201,7 +201,7 @@ static bool staticFileExists(const std::string& target)
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	if (staticFileExists(request.getUri()) == false)
+	if (request.isFile == false && staticFileExists(request.getUri()) == false)
 	{
 		if ((this->_currentLocationKey.empty() == false
 				&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
@@ -369,6 +369,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 		result += uri.substr(i);
 		if (*result.rbegin() == '/')
 		{
+			request.isFile = false;
 			if (it->second.indexPage.empty() == false)
 				result += it->second.indexPage;
 			else
@@ -391,6 +392,7 @@ void Server::routeDefault(Request& request)
 	result = this->_currentConfig.root + request.getUri().substr(1);
 	if (*result.rbegin() == '/')
 	{
+		request.isFile = false;
 		// if (this->_currentConfig.autoIndex == false)
 			result += this->_currentConfig.indexPage;
 		// else

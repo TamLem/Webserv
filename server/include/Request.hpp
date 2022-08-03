@@ -47,6 +47,7 @@ class Request : public Message
 		void addMethods(void);
 
 	public:
+		bool isFile;
 		Request(const std::string&);
 		~Request(void);
 

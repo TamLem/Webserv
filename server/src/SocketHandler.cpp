@@ -139,7 +139,7 @@ bool SocketHandler::addSocket(int fd)
 
 	timeout.tv_sec = 1;
 	timeout.tv_nsec = 0;
-	EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &timeout);
+	EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
 	if (kevent(this->_kq, &ev, 1, NULL, 0, &timeout) == -1)
 	{
 		std::cerr << RED << "Error adding socket to kqueue" << std::endl;

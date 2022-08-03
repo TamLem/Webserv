@@ -99,12 +99,6 @@ void SocketHandler::_initEventLoop()
 	}
 }
 
-void SocketHandler::getEvents()
-{
-	std::cout << "num clients: " << _clients.size() << std::endl;
-	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, NULL);
-}
-
 void SocketHandler::acceptConnection(int i)
 {
 	if (this->_serverMap.count(this->_evList[i].ident) == 1)
@@ -121,21 +115,53 @@ void SocketHandler::acceptConnection(int i)
 			exit(1);
 			return; // throw exception here
 		}
-		else
+		else if (this->addSocket(fd))
 		{
 			#ifdef SHOW_LOG
 				std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
 			#endif
-			struct kevent ev; // maybe this ev is not only needed here, check removeClient
-			int set = 1;
-			setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)); // set socket to not SIGPIPE
 			this->_addClient(fd, *(struct sockaddr_in *)&addr);
-			EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
-			kevent(this->_kq, &ev, 1, NULL, 0, NULL);
-			this->_fd = fd;
-			return;
+		}
+		else
+		{
+			#ifdef SHOW_LOG
+				std::cout << RED << "Error adding socket " << fd << RESET << std::endl;
+			#endif
+			close(fd);
 		}
 	}
+}
+
+bool SocketHandler::addSocket(int fd)
+{
+	struct kevent ev;
+	struct timespec timeout;
+
+	timeout.tv_sec = 1;
+	timeout.tv_nsec = 0;
+	EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, &timeout);
+	if (kevent(this->_kq, &ev, 1, NULL, 0, &timeout) == -1)
+	{
+		std::cerr << RED << "Error adding socket to kqueue" << std::endl;
+		perror(NULL);
+		std::cerr << RESET;
+		return false; 
+	}
+	int val = 1;
+	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4); // is SO_NOSIGPIPE needed here ???????
+	this->_fd = fd;
+	return true;
+}
+
+int SocketHandler::getEvents()
+{
+	struct timespec timeout;
+
+	timeout.tv_sec = 10;
+	timeout.tv_nsec = 0;
+	std::cout << "num clients: " << _clients.size() << std::endl;
+	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, &timeout);	
+	return this->_numEvents;
 }
 
 int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
@@ -152,6 +178,7 @@ void SocketHandler::removeClient(int i) // can be void maybe
 	if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR)  )
 	{
 		std::cout << "Removing client with fd: " << this->_fd << std::endl;
+		close(this->_evList[i].ident);
 		int index = this->_getClient(this->_evList[i].ident);
 		if (index != -1)
 		{
@@ -226,6 +253,24 @@ SocketHandler::SocketHandler(Config *config)
 	this->_initMainSockets();
 	this->_listenMainSockets();
 	this->_initEventLoop();
+}
+
+void SocketHandler::removeInactiveClients()
+{
+	#ifdef SHOW_LOG
+		std::cout << RED << "Clear all connections" << RESET << std::endl;
+	#endif
+	for (size_t i = 0; i < this->_clients.size(); i++)
+	{
+		close(this->_clients[i].fd);
+	}
+	this->_clients.clear();
+	//zero out evlist
+	for (size_t i = 0; i < MAX_EVENTS; i++)
+	{
+		EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+		kevent(this->_kq, &this->_evList[i], 1, NULL, 0, NULL);
+	}
 }
 
 // SocketHandler::SocketHandler(const SocketHandler &src)

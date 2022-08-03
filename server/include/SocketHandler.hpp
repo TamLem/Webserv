@@ -85,10 +85,12 @@ class SocketHandler
 	// Overloaded Operators
 
 	// Public Methods
-		void getEvents();
+		int getEvents();
 		void acceptConnection(int i);
+		bool addSocket(int fd);
 		bool readFromClient(int i);
 		void removeClient(int fd);
+		void removeInactiveClients();
 
 	// Getter
 		int getNumEvents() const;

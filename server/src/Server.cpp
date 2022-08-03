@@ -15,38 +15,6 @@ Server::Server(Config* config): _config(config), _socketHandler(new SocketHandle
 		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
 	#endif
 	handle_signals();
-	// _port = 8080;
-
-// start _initMainPorts
-	// if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	// {
-	// 	std::cerr << RED << "Error creating socket" << std::endl;
-	// 	perror(NULL);
-	// 	std::cerr << RESET;
-	// 	return;
-	// }
-
-
-	// // Set socket reusable from Time-Wait state
-	// int val = 1;
-	// setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
-
-	// // initialize server address struct
-	// struct sockaddr_in serv_addr;
-	// memset(&serv_addr, '0', sizeof(serv_addr)); // is memset allowed? !!!!!!!!!!!!!!!!!!!!
-	// serv_addr.sin_family = AF_INET;
-	// serv_addr.sin_port = htons(_port);
-	// serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-	// // bind socket to address
-	// if((bind(_server_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) < 0)
-	// {
-	// 	std::cerr << RED << "Error binding socket" << std::endl;
-	// 	perror(NULL);
-	// 	std::cerr << RESET;
-	// 	exit(EXIT_FAILURE); // maybe change to return or throw
-	// }
-// end _initMainPorts
 }
 
 Server::~Server(void)
@@ -82,41 +50,8 @@ void	Server::handle_signals(void)
 	// signal(SIGPIPE, handle_signal);
 }
 
-// int Server::get_client(int fd)
-// {
-// // 	for (size_t i = 0; i < _clients.size(); i++)
-// // 	{
-// // 		if (_clients[i].fd == fd)
-// // 			return (i);
-// // 	}
-// // 	return (-1);
-// }
-
-// int Server::add_client(int fd, struct sockaddr_in addr)
-// {
-// 	// struct client c;
-// 	// c.fd = fd;
-// 	// c.addr = addr;
-// 	// _clients.push_back(c);
-// 	// return (_clients.size() - 1);
-// }
-
-// int Server::remove_client(int fd)
-// {
-// 	// int i = get_client(fd);
-// 	// if (i == -1)
-// 	// 	return (-1);
-// 	// _clients.erase(_clients.begin() + i);
-// 	// return (0);
-// }
-
 void Server::runEventLoop()
 {
-// add those to private members
-	// struct kevent ev;
-	// struct kevent evList[MAX_EVENTS];
-	// struct sockaddr_storage addr; // temp
-
 	while(keep_running)
 	{
 		std::cout << "server running " << std::endl;
@@ -140,44 +75,6 @@ void Server::runEventLoop()
 	}
 }
 
-// void Server::run()
-// {
-	// this->_socketHandler = SocketHandler(this->_config);
-// start _listenMainSockets
-	// if (listen(_server_fd, 5))
-	// {
-	// 	std::cerr << RED << "Error listening" << std::endl;
-	// 	perror(NULL);
-	// 	std::cerr << RESET;
-	// 	return;
-	// }
-	// else
-	// 	std::cout << "Listening on port " << _port << std::endl;
-// end _listenMainSockets
-
-// start _initEventLoop
-	// int kq = kqueue();
-	// if (kq == -1)
-	// {
-	// 	std::cerr << RED << "Error creating kqueue" << std::endl;
-	// 	perror(NULL);
-	// 	std::cerr << RESET;
-	// 	return;
-	// }
-	// struct kevent ev;
-	// EV_SET(&ev, _server_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	// int ret = kevent(kq, &ev, 1, NULL, 0, NULL);
-	// if (ret == -1)
-	// {
-	// 	std::cerr << RED << "Error adding server socket to kqueue" << std::endl;
-	// 	perror(NULL);
-	// 	std::cerr << RESET;
-	// 	return;
-	// }
-// end _initEventLoop
-	// run_event_loop();
-// }
-
 static bool staticFileExists(const std::string& target)
 {
 	struct stat statStruct;
@@ -186,22 +83,6 @@ static bool staticFileExists(const std::string& target)
 			return (true);
 	return (false);
 }
-
-// static void staticAutoIndex(const Request& request)
-// {
-// 	DIR *d;
-// 	struct dirent *dir;
-// 	d = opendir(request.getUri());
-// 	if (d)
-// 	{
-// 		while ((dir = readdir(d)) != NULL)
-// 		{
-// 			// printf("%s\n", dir->d_name);
-// 			std::cout << dir->d_name << std::endl
-// 		}
-// 		closedir(d);
-// 	}
-// }
 
 void Server::handleGET(const Request& request)
 {
@@ -254,59 +135,6 @@ void Server::applyCurrentConfig(const Request& request)
 	std::string host = headerFields["host"];
 	this->_currentConfig = this->_config->getConfigStruct(host);
 }
-
-// static std::string staticRemoveTrailingSlash(std::string string)
-// {
-// 	if (*string.rbegin() == '/')
-// 		string = string.substr(0, string.length() - 1);
-// 	return (string);
-// }
-
-// static bool staticTargetIsFile(const std::string& target)
-// {
-// 	struct stat statStruct;
-
-// 	// if (stat(target.c_str(), &statStruct) != 0)
-// 	// 	throw InternalServerError();
-// 	// if (statStruct.st_mode & S_IFREG == 0 && statStruct.st_mode & S_IFDIR == 0)
-// 	// 	throw InternalServerError();
-// 	// else if (statStruct.st_mode & S_IFREG)
-// 	// 	return (true);
-// 	// else
-// 	// 	return (false);
-
-// 	// error will return false
-// 	if (stat(target.c_str(), &statStruct) == 0)
-// 	{
-// 		if (statStruct.st_mode & S_IFREG)
-// 			return (true);
-// 	}
-// 	return (false);
-// }
-
-// static bool staticTargetIsDir(const std::string& target)
-// {
-// 	struct stat statStruct;
-
-// 	// error will return false
-// 	if (stat(target.c_str(), &statStruct) == 0)
-// 	{
-// 		if (statStruct.st_mode & S_IFDIR)
-// 			return (true);
-// 	}
-// 	return (false);
-// }
-
-//https://stackoverflow.com/questions/29310166/check-if-a-fstream-is-either-a-file-or-directory
-// static bool staticIsFile(const std::string& fileName)
-// {
-// 	std::ifstream fileOrDir(fileName);
-// 	//This will set the fail bit if fileName is a directory (or do nothing if it is already set
-// 	fileOrDir.seekg(0, std::ios::end);
-// 	if( !fileOrDir.good())
-// 		return (false);
-// 	return (true);
-// }
 
 int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& uri)
 {
@@ -612,6 +440,19 @@ void cgi_handle(Request& request, int fd)
 	Cgi newCgi(request);
 
 	newCgi.printEnv();
+	int cgiPipe[2];
+	pipe(cgiPipe);
+	//initiate cgi response
+	//listen to event on cgiPipe[0]
+	//if event is read, read from cgiPipe[0] and write to fd
+	//if event is write, write to cgiPipe[1]
+	//if event is error, close cgiPipe[0] and cgiPipe[1]
+	//if event is hangup, close cgiPipe[0] and cgiPipe[1]
+	//if event is timeout, close cgiPipe[0] and cgiPipe[1]
+	//if event is terminate, close cgiPipe[0] and cgiPipe[1]
+	//if event is close, close cgiPipe[0] and cgiPipe[1]
+	
+	
 	newCgi.cgi_response(fd);
 }
 

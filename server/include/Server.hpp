@@ -28,6 +28,8 @@
 #include "SingleServerConfig.hpp"
 #include "Base.hpp"
 
+#define UPLOAD_DIR "./server/data/uploads/"
+
 #ifdef __APPLE__
 	#include "SocketHandler.hpp"
 #else

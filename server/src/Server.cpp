@@ -232,14 +232,17 @@ void Server::handleGET(const Request& request)
 void Server::handlePOST(const Request& request)
 {
 	std::ofstream outFile;
-	outFile.open(request.getUri() + request.getBody()); // AE define for path
+	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
+	std::string tmp = UPLOAD_DIR;
+	tmp.append("testFile.txt");
+	outFile.open(tmp); // AE body is not read anymore and therefore empty
 	if (outFile.is_open() == false)
 		throw std::exception();
 	outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;
 	outFile.close();
 
 	_response.setProtocol(PROTOCOL);
-	_response.createBodyFromFile("./pages/post_test.html");
+	_response.createBodyFromFile("./server/data/pages/post_test.html");
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");

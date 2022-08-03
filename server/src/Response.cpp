@@ -37,7 +37,7 @@ void Response::clear(void)
 	this->headerFields.clear();
 	this->status = "";
 	this->statusMessage = "";
-	uri = "";
+	target = "";
 }
 
 Response::~Response(void)
@@ -58,9 +58,9 @@ void Response::setBody(const std::string& body)
 	this->body = body;
 }
 
-// void Response::setUri(const std::string& uri)
+// void Response::setTarget(const std::string& target)
 // {
-// 	this->uri = uri;
+// 	this->target = target;
 // }
 
 void Response::setProtocol(const std::string& protocol)
@@ -166,7 +166,7 @@ void Response::createIndex(const std::string& path)
 	<ul>";
 	DIR *d;
 	struct dirent *dir;
-	// d = opendir(uri.substr(0, uri.find_last_of('/')).c_str()); // AE better keep path and file seperate
+	// d = opendir(target.substr(0, target.find_last_of('/')).c_str()); // AE better keep path and file seperate
 	d = opendir(path.c_str()); // AE better keep path and file seperate
 	if (d)
 	{
@@ -217,12 +217,12 @@ static bool staticTargetIsDir(const std::string& target)
 	return (false);
 }
 
-void Response::createBodyFromFile(const std::string& uri)
+void Response::createBodyFromFile(const std::string& target)
 {
 	std::stringstream body;
-	std::ifstream file(uri.c_str(), std::ios::binary);
-	// std::cerr << BOLD << RED << "uri:" << uri << RESET << std::endl;
-	if (staticTargetIsDir(uri))
+	std::ifstream file(target.c_str(), std::ios::binary);
+	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
+	if (staticTargetIsDir(target))
 		throw ERROR_404();
 	if (file.is_open())
 	{

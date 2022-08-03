@@ -191,7 +191,7 @@ static bool staticFileExists(const std::string& target)
 // {
 // 	DIR *d;
 // 	struct dirent *dir;
-// 	d = opendir(request.getUri());
+// 	d = opendir(request.getTarget());
 // 	if (d)
 // 	{
 // 		while ((dir = readdir(d)) != NULL)
@@ -206,23 +206,23 @@ static bool staticFileExists(const std::string& target)
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	if (request.isFile == false && staticFileExists(request.getUri() + request.indexPage) == false)
+	if (request.isFile == false && staticFileExists(request.getTarget() + request.indexPage) == false)
 	{
 		if ((this->_currentLocationKey.empty() == false
 				&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
 				|| this->_currentConfig.autoIndex == true)
-			_response.createIndex(request.getUri());
+			_response.createIndex(request.getTarget());
 		else
 		{
-			// std::cerr << BOLD << RED << "uri1:" << request.getUri() << RESET << std::endl;
+			// std::cerr << BOLD << RED << "target1:" << request.getTarget() << RESET << std::endl;
 			// std::cerr << BOLD << RED << "indexPage:" << request.indexPage << RESET << std::endl;
-			_response.createBodyFromFile(request.getUri() + request.indexPage);
+			_response.createBodyFromFile(request.getTarget() + request.indexPage);
 		}
 	}
 	else
 	{
-			// std::cerr << BOLD << RED << "uri2:" << request.getUri() << RESET << std::endl;
-		_response.createBodyFromFile(request.getUri() + request.indexPage);
+			// std::cerr << BOLD << RED << "target2:" << request.getTarget() << RESET << std::endl;
+		_response.createBodyFromFile(request.getTarget() + request.indexPage);
 	}
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
@@ -318,34 +318,34 @@ void Server::applyCurrentConfig(const Request& request)
 // 	return (true);
 // }
 
-int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& uri)
+int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& target)
 {
 	std::string extension;
 	size_t ext_len;
-	size_t uri_len;
+	size_t target_len;
 	std::string result;
 	
-	uri_len = uri.length();
+	target_len = target.length();
 	ext_len = it->first.length() - 1;
 	extension = it->first.substr(1, ext_len);
-	if (uri_len > ext_len && uri.compare(uri_len - ext_len, ext_len, extension) == 0)
+	if (target_len > ext_len && target.compare(target_len - ext_len, ext_len, extension) == 0)
 	{
 		if (it->second.root.empty())
 			result = this->_currentConfig.root;
 		else
 			result = it->second.root;
-		result += uri.substr(uri.find_last_of('/') + 1);
-		request.setUri(result);
+		result += target.substr(target.find_last_of('/') + 1);
+		request.setTarget(result);
 		_currentLocationKey = it->first;
 		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getUri() << " for location: " << _currentLocationKey  << std::endl;
+			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getTarget() << " for location: " << _currentLocationKey  << std::endl;
 		#endif
 		return (0);
 	}
 	return (1);
 }
 
-void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& uri, int& max_count)
+void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& target, int& max_count)
 {
 	std::string path;
 	std::string result;
@@ -358,11 +358,11 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 	#endif
 	int i = 0;
 	int segments = 0;
-	if (uri.length() >= path.length()) //path has to be checked until the end and segments need to be counted
+	if (target.length() >= path.length()) //path has to be checked until the end and segments need to be counted
 	{
 		while (path[i] != '\0')
 		{
-			if (path[i] != uri[i])
+			if (path[i] != target[i])
 			{
 				segments = 0;
 				break ;
@@ -371,7 +371,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 				segments++;
 			i++;
 		}
-		if (uri[i - 1] != '\0' && uri[i - 1] != '/') // carefull with len = 0!
+		if (target[i - 1] != '\0' && target[i - 1] != '/') // carefull with len = 0!
 			segments = 0;
 	}
 	if (segments > max_count)
@@ -381,7 +381,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 			result = this->_currentConfig.root;
 		else
 			result = it->second.root;
-		result += uri.substr(i);
+		result += target.substr(i);
 		if (*result.rbegin() == '/')
 		{
 			request.isFile = false;
@@ -394,10 +394,10 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 			// else
 			// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 		}
-		request.setUri(result);
+		request.setTarget(result);
 		_currentLocationKey = it->first;
 		#ifdef SHOW_LOG_2
-			std::cout  << YELLOW << "DIR MATCH!: " << request.getUri() << " for location: " << _currentLocationKey << std::endl;
+			std::cout  << YELLOW << "DIR MATCH!: " << request.getTarget() << " for location: " << _currentLocationKey << std::endl;
 		#endif
 	}
 }
@@ -406,7 +406,7 @@ void Server::routeDefault(Request& request)
 {
 	std::string result;
 
-	result = this->_currentConfig.root + request.getUri().substr(1);
+	result = this->_currentConfig.root + request.getTarget().substr(1);
 	if (*result.rbegin() == '/')
 	{
 		request.isFile = false;
@@ -416,7 +416,7 @@ void Server::routeDefault(Request& request)
 		// else
 		// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 	}
-	request.setUri(result);
+	request.setTarget(result);
 	_currentLocationKey = "";
 	#ifdef SHOW_LOG
 		std::cout  << YELLOW << "DEFAULT ";
@@ -426,9 +426,9 @@ void Server::routeDefault(Request& request)
 void Server::matchLocation(Request& request)
 {
 	int max_count = 0;
-	std::string uri = request.getUri();
+	std::string target = request.getTarget();
 	#ifdef SHOW_LOG_2
-	std::cout  << RED << "uri: " << uri << std::endl;
+	std::cout  << RED << "target: " << target << std::endl;
 	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
 	{
 		std::cout << RED << it->first << ": "
@@ -439,23 +439,23 @@ void Server::matchLocation(Request& request)
 	{
 		if (it->second.isDir == false)
 		{
-			if (routeFile(request, it, uri) == 0)
+			if (routeFile(request, it, target) == 0)
 				return ;
 		}
 		if (it->second.isDir == true)
-			routeDir(request, it, uri, max_count);
+			routeDir(request, it, target, max_count);
 	}
 	if (max_count == 0)
 		routeDefault(request);
 	#ifdef SHOW_LOG
-		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getUri() << " for location: " << _currentLocationKey  << std::endl;
+		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getTarget() << " for location: " << _currentLocationKey  << std::endl;
 	#endif
 }
 
 std::string Server::percentDecoding(const std::string& str)
 {
 	std::stringstream tmp;
-	// std::string str = request.getUri();
+	// std::string str = request.getTarget();
 	char c;
 	int i = 0;
 	while (str[i] != '\0')
@@ -478,7 +478,7 @@ std::string Server::percentDecoding(const std::string& str)
 			i++;
 		}
 	}
-	// request.setUri(tmp.str());
+	// request.setTarget(tmp.str());
 	return(tmp.str());
 }
 
@@ -498,17 +498,17 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
 		Request request(this->_requestHead);
 		this->applyCurrentConfig(request);
-		//normalize uri (in Request)
+		//normalize target (in Request)
 		//compression (merge slashes)
 		//resolve relative paths
 		//determine location
 		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
-		request.setUri(this->percentDecoding(request.getUri()));
+		request.setTarget(this->percentDecoding(request.getTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
 		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "URI after percent-decoding: " << request.getUri() << std::endl;
+			std::cout  << YELLOW << "URI after percent-decoding: " << request.getTarget() << std::endl;
 		#endif
-		request.setUri("." + request.getUri());
+		request.setTarget("." + request.getTarget());
 		//check method
 		checkLocationMethod(request);
 		if (this->_requestHead.find("/cgi/") != std::string::npos)

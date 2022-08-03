@@ -44,16 +44,16 @@ void Request::parseStartLine(std::istringstream& stream)
 	createStartLineTokens(tokens, line);
 	std::string method = tokens[0];
 	this->url = tokens[1]; // AE remove later
-	breakUpUri(tokens[1]);
+	breakUpTarget(tokens[1]);
 	std::string protocol = tokens[2];
 	if (!isValidMethod(method))
 		throw InvalidMethod();
 	this->method = method;
-	// if (this->uri == "/")
-	// 	this->uri = INDEX_PATH;
+	// if (this->target == "/")
+	// 	this->target = INDEX_PATH;
 	// else
-		// this->uri = "." + this->uri;
-	// std::cerr << RED << "uri: " << this->uri << "\nquery: " << this->query << "\nfragment: " << this->fragment << RESET << std::endl;
+		// this->target = "." + this->target;
+	// std::cerr << RED << "target: " << this->target << "\nquery: " << this->query << "\nfragment: " << this->fragment << RESET << std::endl;
 	if (!isValidProtocol(protocol))
 		throw Request::InvalidProtocol();
 	this->protocol = protocol;
@@ -78,14 +78,14 @@ void Request::createStartLineTokens(std::vector<std::string>& tokens, const std:
 		throw InvalidNumberOfTokens();
 }
 
-void Request::breakUpUri(const std::string& token)
+void Request::breakUpTarget(const std::string& token)
 {
 	size_t pos = 0;
 	size_t last = 0;
 	std::string tmp;
 
 	pos = token.find_first_of("?#");
-	this->uri = token.substr(0, pos);
+	this->target = token.substr(0, pos);
 	if (pos == std::string::npos)
 		return ;
 	else if (token[pos] == '?')
@@ -240,7 +240,7 @@ void Request::addMethods(void)
 std::ostream& operator<<(std::ostream& out, const Request& request)
 {
 	out << request.getMethod() << " "
-	<< request.getUri() << " "
+	<< request.getTarget() << " "
 	<< request.getProtocol() << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = request.getHeaderFields().begin(); it != request.getHeaderFields().end(); ++it)
 	{
@@ -261,9 +261,9 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 // 	this->protocol = protocol;
 // }
 
-void Request::setUri(const std::string& uri)
+void Request::setTarget(const std::string& target)
 {
-	this->uri = uri;
+	this->target = target;
 }
 
 void Request::setQuery(const std::string& query)
@@ -281,9 +281,9 @@ const std::string& Request::getUrl(void) const
 	return (this->url);
 }
 
-const std::string& Request::getUri(void) const
+const std::string& Request::getTarget(void) const
 {
-	return (this->uri);
+	return (this->target);
 }
 
 const std::string& Request::getQuery(void) const

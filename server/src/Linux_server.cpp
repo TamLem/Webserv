@@ -41,9 +41,9 @@ void parseArgv(int argc, char **argv)
 static Config *_config;
 static Response _response;
 
-void handleGET(const std::string& status, int fd, const std::string& uri)
+void handleGET(const std::string& status, int fd, const std::string& target)
 {
-	_response.init(status, fd, uri);
+	_response.init(status, fd, target);
 	_response.createBodyFromFile();
 	_response.addDefaultHeaderFields();
 	_response.sendResponse();
@@ -81,7 +81,7 @@ void handleRequest(const std::string& buffer, int fd)
 		else if (newRequest.getMethod() == "POST")
 			handlePOST("200", fd, newRequest);
 		else
-			handleGET("200", fd, newRequest.getUri());
+			handleGET("200", fd, newRequest.getTarget());
 	}
 	catch (std::exception& exception)
 	{

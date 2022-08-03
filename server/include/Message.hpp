@@ -21,7 +21,7 @@ class Message
 		std::string protocol;
 		std::string body;
 		bool hasBody;
-		std::string uri;
+		std::string target;
 		bool isValidProtocol(const std::string&) const;
 		std::map<std::string, std::string> headerFields;
 		Message(void);

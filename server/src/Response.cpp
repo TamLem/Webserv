@@ -174,6 +174,7 @@ void Response::createIndex(const std::string& path)
 		{
 			// if (dir->d_type == DT_REG) //only files
 			// {
+				// std::cerr << BOLD << RED << "dir: " << dir->d_name << RESET << std::endl;
 				if (strcmp(dir->d_name, "..") == 0)
 				{
 					body << "<li><a href=\"" << dir->d_name << "\">" << "Parent Directory" << "</a></li>\n";

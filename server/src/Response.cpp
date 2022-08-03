@@ -159,11 +159,11 @@ void Response::createIndex(const std::string& path)
 	</head>\n\
 	<body bgcolor=\"FFFFFF\">\n\
 	<center>\n\
-	<h1 style=\"color:black\">Index\n\
+	<h1 style=\"color:black\">Index of/\n\
 	</h1>\n\
 	</center>\n\
-	<left>\n\
-	<p style=\"color:blue\">";
+	<div style=\"margin-left:0%\">\n\
+	<ul>";
 	DIR *d;
 	struct dirent *dir;
 	// d = opendir(uri.substr(0, uri.find_last_of('/')).c_str()); // AE better keep path and file seperate
@@ -174,11 +174,23 @@ void Response::createIndex(const std::string& path)
 		{
 			// if (dir->d_type == DT_REG) //only files
 			// {
-				body << "<p style=\"color:blue\">" << dir->d_name << '\n';
+				if (strcmp(dir->d_name, "..") == 0)
+				{
+					body << "<li><a href=\"" << dir->d_name << "\">" << "Parent Directory" << "</a></li>\n";
+				}
+				else if (strlen(dir->d_name) != 0 && strcmp(dir->d_name, ".") != 0)
+				{
+					if (dir->d_type == DT_DIR)
+						body << "<li><a href=\"" << dir->d_name << "/\">" << dir->d_name << "</a></li>\n";
+					else
+						body << "<li><a href=\"" << dir->d_name << "\">" << dir->d_name << "</a></li>\n";
+				}
+
+				// body << "<li style=\"color:blue\">" << dir->d_name << "<li/>";
 			// }
 		}
 		body <<
-		"</left>\n\
+		"</div>\n\
 		</body>\n\
 		</html>";
 		this->body = body.str();

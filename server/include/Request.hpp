@@ -24,14 +24,14 @@ class Request : public Message
 		std::set<std::string> validMethods;
 		std::string method;
 		std::string url; // AE remove
-		// std::string uri;
+		// std::string target;
 		std::string query;
 		std::string fragment;
 	// private Methods
 		void parseMessage(const std::string&);
 		void parseStartLine(std::istringstream&);
 		void createStartLineTokens(std::vector<std::string>&, const std::string&) const;
-		void breakUpUri(const std::string&);
+		void breakUpTarget(const std::string&);
 		bool isValidMethod(const std::string) const;
 		void parseHeaderFields(std::istringstream&);
 		void parseHeaderFieldLine(const std::string&);
@@ -53,12 +53,12 @@ class Request : public Message
 		~Request(void);
 
 		// void setMethod(const std::string&);
-		void setUri(const std::string&);
+		void setTarget(const std::string&);
 		void setQuery(const std::string&);
 
 		const std::string& getMethod(void) const;
 		const std::string& getUrl(void) const;
-		const std::string& getUri(void) const;
+		const std::string& getTarget(void) const;
 		const std::string& getQuery(void) const;
 		const std::string& getFragment(void) const;
 		// const std::string& getProtocol(void) const;

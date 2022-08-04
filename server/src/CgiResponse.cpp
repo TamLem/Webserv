@@ -1,6 +1,6 @@
 #include "Cgi/CgiResponse.hpp"
 
-CgiResponse::CgiResponse(int cgiFD, int clientFD): _cgiFD(fd), _clientFD(clientFD) // undefined fd????
+CgiResponse::CgiResponse(int cgiFD, int clientFD): _cgiFD(fd), _clientFD(clientFD) // undefined fd???? Tam please check this
 {
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "CgiResponse Constructor called for " << this << RESET << std::endl;

@@ -38,7 +38,6 @@ class Config
 		void _parseServerBlock(std::string serverBlock);
 		void _createConfigStruct(std::string server);
 		ConfigStruct _initConfigStruct();
-		void _freeConfigStruct(); // currently empty
 		void _readConfigFile();
 		const std::string _printLocationStruct(LocationStruct locationStruct) const;
 

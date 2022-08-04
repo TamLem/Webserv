@@ -496,17 +496,6 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 
 		throw SingleServerConfig::InvalidLocationException();
 	}
-	// if (foundIndex == true && locationStruct.autoIndex == true)
-	// {
-	// 	std::cout << RED << "location " << key << RESET << std::endl;
-	// 	throw SingleServerConfig::InvalidIndexCombinationException();
-	// }
-	// else if ((!foundIndex && !foundAutoIndex) || (!foundIndex && locationStruct.autoIndex == false))
-	// {
-	// 	std::cout << RED << "location " << key << RESET << std::endl;
-	// 	throw SingleServerConfig::MissingIndexException();
-	// }
-
 
 	return (locationStruct);
 }

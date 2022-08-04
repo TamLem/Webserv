@@ -3,12 +3,6 @@
 #include "Cgi/Cgi.hpp"
 #include <sys/stat.h> // stat
 
-// Server::Server(void)
-// {
-// 	std::cout << "Server default constructor called for " << this << std::endl;
-// 	handle_signals();
-// }
-
 Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
 {
 	#ifdef SHOW_CONSTRUCTION

@@ -12,7 +12,6 @@ Message::Message(void)
 Message::~Message(void)
 {
 	#ifdef SHOW_CONSTRUCTION
-		// std::cout << "headerFields: " << this->headerFields.size() << std::endl;
 		std::cout << RED << "Message Deconstructor called for " << this << RESET << std::endl;
 	#endif
 }

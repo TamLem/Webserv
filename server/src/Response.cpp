@@ -26,6 +26,9 @@ bool Response::isValidStatus(const std::string& status)
 
 Response::Response(void)
 {
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << GREEN << "Response Default Constructor called for " << this << RESET << std::endl;
+	#endif
 	this->createMessageMap();
 }
 
@@ -42,7 +45,10 @@ void Response::clear(void)
 
 Response::~Response(void)
 {
-
+	#ifdef SHOW_CONSTRUCTION
+		// std::cout << "messageMap: " << this->messageMap.size() << std::endl;
+		std::cout << RED << "Response Deconstructor called for " << this << RESET << std::endl;
+	#endif
 }
 
 void Response::setStatus(const std::string& status)

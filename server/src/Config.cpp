@@ -256,7 +256,7 @@ const std::string Config::_printLocationStruct(LocationStruct locationStruct) co
 // Constructor
 Config::Config()
 {
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Config Default Constructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -264,14 +264,7 @@ Config::Config()
 // Deconstructor
 Config::~Config()
 {
-	std::map<std::string, ConfigStruct>::iterator it;
-	// for (it = this->_cluster.begin(); it != this->_cluster.end(); ++it) // check if needed
-	// {
-	// 	this->applyConfig(it->first);
-	// 	this->_freeConfigStruct();
-	// }
-	// this->_cluster.clear();
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << RED << "Config Deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -319,9 +312,9 @@ const ConfigStruct& Config::getConfigStruct(std::string hostName) // use this fu
 		return (this->_conf);
 	else
 	{
-		// #ifdef SHOW_LOG
+		#ifdef SHOW_LOG
 			std::cout << std::endl << RED << BOLD << "!!!!! DEFAULT STRUCT IS NOW BEEING USED !!!!!" << RESET << std::endl << std::endl;
-		// #endif
+		#endif
 		this->applyConfig(defaultConfig);
 	}
 	return (this->_conf);
@@ -487,7 +480,7 @@ bool Config::applyConfig(std::string serverName)
 		return (true);
 	}
 	else
-		return (false); // the return of this function needs to be checked
+		return (false);
 }
 
 // Exceptions

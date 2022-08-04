@@ -4,6 +4,9 @@
 
 Cgi::Cgi(Request &request): _isPhp(false)
 {
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << GREEN << "Cgi Constructor called for " << this << RESET << std::endl;
+	#endif
 	_env = NULL;
 	_method = request.getMethod();
 	string url = request.getUrl();
@@ -43,6 +46,9 @@ Cgi::~Cgi()
 	while(_env[i])
 		delete _env[i++];
 	delete _env;
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << RED << "Cgi Deconstructor called for " << this << RESET << std::endl;
+	#endif
 }
 
 void Cgi::setEnv(Request &request) // think about changing this to return a const char **

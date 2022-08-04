@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-std::string parseArgv(int argc, char **argv) // include this into some object, maybe config would be appropriate, since it does do the parsing
+static std::string parseArgv(int argc, char **argv)
 {
 	std::string defaultConfPath = "config/www.conf";
 	if (argc == 1)
@@ -32,7 +32,7 @@ void my_leaks()
 
 int main(int argc, char **argv)
 {
-	// atexit(my_leaks);
+	// atexit(my_leaks); // use this to check for leaks
 	Config *config = new Config();
 	try
 	{
@@ -54,6 +54,6 @@ int main(int argc, char **argv)
 	delete test;
 	config = NULL;
 	test = NULL;
-	// system("leaks webserv");
+	// system("leaks webserv"); // use this to check for leaks
 	return (0);
 }

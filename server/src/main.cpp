@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+// #include <ulimit.h>
+
 std::string parseArgv(int argc, char **argv) // include this into some object, maybe config would be appropriate, since it does do the parsing
 {
 	std::string defaultConfPath = "config/www.conf";
@@ -32,6 +34,7 @@ void my_leaks()
 
 int main(int argc, char **argv)
 {
+	// ulimit(UL_SETFSIZE, 64);
 	// atexit(my_leaks);
 	Config *config = new Config();
 	try

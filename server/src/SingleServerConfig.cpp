@@ -1,15 +1,9 @@
 #include "SingleServerConfig.hpp"
 
 // Constructors
-SingleServerConfig::SingleServerConfig()
-{
-	#ifdef SHOW_LOG
-		std::cout << GREEN << "SingleServerConfig default constructor called for " << this << RESET << std::endl;
-	#endif
-}
 SingleServerConfig::SingleServerConfig(std::string config, ConfigStruct *conf): _conf(conf)
 {
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "SingleServerConfig constructor called for " << this << RESET << std::endl;
 	#endif
 	#ifdef SHOW_LOG_2
@@ -22,7 +16,7 @@ SingleServerConfig::SingleServerConfig(std::string config, ConfigStruct *conf): 
 // Deconstructors
 SingleServerConfig::~SingleServerConfig()
 {
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << RED << "SingleServerConfig deconstructor called for " << this << RESET << std::endl;
 	#endif
 }

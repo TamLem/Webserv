@@ -190,7 +190,7 @@ void SocketHandler::removeClient(int i) // can be void maybe
 			#endif
 		}
 		else
-			std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl; 
+			std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl;
 	}
 }
 
@@ -245,7 +245,7 @@ int SocketHandler::_getClient(int fd)
 // Constructors
 SocketHandler::SocketHandler(Config *config)
 {
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "SocketHandler Default Constructor called for " << this << RESET << std::endl;
 	#endif
 	this->_cluster = config->getCluster();
@@ -283,7 +283,11 @@ SocketHandler::~SocketHandler()
 {
 	for (std::vector<int>::const_iterator it = this->_serverFds.begin(); it != this->_serverFds.end(); ++it)
 		close(*it);
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
+		// std::cout << "cluster: " << this->_cluster.size() << std::endl;
+		// std::cout << "ports: " << this->_ports.size() << std::endl;
+		// std::cout << "serverFDs: " << this->_serverFds.size() << std::endl;
+		// std::cout << "serverMap: " << this->_serverMap.size() << std::endl;
 		std::cout << RED << "SocketHandler Deconstructor called for " << this << RESET << std::endl;
 	#endif
 }

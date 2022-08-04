@@ -11,7 +11,7 @@
 
 Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
 {
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
 	#endif
 	handle_signals();
@@ -52,7 +52,8 @@ Server::Server(Config* config): _config(config), _socketHandler(new SocketHandle
 Server::~Server(void)
 {
 	delete _socketHandler;
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
+		// std::cout << "clients: " << this->_clients.size() << std::endl;
 		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -330,7 +331,7 @@ int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::c
 	size_t ext_len;
 	size_t target_len;
 	std::string result;
-	
+
 	target_len = target.length();
 	ext_len = it->first.length() - 1;
 	extension = it->first.substr(1, ext_len);
@@ -355,7 +356,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 {
 	std::string path;
 	std::string result;
-	
+
 	path = it->first;
 	// if (path != "/")
 	// 	path = "/" + path;

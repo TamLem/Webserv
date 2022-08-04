@@ -8,6 +8,9 @@
 
 Request::Request(const std::string& message)
 {
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << GREEN << "Request Constructor called for " << this << RESET << std::endl;
+	#endif
 	this->hasBody = false;
 	this->isFile = true;
 	this->indexPage = "";
@@ -17,7 +20,10 @@ Request::Request(const std::string& message)
 
 Request::~Request(void)
 {
-
+	#ifdef SHOW_CONSTRUCTION
+		// std::cout << "validMethods: " << this->validMethods.size() << std::endl;
+		std::cout << RED << "Request Deconstructor called for " << this << RESET << std::endl;
+	#endif
 }
 
 void Request::parseMessage(const std::string& message)

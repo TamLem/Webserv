@@ -139,6 +139,7 @@ bool SocketHandler::addSocket(int fd)
 	timeout.tv_sec = 1;
 	timeout.tv_nsec = 0;
 	EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
+	// EV_SET(&ev, fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
 	if (kevent(this->_kq, &ev, 1, NULL, 0, &timeout) == -1)
 	{
 		std::cerr << RED << "Error adding socket to kqueue" << std::endl;
@@ -196,6 +197,25 @@ void SocketHandler::removeClient(int i) // can be void maybe
 bool SocketHandler::readFromClient(int i)
 {
 	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].flags & EVFILT_READ)
+	{
+		this->_fd = this->_evList[i].ident;
+		int status = this->_getClient(this->_fd);
+		if (status == -1)
+		{
+			std::cerr << RED << "Error getting client for fd: " << this->_fd << std::endl;
+			perror(NULL); // check if illegal
+			std::cerr << RESET;
+			return (false); // throw exception
+		}
+		return (true);
+	}
+	else
+		return (false);
+}
+
+bool SocketHandler::writeToClient(int i)
+{
+	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].flags & EVFILT_WRITE)
 	{
 		this->_fd = this->_evList[i].ident;
 		int status = this->_getClient(this->_fd);
@@ -284,4 +304,25 @@ int SocketHandler::getFD() const
 }
 
 // Setter
+void SocketHandler::setWriteable(int i)
+{
+	int fd = this->_evList[i].ident;
+	EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+	// struct kevent ev;
+	struct timespec timeout;
 
+	timeout.tv_sec = 1;
+	timeout.tv_nsec = 0;
+	EV_SET(&this->_evList[i], fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
+	if (kevent(this->_kq, this->_evList, 1, NULL, 0, &timeout) == -1)
+	{
+		std::cerr << RED << "Error adding socket to kqueue" << std::endl;
+		perror(NULL);
+		std::cerr << RESET;
+		return ;
+	}
+	// int val = 1;
+	// setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
+	this->_fd = fd;
+	return ;
+}

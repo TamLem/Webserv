@@ -19,12 +19,14 @@ class Response : public Message
 		std::string status;
 		std::string statusMessage;
 		std::map<std::string, std::string> messageMap;
+		std::map<size_t, ResponseStruct> _responseMap; // this will store all the data for sending
 		// std::string target;
 	// private Methods
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
 	protected:
 		int sendall(const int sock_fd, char *buffer, const int len) const;
+		void sendChunk(int i);// i is the fd
 	public:
 		Response(void);
 		~Response(void);
@@ -33,7 +35,7 @@ class Response : public Message
 		void setStatus(const std::string&);
 		void setBody(const std::string&);
 		// void setTarget(const std::string&);
-		void setFd(int);
+		void setFd(int); // is this used???
 		void setProtocol(const std::string&);
 
 		// const std::string& getProtocol(void) const;
@@ -63,6 +65,11 @@ class Response : public Message
 	};
 
 	class InvalidProtocol : public std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class InternalServerErrorException : public std::exception
 	{
 		const char* what() const throw();
 	};

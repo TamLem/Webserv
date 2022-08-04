@@ -109,10 +109,10 @@ int Response::sendall(const int sock_fd, char *buffer, const int len) const
 	int total;
 	int bytesleft;
 	int n;
-	// int i = 0;
 
-	total = len;
-	bytesleft = len;
+	// const int sock_fd = this->_responseMap[i].fd;
+	total = len; // = this->_responseMap[i].total;
+	bytesleft = len; // = this->_responseMap[i].bytesleft;
 	while (total > 0)
 	{
 		n = send(sock_fd, buffer, bytesleft, 0);
@@ -130,6 +130,64 @@ int Response::sendall(const int sock_fd, char *buffer, const int len) const
 		std::cout << RED << "fd: " << sock_fd << " was closed after sending response" << RESET << std::endl;
 	#endif
 	return (0);
+}
+
+void Response::sendChunk(int i)
+{
+	const int clientFd = i;
+	int total = this->_responseMap[i].total;
+	int bytesLeft = this->_responseMap[i].bytesLeft;
+	int bytesSend = 0;
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// check length of body + standard header-length > MAX_SEND_CHUNK_SIZE
+	// if true
+		// constructChunkedHeader()
+	// else
+		// constructHeader()
+
+	while (bytesLeft && bytesSend < MAX_SEND_CHUNK_SIZE)
+	{
+		// const char * buffer = NULL;
+		// if (bytesLeft > MAX_SEND_CHUNK_SIZE)
+		// 	buffer = this->_responseMap[i].response.substr(total - bytesLeft, MAX_SEND_CHUNK_SIZE).c_str();
+		// else
+		// char *buffer = (char *)this->_responseMap[i].response.substr(total - bytesLeft).c_str();
+		// int n = send(clientFd, buffer, MAX_SEND_CHUNK_SIZE, 0); // check if this can overflow the string!!!!!!
+		int n;
+		if (bytesLeft > MAX_SEND_CHUNK_SIZE)
+			n = send(clientFd, (char *)this->_responseMap[i].response.substr(total - bytesLeft).c_str(), MAX_SEND_CHUNK_SIZE, 0); // check if this can overflow the string!!!!!!
+		else
+			n = send(clientFd, (char *)this->_responseMap[i].response.substr(total - bytesLeft).c_str(), bytesLeft, 0); // check if this can overflow the string!!!!!!
+		std::cout << BOLD << RED << n << RESET << std::endl;
+		if (n > 0)
+		{
+			bytesSend += n;
+			bytesLeft -= n;
+			std::cout << bytesLeft << std::endl;
+		}
+		else if (n == -1)
+		{
+			perror("send");
+			this->_responseMap.erase(i);
+			throw Response::InternalServerErrorException(); // check if this gets through to send an error to the fd !!!!!!!!!!
+			// maybe use the create errorHead + errorBody instead here ????
+		}
+		else // this should never happen right?????
+			break ;
+	}
+	if (bytesLeft)
+	{
+		this->_responseMap[i].bytesLeft = bytesLeft;
+	}
+	else
+	{
+		close(clientFd);
+		#ifdef SHOW_LOG
+			std::cout << RED << "fd: " << clientFd << " was closed after sending response" << RESET << std::endl;
+		#endif
+		this->_responseMap.erase(i);
+	}
 }
 
 void Response::createErrorBody(void)
@@ -258,8 +316,17 @@ void Response::addDefaultHeaderFields(void)
 
 void Response::sendResponse(int fd)
 {
-	std::string response = this->constructHeader() + this->body;
-	sendall(fd, (char *)response.c_str(), response.length());
+// old start
+	// std::string response = this->constructHeader() + this->body;
+	// sendall(fd, (char *)response.c_str(), response.length());
+// old end
+	if (this->_responseMap.count(fd) == 0)
+	{
+		this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
+		this->_responseMap[fd].total = this->_responseMap[fd].response.length();
+		this->_responseMap[fd].bytesLeft = this->_responseMap[fd].response.length();
+	}
+	sendChunk(fd);
 }
 
 void Response::createMessageMap(void)
@@ -359,6 +426,11 @@ const char* Response::ERROR_404::what() const throw()
 }
 
 const char* Response::InvalidProtocol::what() const throw() //AE is it good to have different codes for request/response?
+{
+	return ("500");
+}
+
+const char* Response::InternalServerErrorException::what() const throw()
 {
 	return ("500");
 }

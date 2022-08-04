@@ -60,8 +60,19 @@ void Server::runEventLoop()
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
 				handleRequest(this->_socketHandler->getFD());
+				this->_socketHandler->setWriteable(i);
+			}
+			if (this->_socketHandler->writeToClient(i) == true)
+			{
+				//this->responseMap.count(i).respond()
+				//if (this->responseMap.count(i).isDone())
+					//close(fd)
+					//delete the (fd, pair)reponse
+				// this->_handleResponse(i);
+				this->_response.sendResponse(this->_socketHandler->getFD());
 			}
 			this->_socketHandler->removeClient(i);
+		// move the writeRequest here
 		}
 	}
 }
@@ -419,8 +430,10 @@ void Server::handleRequest(int fd)
 			code = "500";
 		handleERROR(code);
 	}
+	// lseek(fd,0,SEEK_END);
+	//create a response object and add it to responseMap
 	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
-	this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
+	// this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
 }
 
 bool Server::_crlftwoFound()

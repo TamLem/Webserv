@@ -89,6 +89,7 @@ class SocketHandler
 		void acceptConnection(int i);
 		bool addSocket(int fd);
 		bool readFromClient(int i);
+		bool writeToClient(int i);
 		void removeClient(int fd);
 		void removeInactiveClients();
 
@@ -99,6 +100,7 @@ class SocketHandler
 		int getFD() const;
 
 	// Setter
+		void setWriteable(int i);
 
 };
 #endif // SOCKETHANDLER_HPP

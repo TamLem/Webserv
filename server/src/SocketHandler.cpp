@@ -41,7 +41,7 @@ void SocketHandler::_initMainSockets()
 
 		// initialize server address struct
 		struct sockaddr_in servAddr;
-		memset(&servAddr, '0', sizeof(servAddr)); // is memset allowed? !!!!!!!!!!!!!!!!!!!!
+		memset(&servAddr, '0', sizeof(servAddr));
 		servAddr.sin_family = AF_INET;
 		servAddr.sin_port = htons(*portsIt);
 		servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -104,7 +104,6 @@ void SocketHandler::acceptConnection(int i)
 	if (this->_serverMap.count(this->_evList[i].ident) == 1)
 	{
 		struct sockaddr_storage addr; // temp
-
 		socklen_t addrlen = sizeof(addr); //temp
 		int fd = accept(this->_evList[i].ident, (struct sockaddr *)&addr, &addrlen);
 		if (fd < 0)
@@ -145,7 +144,7 @@ bool SocketHandler::addSocket(int fd)
 		std::cerr << RED << "Error adding socket to kqueue" << std::endl;
 		perror(NULL);
 		std::cerr << RESET;
-		return false; 
+		return false;
 	}
 	int val = 1;
 	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4); // is SO_NOSIGPIPE needed here ???????
@@ -160,7 +159,7 @@ int SocketHandler::getEvents()
 	timeout.tv_sec = 10;
 	timeout.tv_nsec = 0;
 	std::cout << "num clients: " << _clients.size() << std::endl;
-	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, &timeout);	
+	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, &timeout);
 	return this->_numEvents;
 }
 
@@ -207,25 +206,6 @@ bool SocketHandler::readFromClient(int i)
 			std::cerr << RESET;
 			return (false); // throw exception
 		}
-		// char buf[1024]; // probably needs to be an ifstream to not overflow with enormous requests !!!!!!!!!!!
-		// int n = read(this->_fd, buf, 1023);
-		// if (n < 0)
-		// {
-		// 	std::cerr << RED << "Error reading from client" << std::endl;
-		// 	perror(NULL);
-		// 	std::cerr << RESET;
-		// 	return false;
-		// }
-		// // if (n == 1024 /*&& !found("/r/n/r/n"*/)
-		// // {
-		// // 	// addToChunkedList(fd);
-		// // }
-		// buf[n] = '\0';
-		// this->_buffer = std::string(buf);
-		// // std::cout << "message: " << this->_buffer << std::endl;
-		// #ifdef SHOW_LOG
-		// 	std::cout << YELLOW << "Received->" << RESET << this->_buffer << YELLOW << "<-Received on socket: " << this->_fd << RESET << std::endl;
-		// #endif
 		return (true);
 	}
 	else
@@ -273,38 +253,17 @@ void SocketHandler::removeInactiveClients()
 	}
 }
 
-// SocketHandler::SocketHandler(const SocketHandler &src)
-// {
-// 	this = src;
-// }
-
 // Deconstructors
 SocketHandler::~SocketHandler()
 {
 	for (std::vector<int>::const_iterator it = this->_serverFds.begin(); it != this->_serverFds.end(); ++it)
 		close(*it);
 	#ifdef SHOW_CONSTRUCTION
-		// std::cout << "cluster: " << this->_cluster.size() << std::endl;
-		// std::cout << "ports: " << this->_ports.size() << std::endl;
-		// std::cout << "serverFDs: " << this->_serverFds.size() << std::endl;
-		// std::cout << "serverMap: " << this->_serverMap.size() << std::endl;
 		std::cout << RED << "SocketHandler Deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
 
 // Overloaded Operators
-// SocketHandler &SocketHandler::operator=(const SocketHandler &src)
-// {
-// 	this->_cluster = src._cluster;
-// 	this->_ports = src._ports;
-// 	this->_clients = src._clients;
-// 	this->_serverFds = src._serverFds;
-// 	this->_serverMap = src._serverMap;
-// 	this->_kq = src._kq;
-// 	this->_numEvents = src._numEvents;
-// 	this->_
-// }
-
 
 // Public Methods
 
@@ -314,15 +273,8 @@ int SocketHandler::getNumEvents() const
 	return (this->_numEvents);
 }
 
-// const char *SocketHandler::getBuffer() const
-// {
-// 	// check buffer for non ascii maybe? or do that in the read loop
-// 	return (this->_buffer);
-// }
-
 std::string SocketHandler::getBuffer() const
 {
-	// check buffer for non ascii maybe? or do that in the read loop
 	return (this->_buffer);
 }
 

@@ -15,45 +15,12 @@ Server::Server(Config* config): _config(config), _socketHandler(new SocketHandle
 		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
 	#endif
 	handle_signals();
-	// _port = 8080;
-
-// start _initMainPorts
-	// if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	// {
-	// 	std::cerr << RED << "Error creating socket" << std::endl;
-	// 	perror(NULL);
-	// 	std::cerr << RESET;
-	// 	return;
-	// }
-
-
-	// // Set socket reusable from Time-Wait state
-	// int val = 1;
-	// setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
-
-	// // initialize server address struct
-	// struct sockaddr_in serv_addr;
-	// memset(&serv_addr, '0', sizeof(serv_addr)); // is memset allowed? !!!!!!!!!!!!!!!!!!!!
-	// serv_addr.sin_family = AF_INET;
-	// serv_addr.sin_port = htons(_port);
-	// serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-	// // bind socket to address
-	// if((bind(_server_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) < 0)
-	// {
-	// 	std::cerr << RED << "Error binding socket" << std::endl;
-	// 	perror(NULL);
-	// 	std::cerr << RESET;
-	// 	exit(EXIT_FAILURE); // maybe change to return or throw
-	// }
-// end _initMainPorts
 }
 
 Server::~Server(void)
 {
 	delete _socketHandler;
 	#ifdef SHOW_CONSTRUCTION
-		// std::cout << "clients: " << this->_clients.size() << std::endl;
 		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -73,7 +40,6 @@ void Server::handle_signal(int sig)
 	}
 }
 
-// check if signal is forbidden!!!!!!!!!!!!!!!!!
 void	Server::handle_signals(void)
 {
 	signal(SIGQUIT, SIG_IGN);
@@ -83,41 +49,8 @@ void	Server::handle_signals(void)
 	// signal(SIGPIPE, handle_signal);
 }
 
-// int Server::get_client(int fd)
-// {
-// // 	for (size_t i = 0; i < _clients.size(); i++)
-// // 	{
-// // 		if (_clients[i].fd == fd)
-// // 			return (i);
-// // 	}
-// // 	return (-1);
-// }
-
-// int Server::add_client(int fd, struct sockaddr_in addr)
-// {
-// 	// struct client c;
-// 	// c.fd = fd;
-// 	// c.addr = addr;
-// 	// _clients.push_back(c);
-// 	// return (_clients.size() - 1);
-// }
-
-// int Server::remove_client(int fd)
-// {
-// 	// int i = get_client(fd);
-// 	// if (i == -1)
-// 	// 	return (-1);
-// 	// _clients.erase(_clients.begin() + i);
-// 	// return (0);
-// }
-
 void Server::runEventLoop()
 {
-// add those to private members
-	// struct kevent ev;
-	// struct kevent evList[MAX_EVENTS];
-	// struct sockaddr_storage addr; // temp
-
 	while(keep_running)
 	{
 		std::cout << "server running " << std::endl;
@@ -132,52 +65,12 @@ void Server::runEventLoop()
 			this->_socketHandler->acceptConnection(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
-				// this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
-				handleRequest(/*this->_requestHead, */this->_socketHandler->getFD());
-				// continue;
+				handleRequest(this->_socketHandler->getFD());
 			}
 			this->_socketHandler->removeClient(i);
 		}
 	}
 }
-
-// void Server::run()
-// {
-	// this->_socketHandler = SocketHandler(this->_config);
-// start _listenMainSockets
-	// if (listen(_server_fd, 5))
-	// {
-	// 	std::cerr << RED << "Error listening" << std::endl;
-	// 	perror(NULL);
-	// 	std::cerr << RESET;
-	// 	return;
-	// }
-	// else
-	// 	std::cout << "Listening on port " << _port << std::endl;
-// end _listenMainSockets
-
-// start _initEventLoop
-	// int kq = kqueue();
-	// if (kq == -1)
-	// {
-	// 	std::cerr << RED << "Error creating kqueue" << std::endl;
-	// 	perror(NULL);
-	// 	std::cerr << RESET;
-	// 	return;
-	// }
-	// struct kevent ev;
-	// EV_SET(&ev, _server_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	// int ret = kevent(kq, &ev, 1, NULL, 0, NULL);
-	// if (ret == -1)
-	// {
-	// 	std::cerr << RED << "Error adding server socket to kqueue" << std::endl;
-	// 	perror(NULL);
-	// 	std::cerr << RESET;
-	// 	return;
-	// }
-// end _initEventLoop
-	// run_event_loop();
-// }
 
 static bool staticFileExists(const std::string& target)
 {
@@ -358,8 +251,6 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 	std::string result;
 
 	path = it->first;
-	// if (path != "/")
-	// 	path = "/" + path;
 	#ifdef SHOW_LOG_2
 		std::cout  << BLUE << "path: " << path << std::endl;
 	#endif
@@ -378,7 +269,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 				segments++;
 			i++;
 		}
-		if (target[i - 1] != '\0' && target[i - 1] != '/') // carefull with len = 0!
+		if (target[i - 1] != '\0' && target[i - 1] != '/') // carefull with len = 0!!!!!!!!!!!
 			segments = 0;
 	}
 	if (segments > max_count)
@@ -497,7 +388,7 @@ void Server::checkLocationMethod(const Request& request) const
 		throw MethodNotAllowed();
 }
 
-void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe breaks here
+void Server::handleRequest(int fd)
 {
 	this->_response.clear();
 	try
@@ -525,7 +416,6 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		else
 		{
 			handleGET(request);
-			// lseek(fd, 0, SEEK_END); // sets the filedescriptor to EOF so that, check this again!!!!!!!!!
 		}
 	}
 	catch (std::exception& exception)
@@ -568,9 +458,9 @@ void Server::_readRequestHead(int fd)
 		n = read(fd, buffer, 1);
 		if (n < 0) // read had an error reading from fd
 		{
-			std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
-			perror(NULL); // check if forbidden!!!!!!!!
-			std::cerr << RESET << std::endl;
+			#ifdef SHOW_LOG
+				std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
+			#endif
 			throw Server::InternatServerErrorException();
 		}
 		else if (n == 0) // read reached eof
@@ -580,7 +470,9 @@ void Server::_readRequestHead(int fd)
 			buffer[1] = '\0';
 			if (!this->_isPrintableAscii(buffer[0]))
 			{
-				std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;
+				#ifdef SHOW_LOG
+					std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;
+				#endif
 				throw Server::BadRequestException();
 			}
 			this->_requestHead.append(buffer);
@@ -594,7 +486,9 @@ void Server::_readRequestHead(int fd)
 		}
 		if (firstLineBreak == false && charsRead >= MAX_REQUEST_LINE_SIZE)
 		{
-			std::cout << RED << "FIRST LINE TOO LONG" << RESET << std::endl;
+			#ifdef SHOW_LOG
+				std::cout << RED << "FIRST LINE TOO LONG" << RESET << std::endl;
+			#endif
 			throw Server::FirstLineTooLongException();
 		}
 	}
@@ -604,9 +498,11 @@ void Server::_readRequestHead(int fd)
 			std::cout << YELLOW << "Received->" << RESET << this->_requestHead << YELLOW << "<-Received on fd: " << fd << RESET << std::endl;
 		#endif
 	}
-	else /*if (charsRead >= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == false)*/
+	else
 	{
-		std::cout << RED << "HEAD BIGGER THAN " << MAX_REQUEST_HEADER_SIZE << " OR NO CRLFTWO FOUND (incomplete request)" << RESET << std::endl;
+		#ifdef SHOW_LOG
+			std::cout << RED << "HEAD BIGGER THAN " << MAX_REQUEST_HEADER_SIZE << " OR NO CRLFTWO FOUND (incomplete request)" << RESET << std::endl;
+		#endif
 		throw Server::BadRequestException();
 	}
 }

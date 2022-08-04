@@ -508,12 +508,12 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		//compression (merge slashes)
 		//resolve relative paths
 		//determine location
-		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
 		request.setTarget(this->percentDecoding(request.getTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
 		#ifdef SHOW_LOG
 			std::cout  << YELLOW << "URI after percent-decoding: " << request.getTarget() << std::endl;
 		#endif
+		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
 		request.setTarget("." + request.getTarget());
 		//check method
 		checkLocationMethod(request);

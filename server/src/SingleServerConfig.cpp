@@ -866,7 +866,7 @@ const char* SingleServerConfig::DuplicateLocationAutoIndexException::what(void) 
 
 const char* SingleServerConfig::InvalidIndexPageException::what(void) const throw()
 {
-	return ("↑↑↑ index page value can not start with '/' or '.'");
+	return ("↑↑↑ index page value can not start with '/' or '.' or have any '..' inside");
 }
 
 const char* SingleServerConfig::MissingIndexException::what(void) const throw()

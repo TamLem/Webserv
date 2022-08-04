@@ -115,7 +115,7 @@ void Server::handleGET(const Request& request)
 	{
 			// std::cerr << BOLD << RED << "target2:" << request.getTarget() << RESET << std::endl;
 		_response.createBodyFromFile(request.getTarget() + request.indexPage);
-		_response.addHeaderField("Content-Type", "text/html; charset=utf-8");
+		_response.addHeaderField("Content-Type", "text/html; charset=utf-8");// here is the memory pollution happening, whe we are sending the large.jpeg
 	}
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();

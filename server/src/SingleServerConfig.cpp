@@ -371,12 +371,9 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 		if (keyValue.length() <= 0)
 			continue ;
 		key = keyValue.substr(0, keyValue.find_first_of(WHITESPACE));
-		if (key == "method" && keyValue.find_first_of(WHITESPACE) == std::string::npos)
+		if (key == "method" && keyValue.find_first_of(WHITESPACE) == std::string::npos && foundMethod == false)
 		{
 			foundMethod = true;
-			// locationStruct.getAllowed = false;
-			// locationStruct.postAllowed = false;
-			// locationStruct.deleteAllowed = false;
 			continue ;
 		}
 		else if (keyValue.find_first_of(WHITESPACE) == std::string::npos)
@@ -549,6 +546,7 @@ std::string SingleServerConfig::_printLocationStruct(LocationStruct locationStru
 		outStream << "\t\tautoindex true" << std::endl;
 	else
 	{
+		outStream << "\t\tautoindex false" << std::endl;
 		outStream << "\t\tindex " << locationStruct.indexPage << std::endl;
 	}
 	outStream << "\t}" << std::endl;

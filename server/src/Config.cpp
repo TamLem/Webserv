@@ -264,19 +264,7 @@ Config::Config()
 // Deconstructor
 Config::~Config()
 {
-	// this->_cluster.clear();
 	#ifdef SHOW_CONSTRUCTION
-		// std::cout << "cluster: " << this->_cluster.size() << std::endl;
-		// std::cout << "listen: " << this->_conf.listen.size() << std::endl;
-		// std::cout << "location: " << this->_conf.location.size() << std::endl;
-		// for (std::map<std::string, ConfigStruct>::iterator it = this->_cluster.begin(); it != this->_cluster.end(); ++it) // check if needed
-		// {
-		// 	for (std::map<std::string, LocationStruct>::const_iterator locationIt = it->second.location.begin(); locationIt != it->second.location.end(); ++locationIt)
-		// 	{
-		// 		std::cout << "allowedMethods: " << locationIt->second.allowedMethods.size() << std::endl;
-		// 	}
-		// }
-		// std::cout << "errorPage: " << this->_conf.errorPage.size() << std::endl;
 		std::cout << RED << "Config Deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -492,7 +480,7 @@ bool Config::applyConfig(std::string serverName)
 		return (true);
 	}
 	else
-		return (false); // the return of this function needs to be checked
+		return (false);
 }
 
 // Exceptions

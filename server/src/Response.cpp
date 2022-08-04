@@ -225,7 +225,7 @@ static bool staticTargetIsDir(const std::string& target)
 
 void Response::createBodyFromFile(const std::string& target)
 {
-	std::stringstream body;
+	std::stringstream tempBody;
 	std::ifstream file(target.c_str(), std::ios::binary);
 	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
 	if (staticTargetIsDir(target))
@@ -233,9 +233,9 @@ void Response::createBodyFromFile(const std::string& target)
 	if (file.is_open())
 	{
 		// std::cerr << BOLD << RED << "open" << RESET << std::endl;
-		body << file.rdbuf();
+		tempBody << file.rdbuf();
 		file.close();
-		this->body = body.str();
+		this->body = tempBody.str();
 	}
 	else
 	{

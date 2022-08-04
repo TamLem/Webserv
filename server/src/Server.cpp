@@ -107,21 +107,21 @@ void Server::handleGET(const Request& request)
 		|| this->_currentConfig.autoIndex == true)
 		{
 			_response.createIndex(request.getTarget());
-			_response.addHeaderField("Content-Type", "text/html; charset=utf-8");
+			// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 		}
 		else
 		{
 			// std::cerr << BOLD << RED << "target1:" << request.getTarget() << RESET << std::endl;
 			// std::cerr << BOLD << RED << "indexPage:" << request.indexPage << RESET << std::endl;
 			_response.createBodyFromFile(request.getTarget() + request.indexPage);
-			_response.addHeaderField("Content-Type", "text/html; charset=utf-8");
+			// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 		}
 	}
 	else
 	{
 			// std::cerr << BOLD << RED << "target2:" << request.getTarget() << RESET << std::endl;
 		_response.createBodyFromFile(request.getTarget() + request.indexPage);
-		_response.addHeaderField("Content-Type", "text/html; charset=utf-8");
+		// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 	}
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();

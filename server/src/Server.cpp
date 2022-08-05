@@ -69,7 +69,8 @@ void Server::runEventLoop()
 					//close(fd)
 					//delete the (fd, pair)reponse
 				// this->_handleResponse(i);
-				this->_response.sendResponse(this->_socketHandler->getFD());
+				if (this->_response.sendResponse(this->_socketHandler->getFD()) == true)
+					this->_socketHandler->removeClient(i, true);
 			}
 			this->_socketHandler->removeClient(i);
 		// move the writeRequest here

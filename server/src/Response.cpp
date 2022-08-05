@@ -229,7 +229,8 @@ void Response::sendChunk(int i)
 		{
 			perror("send");
 			this->_responseMap.erase(i);
-			throw Response::InternalServerErrorException(); // check if this gets through to send an error to the fd !!!!!!!!!!
+			bytesLeft = 0;
+			// throw Response::InternalServerErrorException(); // check if this gets through to send an error to the fd !!!!!!!!!!
 			// maybe use the create errorHead + errorBody instead here ????
 		}
 		// else // this should never happen right?????
@@ -397,7 +398,7 @@ void Response::addDefaultHeaderFields(void)
 	}
 }
 
-void Response::sendResponse(int fd)
+bool Response::sendResponse(int fd)
 {
 // old start
 	// std::string response = this->constructHeader() + this->body;
@@ -416,6 +417,9 @@ void Response::sendResponse(int fd)
 		this->_responseMap[fd].bytesLeft = this->_responseMap[fd].response.length();
 	}
 	sendChunk(fd);
+	if (this->_responseMap.count(fd) == 0)
+		return (true);
+	return (false);
 }
 
 void Response::createMessageMap(void)

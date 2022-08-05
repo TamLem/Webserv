@@ -136,7 +136,7 @@ bool SocketHandler::addSocket(int fd)
 	struct kevent ev;
 	struct timespec timeout;
 
-	timeout.tv_sec = 1;
+	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
 	EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
 	// EV_SET(&ev, fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
@@ -173,9 +173,9 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	return (this->_clients.size() - 1); // is this return value ever used??????
 }
 
-void SocketHandler::removeClient(int i)
+void SocketHandler::removeClient(int i, bool force)
 {
-	if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR)  )
+	if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR) || force)
 	{
 		std::cout << "Removing client with fd: " << this->_fd << std::endl;
 		close(this->_evList[i].ident);

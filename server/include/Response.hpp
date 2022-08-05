@@ -53,7 +53,7 @@ class Response : public Message
 		void createBodyFromFile(const std::string&);
 		void createIndex(const std::string&);
 		void createErrorBody(void);
-		void sendResponse(int);
+		bool sendResponse(int);
 
 	class InvalidStatus : public std::exception
 	{

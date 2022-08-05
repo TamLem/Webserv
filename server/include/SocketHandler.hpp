@@ -90,7 +90,7 @@ class SocketHandler
 		bool addSocket(int fd);
 		bool readFromClient(int i);
 		bool writeToClient(int i);
-		void removeClient(int fd);
+		void removeClient(int fd, bool force = false);
 		void removeInactiveClients();
 
 	// Getter

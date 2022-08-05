@@ -139,13 +139,6 @@ void Response::sendChunk(int i)
 	int bytesLeft = this->_responseMap[i].bytesLeft;
 	int bytesSend = 0;
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	// check length of body + standard header-length > MAX_SEND_CHUNK_SIZE
-	// if true
-		// constructChunkedHeader()
-	// else
-		// constructHeader()
-
 	while (bytesLeft && bytesSend < MAX_SEND_CHUNK_SIZE)
 	{
 		// const char * buffer = NULL;
@@ -322,7 +315,10 @@ void Response::sendResponse(int fd)
 // old end
 	if (this->_responseMap.count(fd) == 0)
 	{
-		this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
+		if (this->body.size() > MAX_SEND_CHUNK_SIZE)
+			this->_responseMap[fd].response = this->constructChunkedHeader() + this->body; // only put the body in here
+		else
+			this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
 		this->_responseMap[fd].total = this->_responseMap[fd].response.length();
 		this->_responseMap[fd].bytesLeft = this->_responseMap[fd].response.length();
 	}

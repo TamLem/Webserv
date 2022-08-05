@@ -126,7 +126,7 @@ void Server::handleGET(const Request& request)
 	{
 			// std::cerr << BOLD << RED << "target2:" << request.getTarget() << RESET << std::endl;
 		_response.createBodyFromFile(request.getTarget() + request.indexPage);
-		// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");// here is the memory pollution happening, whe we are sending the large.jpeg
+		// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 	}
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
@@ -405,12 +405,12 @@ void Server::handleRequest(int fd)
 		//compression (merge slashes)
 		//resolve relative paths
 		//determine location
-		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
 		request.setTarget(this->percentDecoding(request.getTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
 		#ifdef SHOW_LOG
 			std::cout  << YELLOW << "URI after percent-decoding: " << request.getTarget() << std::endl;
 		#endif
+		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
 		request.setTarget("." + request.getTarget());
 		//check method
 		checkLocationMethod(request);

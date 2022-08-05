@@ -173,9 +173,9 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	return (this->_clients.size() - 1); // is this return value ever used??????
 }
 
-void SocketHandler::removeClient(int i)
+void SocketHandler::removeClient(int i, bool force)
 {
-	if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR)  )
+	if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR) || force)
 	{
 		std::cout << "Removing client with fd: " << this->_fd << std::endl;
 		close(this->_evList[i].ident);

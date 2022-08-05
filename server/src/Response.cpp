@@ -111,7 +111,7 @@ std::string Response::constructChunkedHeader(void)
 	std::stringstream stream;
 
 	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
-	stream << "Content-Type: " << "image/jpg" << CRLF;
+	// stream << "Content-Type: " << "image/jpg" << CRLF;
 	stream << "Transfer-Encoding: chunked" << CRLFTWO;
 
 	return (stream.str());
@@ -171,21 +171,26 @@ void Response::sendChunk(int i)
 			buffer = this->_responseMap[i].header;
 			bufferLength = this->_responseMap[i].header.length();
 
-			send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
+			n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
 
 			std::cout	<< YELLOW << "Message send >" << RESET << std::endl
 						<< this->_responseMap[i].header
 						<< YELLOW << "<" << RESET << std::endl;
 			this->_responseMap[i].header.clear();
+
+			std::string test = CRLF;
+			std::cout << RED << BOLD << ">" << buffer << "< has a length of" << n << RESET << std::endl;
+			n = 0;
 		}
 		else if (total > MAX_SEND_CHUNK_SIZE && bytesLeft > MAX_SEND_CHUNK_SIZE)
 		{
 			buffer = intToHexString(MAX_SEND_CHUNK_SIZE) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft, MAX_SEND_CHUNK_SIZE) + CRLF;
 			bufferLength = MAX_SEND_CHUNK_SIZE + intToHexString(bytesLeft).length() + 4;
+			std::cout << YELLOW << "bufferLength: " << bufferLength << RESET << std::endl;
 
 			n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
 			if (n > 0)
-				n -= 4;
+				n -= 10;
 
 			// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
 			// 			<< intToHexString(MAX_SEND_CHUNK_SIZE) << CRLF << this->_responseMap[i].response.substr(total - bytesLeft, MAX_SEND_CHUNK_SIZE) << CRLF
@@ -195,10 +200,11 @@ void Response::sendChunk(int i)
 		{
 			buffer = intToHexString(bytesLeft) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft) + CRLF;
 			bufferLength = bytesLeft + intToHexString(bytesLeft).length() + 4; // same as buffer.length()
+			std::cout << YELLOW << "last bufferLength: " << bufferLength << RESET << std::endl;
 
 			n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
 			if (n > 0 )
-				n -= 4;
+				n -= 4 + intToHexString(bytesLeft).length();
 
 			// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
 			// 			<< (intToHexString(MAX_SEND_CHUNK_SIZE) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft, (bytesLeft + intToHexString(bytesLeft).length())) + CRLF)
@@ -207,7 +213,8 @@ void Response::sendChunk(int i)
 		else
 		{
 			buffer = this->_responseMap[i].response;
-			bufferLength =bytesLeft;
+			bufferLength = bytesLeft;
+			std::cout << YELLOW << "bufferLength: " << bufferLength << RESET << std::endl;
 
 			n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
 

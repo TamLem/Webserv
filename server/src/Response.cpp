@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <sys/stat.h> // stat
 
+#include <iomanip> // setfill
+
 #define RESET "\033[0m"
 #define GREEN "\033[32m"
 #define YELLOW "\033[33m"
@@ -104,15 +106,25 @@ std::string Response::constructHeader(void)
 	return (stream.str());
 }
 
+std::string Response::constructChunkedHeader(void)
+{
+	std::stringstream stream;
+
+	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
+	stream << "Content-Type: " << "image/jpg" << CRLF;
+	stream << "Transfer-Encoding: chunked" << CRLFTWO;
+
+	return (stream.str());
+}
+
 int Response::sendall(const int sock_fd, char *buffer, const int len) const
 {
 	int total;
 	int bytesleft;
 	int n;
 
-	// const int sock_fd = this->_responseMap[i].fd;
-	total = len; // = this->_responseMap[i].total;
-	bytesleft = len; // = this->_responseMap[i].bytesleft;
+	total = len;
+	bytesleft = len;
 	while (total > 0)
 	{
 		n = send(sock_fd, buffer, bytesleft, 0);
@@ -132,32 +144,86 @@ int Response::sendall(const int sock_fd, char *buffer, const int len) const
 	return (0);
 }
 
+template< typename T >
+static std::string intToHexString(T number)
+{
+	std::stringstream converted;
+	converted	/*<< "0x"*/
+				// << std::setfill ('0') << std::setw(sizeof(T)*2)
+				<< std::hex << number;
+	return (converted.str());
+}
+
 void Response::sendChunk(int i)
 {
 	const int clientFd = i;
 	int total = this->_responseMap[i].total;
 	int bytesLeft = this->_responseMap[i].bytesLeft;
-	int bytesSend = 0;
+	// int bytesSend = 0;
 
-	while (bytesLeft && bytesSend < MAX_SEND_CHUNK_SIZE)
-	{
-		// const char * buffer = NULL;
-		// if (bytesLeft > MAX_SEND_CHUNK_SIZE)
-		// 	buffer = this->_responseMap[i].response.substr(total - bytesLeft, MAX_SEND_CHUNK_SIZE).c_str();
-		// else
-		// char *buffer = (char *)this->_responseMap[i].response.substr(total - bytesLeft).c_str();
-		// int n = send(clientFd, buffer, MAX_SEND_CHUNK_SIZE, 0); // check if this can overflow the string!!!!!!
-		int n;
-		if (bytesLeft > MAX_SEND_CHUNK_SIZE)
-			n = send(clientFd, (char *)this->_responseMap[i].response.substr(total - bytesLeft).c_str(), MAX_SEND_CHUNK_SIZE, 0); // check if this can overflow the string!!!!!!
+	// while (bytesLeft && bytesSend < MAX_SEND_CHUNK_SIZE)
+	// {
+		int n = 0;
+		std::string buffer;
+		int bufferLength;
+		if (this->_responseMap[i].header.length() != 0)
+		{
+			buffer = this->_responseMap[i].header;
+			bufferLength = this->_responseMap[i].header.length();
+
+			send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
+
+			std::cout	<< YELLOW << "Message send >" << RESET << std::endl
+						<< this->_responseMap[i].header
+						<< YELLOW << "<" << RESET << std::endl;
+			this->_responseMap[i].header.clear();
+		}
+		else if (total > MAX_SEND_CHUNK_SIZE && bytesLeft > MAX_SEND_CHUNK_SIZE)
+		{
+			buffer = intToHexString(MAX_SEND_CHUNK_SIZE) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft, MAX_SEND_CHUNK_SIZE) + CRLF;
+			bufferLength = MAX_SEND_CHUNK_SIZE + intToHexString(bytesLeft).length() + 4;
+
+			n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
+			if (n > 0)
+				n -= 4;
+
+			// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
+			// 			<< intToHexString(MAX_SEND_CHUNK_SIZE) << CRLF << this->_responseMap[i].response.substr(total - bytesLeft, MAX_SEND_CHUNK_SIZE) << CRLF
+			// 			<< YELLOW << "<" << RESET << std::endl;
+		}
+		else if (total > MAX_SEND_CHUNK_SIZE && bytesLeft < MAX_SEND_CHUNK_SIZE)
+		{
+			buffer = intToHexString(bytesLeft) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft) + CRLF;
+			bufferLength = bytesLeft + intToHexString(bytesLeft).length() + 4; // same as buffer.length()
+
+			n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
+			if (n > 0 )
+				n -= 4;
+
+			// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
+			// 			<< (intToHexString(MAX_SEND_CHUNK_SIZE) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft, (bytesLeft + intToHexString(bytesLeft).length())) + CRLF)
+			// 			<< YELLOW << "<" << RESET << std::endl;
+		}
 		else
-			n = send(clientFd, (char *)this->_responseMap[i].response.substr(total - bytesLeft).c_str(), bytesLeft, 0); // check if this can overflow the string!!!!!!
-		std::cout << BOLD << RED << n << RESET << std::endl;
+		{
+			buffer = this->_responseMap[i].response;
+			bufferLength =bytesLeft;
+
+			n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
+
+			// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
+			// 			<< this->_responseMap[i].response
+			// 			<< YELLOW << "<" << RESET << std::endl;
+		}
+		std::cout << BOLD << GREEN << "Bytes send to " << clientFd << ": " << n << RESET << std::endl;
 		if (n > 0)
 		{
-			bytesSend += n;
-			bytesLeft -= n;
-			std::cout << bytesLeft << std::endl;
+			if (n > bytesLeft)
+				bytesLeft = 0;
+			else
+				bytesLeft -= n;
+			// bytesSend += n;
+			std::cout << BOLD << YELLOW << "Bytes left for " << clientFd << ": " << bytesLeft << RESET << std::endl;
 		}
 		else if (n == -1)
 		{
@@ -166,15 +232,21 @@ void Response::sendChunk(int i)
 			throw Response::InternalServerErrorException(); // check if this gets through to send an error to the fd !!!!!!!!!!
 			// maybe use the create errorHead + errorBody instead here ????
 		}
-		else // this should never happen right?????
-			break ;
-	}
+		// else // this should never happen right?????
+		// 	break ;
+	// }
 	if (bytesLeft)
 	{
 		this->_responseMap[i].bytesLeft = bytesLeft;
 	}
 	else
 	{
+		if (total > MAX_SEND_CHUNK_SIZE)
+		{
+			std::stringstream buffer;
+			buffer << "0" << CRLFTWO;
+			send (clientFd, (char *)buffer.str().c_str(), 5, 0);
+		}
 		close(clientFd);
 		#ifdef SHOW_LOG
 			std::cout << RED << "fd: " << clientFd << " was closed after sending response" << RESET << std::endl;
@@ -316,7 +388,10 @@ void Response::sendResponse(int fd)
 	if (this->_responseMap.count(fd) == 0)
 	{
 		if (this->body.size() > MAX_SEND_CHUNK_SIZE)
-			this->_responseMap[fd].response = this->constructChunkedHeader() + this->body; // only put the body in here
+		{
+			this->_responseMap[fd].header = this->constructChunkedHeader();
+			this->_responseMap[fd].response = this->body; // only put the body in here
+		}
 		else
 			this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
 		this->_responseMap[fd].total = this->_responseMap[fd].response.length();

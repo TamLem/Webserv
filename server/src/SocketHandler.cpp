@@ -173,7 +173,7 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	return (this->_clients.size() - 1); // is this return value ever used??????
 }
 
-void SocketHandler::removeClient(int i) // can be void maybe
+void SocketHandler::removeClient(int i)
 {
 	if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR)  )
 	{
@@ -196,7 +196,7 @@ void SocketHandler::removeClient(int i) // can be void maybe
 
 bool SocketHandler::readFromClient(int i)
 {
-	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].flags & EVFILT_READ)
+	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].filter == EVFILT_READ)
 	{
 		this->_fd = this->_evList[i].ident;
 		int status = this->_getClient(this->_fd);
@@ -215,7 +215,7 @@ bool SocketHandler::readFromClient(int i)
 
 bool SocketHandler::writeToClient(int i)
 {
-	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].flags & EVFILT_WRITE)
+	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].filter == EVFILT_WRITE)
 	{
 		this->_fd = this->_evList[i].ident;
 		int status = this->_getClient(this->_fd);
@@ -307,22 +307,22 @@ int SocketHandler::getFD() const
 void SocketHandler::setWriteable(int i)
 {
 	int fd = this->_evList[i].ident;
-	EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+	// EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 	// struct kevent ev;
 	struct timespec timeout;
 
-	timeout.tv_sec = 1;
+	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
-	EV_SET(&this->_evList[i], fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
-	if (kevent(this->_kq, this->_evList, 1, NULL, 0, &timeout) == -1)
+	EV_SET(&this->_evList[i], fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+	if (kevent(this->_kq, this->_evList, 1, NULL, 0, NULL) == -1)
 	{
 		std::cerr << RED << "Error adding socket to kqueue" << std::endl;
 		perror(NULL);
 		std::cerr << RESET;
 		return ;
 	}
-	// int val = 1;
-	// setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
+	int val = 1;
+	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
 	this->_fd = fd;
 	return ;
 }

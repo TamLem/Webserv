@@ -44,6 +44,7 @@ class Response : public Message
 		const std::map<std::string, std::string>& getMessageMap(void) const;
 
 		std::string constructHeader(void);
+		std::string constructChunkedHeader(void);
 
 		void clear(void);
 		// void init(const Request&);

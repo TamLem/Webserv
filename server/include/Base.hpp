@@ -34,6 +34,7 @@
 // ResponseStruct
 struct ResponseStruct
 {
+	std::string header;
 	std::string response;
 	// std::string status;
 	// std::string statusMessage;

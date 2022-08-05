@@ -136,7 +136,7 @@ bool SocketHandler::addSocket(int fd)
 	struct kevent ev;
 	struct timespec timeout;
 
-	timeout.tv_sec = 1;
+	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
 	EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
 	// EV_SET(&ev, fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
@@ -157,7 +157,7 @@ int SocketHandler::getEvents()
 {
 	struct timespec timeout;
 
-	timeout.tv_sec = 10;
+	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
 	std::cout << "num clients: " << _clients.size() << std::endl;
 	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, &timeout);
@@ -307,7 +307,7 @@ int SocketHandler::getFD() const
 void SocketHandler::setWriteable(int i)
 {
 	int fd = this->_evList[i].ident;
-	// EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+	EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 	// struct kevent ev;
 	struct timespec timeout;
 
@@ -316,7 +316,7 @@ void SocketHandler::setWriteable(int i)
 	EV_SET(&this->_evList[i], fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
 	if (kevent(this->_kq, this->_evList, 1, NULL, 0, NULL) == -1)
 	{
-		std::cerr << RED << "Error adding socket to kqueue" << std::endl;
+		std::cerr << RED << "Write Error adding socket to kqueue" << std::endl;
 		perror(NULL);
 		std::cerr << RESET;
 		return ;

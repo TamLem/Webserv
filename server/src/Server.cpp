@@ -59,16 +59,19 @@ void Server::runEventLoop()
 		{
 			this->_socketHandler->removeInactiveClients();	// remove inactive clients
 		}
-		for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
-		{
+		int i = 7;
+		// for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
+		// {
+			#ifdef SHOW_LOG_2
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
+			#endif
 			this->_socketHandler->acceptConnection(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
 				handleRequest(this->_socketHandler->getFD());
 			}
 			this->_socketHandler->removeClient(i);
-		}
+		// }
 	}
 }
 
@@ -134,7 +137,7 @@ void Server::handlePOST(const Request& request)
 	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
 	std::string tmp = UPLOAD_DIR;
 	tmp.append("testFile.txt");
-	outFile.open(tmp); // AE body is not read anymore and therefore empty
+	outFile.open(tmp.c_str()); // AE body is not read anymore and therefore empty
 	if (outFile.is_open() == false)
 		throw std::exception();
 	outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;

@@ -47,11 +47,12 @@ SRC_FILES	=	main.cpp \
 				SingleServerConfig.cpp
 else
 #(blocking server for testing on Linux)
-SRC_FILES	=	Linux_server.cpp \
+SRC_FILES	=	main.cpp \
+				LinuxSocketHandler.cpp \
+				Server.cpp \
 				Message.cpp \
 				Response.cpp \
 				Cgi.cpp		\
-				CgiResoponse.cpp \
 				Request.cpp \
 				Config.cpp \
 				SingleServerConfig.cpp

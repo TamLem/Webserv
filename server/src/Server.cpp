@@ -59,9 +59,8 @@ void Server::runEventLoop()
 		{
 			this->_socketHandler->removeInactiveClients();	// remove inactive clients
 		}
-		int i = 7;
-		// for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
-		// {
+		for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
+		{
 			#ifdef SHOW_LOG_2
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
 			#endif
@@ -71,7 +70,7 @@ void Server::runEventLoop()
 				handleRequest(this->_socketHandler->getFD());
 			}
 			this->_socketHandler->removeClient(i);
-		// }
+		}
 	}
 }
 

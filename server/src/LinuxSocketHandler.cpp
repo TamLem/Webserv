@@ -100,6 +100,7 @@ void SocketHandler::_initEventLoop()
 
 void SocketHandler::acceptConnection(int i)
 {
+	i = 7; // AE hardcoded!
 	// if (this->_serverMap.count(this->_evList[i].ident) == 1)
 	// {
 		struct sockaddr_storage addr; // temp

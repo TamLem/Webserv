@@ -142,7 +142,7 @@ void Response::receiveChunk(int i)
 	int n = 0;
 	std::ofstream buffer;
 	char *chunk = NULL;
-	buffer.open(this->_receiveMap[i].target, std::ios_base::app);
+	buffer.open(this->_receiveMap[i].target.c_str(), std::ios_base::app);
 	// int bufferLength;
 	if (total > this->_receiveMap[i].bufferSize && bytesLeft > this->_receiveMap[i].bufferSize)
 	{

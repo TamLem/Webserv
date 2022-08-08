@@ -1,7 +1,6 @@
 #include "Server.hpp"
 #include "Config.hpp"
 #include "Cgi/Cgi.hpp"
-#include <sys/stat.h> // stat
 
 // Server::Server(void)
 // {
@@ -72,15 +71,6 @@ void Server::runEventLoop()
 	}
 }
 
-static bool staticFileExists(const std::string& target)
-{
-	struct stat statStruct;
-
-	if (stat(target.c_str(), &statStruct) == 0)
-			return (true);
-	return (false);
-}
-
 // static void staticAutoIndex(const Request& request)
 // {
 // 	DIR *d;
@@ -100,7 +90,7 @@ static bool staticFileExists(const std::string& target)
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	if (request.isFile == false && staticFileExists(request.getTarget() + request.indexPage) == false)
+	if (request.isFile == false && fileExists(request.getTarget() + request.indexPage) == false)
 	{
 		if ((this->_currentLocationKey.empty() == false
 		&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))

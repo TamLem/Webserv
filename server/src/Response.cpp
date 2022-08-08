@@ -8,7 +8,7 @@
 #include <sys/socket.h> // send
 #include <dirent.h> // dirent, opendir
 // #include <sys/types.h>  // opendir
-#include <unistd.h>
+#include <unistd.h> // access
 #include <sys/stat.h> // stat
 
 #define RESET "\033[0m"
@@ -245,10 +245,12 @@ static bool staticTargetIsDir(const std::string& target)
 void Response::createBodyFromFile(const std::string& target)
 {
 	std::stringstream body;
-	std::ifstream file(target.c_str(), std::ios::binary);
 	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
-	if (staticTargetIsDir(target))
+	if (fileExists(target) == false || staticTargetIsDir(target) == true)
 		throw ERROR_404();
+	else if (access(target.c_str(), R_OK) != 0)
+		throw ERROR_403();
+	std::ifstream file(target.c_str(), std::ios::binary);
 	if (file.is_open())
 	{
 		// std::cerr << BOLD << RED << "open" << RESET << std::endl;
@@ -258,9 +260,7 @@ void Response::createBodyFromFile(const std::string& target)
 	}
 	else
 	{
-		perror(NULL);
-		throw ERROR_404();
-		//404 response
+		throw ERROR_500();
 	}
 }
 
@@ -377,7 +377,26 @@ const char* Response::ERROR_404::what() const throw()
 	return ("404");
 }
 
+const char* Response::ERROR_403::what() const throw()
+{
+	return ("403");
+}
+
 const char* Response::InvalidProtocol::what() const throw() //AE is it good to have different codes for request/response?
 {
 	return ("500");
+}
+
+const char* Response::ERROR_500::what() const throw()
+{
+	return ("500");
+}
+
+bool fileExists(const std::string& target)
+{
+	struct stat statStruct;
+
+	if (stat(target.c_str(), &statStruct) == 0)
+			return (true);
+	return (false);
 }

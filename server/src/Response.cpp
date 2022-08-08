@@ -246,10 +246,10 @@ void Response::createBodyFromFile(const std::string& target)
 {
 	std::stringstream body;
 	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
+	if (access(target.c_str(), F_OK) != 0 && errno == EACCES)
+		throw ERROR_403();
 	if (fileExists(target) == false || staticTargetIsDir(target) == true)
 		throw ERROR_404();
-	else if (access(target.c_str(), R_OK) != 0)
-		throw ERROR_403();
 	std::ifstream file(target.c_str(), std::ios::binary);
 	if (file.is_open())
 	{

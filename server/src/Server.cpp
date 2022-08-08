@@ -136,12 +136,12 @@ void Server::handlePOST(const Request& request)
 	// std::string tmp = UPLOAD_DIR;
 	this->_response.setTarget(i, request.getTarget()); // this maybe needs to be parsed???? put this target into the response class
 	// tmp.append("testFile.txt");
-	outFile.open(tmp); // AE body is not read anymore and therefore empty
+	// outFile.open(tmp); // AE body is not read anymore and therefore empty
 	if (outFile.is_open() == false)
 		throw std::exception();
 
-	outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;
-	outFile.close(); // only close once all data is read from client body
+	// outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;
+	// outFile.close(); // only close once all data is read from client body
 
 	_response.setProtocol(PROTOCOL);
 	_response.createBodyFromFile("./server/data/pages/post_test.html");
@@ -415,7 +415,7 @@ void Server::handleRequest(int fd)
 		if (this->_requestHead.find("/cgi/") != std::string::npos)
 			cgi_handle(request, fd);
 		else if (request.getMethod() == "POST")
-			handlePOST(request);
+			handlePOST(fd, request);
 		else
 		{
 			handleGET(request);

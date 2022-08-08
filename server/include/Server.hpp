@@ -99,7 +99,7 @@ class Server
 		std::string percentDecoding(const std::string&);
 		void checkLocationMethod(const Request& request) const;
 		void handleGET(const Request&);
-		void handlePOST(const Request&);
+		void handlePOST(const Request&); // maybe passs fd to this function
 		void handleERROR(const std::string&);
 
 	// Exceptions

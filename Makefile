@@ -60,7 +60,7 @@ endif
 
 OBJ_FILES	=	$(SRC_FILES:.cpp=.o)
 
-DEP			=	$(INC_DIR)*.hpp
+DEP			=	$(wildcard $(INC_DIR)*.hpp) $(wildcard $(INC_DIR)*/*.hpp)
 
 #paths
 SRC			=	$(addprefix $(SRC_DIR), $(SRC_FILES))
@@ -77,6 +77,7 @@ all: $(NAME)
 
 #compile the executable
 $(NAME): $(OBJ) $(DEP)
+	@echo $(DEP)
 	@echo "$(YELLOW)Compiling [$(NAME)]...$(RESET)"
 	@$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 	@echo "$(GREEN)Finished [$(NAME)]$(RESET)"

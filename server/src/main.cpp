@@ -30,8 +30,33 @@ void my_leaks()
 	system("leaks webserv");
 }
 
+void handle_signal(int sig)
+{
+	if (sig == SIGINT || sig == SIGQUIT)
+	{
+		// std::cerr << BLUE << "SIGINT detected, terminating server now" << RESET << std::endl;
+		keep_running = 0;
+		throw std::runtime_error("SIGINT detected, terminating server now");
+	}
+	else if (sig == SIGPIPE)
+	{
+		std::cerr << RED << "SIGPIPE detected, will end now" << RESET << std::endl;
+		keep_running = 0;
+	}
+}
+
+void handle_signals(void)
+{
+	signal(SIGQUIT, SIG_IGN);
+	signal(SIGINT, SIG_IGN);
+	// signal(SIGPIPE, SIG_IGN);
+	signal(SIGINT, handle_signal);
+	// signal(SIGPIPE, handle_signal);
+}
+
 int main(int argc, char **argv)
 {
+	handle_signals();
 	// atexit(my_leaks); // use this to check for leaks
 	Config *config = new Config();
 	try
@@ -49,7 +74,20 @@ int main(int argc, char **argv)
 	#ifdef SHOW_LOG_2
 		config->printCluster();
 	#endif
-	test->runEventLoop();
+	try
+	{
+		test->runEventLoop();
+	}
+	catch (std::exception &e)
+	{
+		std::cerr << BLUE << e.what() << RESET << std::endl;
+		delete config;
+		delete test;
+		config = NULL;
+		test = NULL;
+		// system("leaks webserv"); // use this to check for leaks
+		return (0);
+	}
 	delete config;
 	delete test;
 	config = NULL;

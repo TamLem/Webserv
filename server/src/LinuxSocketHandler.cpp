@@ -176,6 +176,7 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 
 void SocketHandler::removeClient(int i) // can be void maybe
 {
+	(void)i;
 	// if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR)  )
 	// {
 	// 	std::cout << "Removing client with fd: " << this->_fd << std::endl;
@@ -197,6 +198,7 @@ void SocketHandler::removeClient(int i) // can be void maybe
 
 bool SocketHandler::readFromClient(int i)
 {
+	(void)i;
 	// if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].flags & EVFILT_READ)
 	// {
 	// 	this->_fd = this->_evList[i].ident;

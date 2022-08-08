@@ -8,10 +8,36 @@
 // 	handle_signals();
 // }
 
+void Server::handle_signal(int sig)
+{
+	if (sig == SIGINT)
+	{
+		std::cerr << BLUE << "SIGINT detected, terminating server now" << RESET << std::endl;
+		keep_running = 0;
+	}
+	else if (sig == SIGPIPE)
+	{
+		std::cerr << RED << "SIGPIPE detected, will end now" << RESET << std::endl;
+		keep_running = 0;
+	}
+}
+
+void Server::handle_signals(void)
+{
+	signal(SIGQUIT, SIG_IGN);
+	signal(SIGINT, SIG_IGN);
+	// signal(SIGPIPE, SIG_IGN);
+	signal(SIGINT, handle_signal);
+	// signal(SIGPIPE, handle_signal);
+}
+
 Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
 {
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
+	#endif
+	#ifdef __APPLE__
+		handle_signals();
 	#endif
 }
 

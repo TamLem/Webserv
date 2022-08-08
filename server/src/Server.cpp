@@ -1,30 +1,12 @@
 #include "Server.hpp"
 #include "Config.hpp"
 #include "Cgi/Cgi.hpp"
-#include <sys/stat.h> // stat
 
 // Server::Server(void)
 // {
 // 	std::cout << "Server default constructor called for " << this << std::endl;
 // 	handle_signals();
 // }
-
-Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
-{
-	#ifdef SHOW_CONSTRUCTION
-		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
-	#endif
-	handle_signals();
-}
-
-Server::~Server(void)
-{
-	delete _socketHandler;
-	#ifdef SHOW_CONSTRUCTION
-		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
-	#endif
-}
-
 
 void Server::handle_signal(int sig)
 {
@@ -49,6 +31,24 @@ void Server::handle_signals(void)
 	// signal(SIGPIPE, handle_signal);
 }
 
+Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
+{
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
+	#endif
+	#ifdef __APPLE__
+		handle_signals();
+	#endif
+}
+
+Server::~Server(void)
+{
+	delete _socketHandler;
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
+	#endif
+}
+
 void Server::runEventLoop()
 {
 	while(keep_running)
@@ -61,7 +61,9 @@ void Server::runEventLoop()
 		}
 		for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
 		{
+			#ifdef SHOW_LOG_2
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
+			#endif
 			this->_socketHandler->acceptConnection(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
@@ -70,15 +72,6 @@ void Server::runEventLoop()
 			this->_socketHandler->removeClient(i);
 		}
 	}
-}
-
-static bool staticFileExists(const std::string& target)
-{
-	struct stat statStruct;
-
-	if (stat(target.c_str(), &statStruct) == 0)
-			return (true);
-	return (false);
 }
 
 // static void staticAutoIndex(const Request& request)
@@ -100,7 +93,7 @@ static bool staticFileExists(const std::string& target)
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	if (request.isFile == false && staticFileExists(request.getTarget() + request.indexPage) == false)
+	if (request.isFile == false && fileExists(request.getTarget() + request.indexPage) == false)
 	{
 		if ((this->_currentLocationKey.empty() == false
 		&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
@@ -130,15 +123,17 @@ void Server::handleGET(const Request& request)
 
 void Server::handlePOST(const Request& request)
 {
+	(void)request;
 	// create and fill some temp response data structures, maybe even the
 	// std::ofstream outFile;
 	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
 	// std::string tmp = UPLOAD_DIR;
-	this->_response.setTarget(i, request.getTarget()); // this maybe needs to be parsed???? put this target into the response class
+	// int i = clientFd
+	// this->_response.setTarget(i, request.getTarget()); // this maybe needs to be parsed???? put this target into the response class
 	// tmp.append("testFile.txt");
 	// outFile.open(tmp); // AE body is not read anymore and therefore empty
-	if (outFile.is_open() == false)
-		throw std::exception();
+	// if (outFile.is_open() == false)
+	// 	throw std::exception();
 
 	// outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;
 	// outFile.close(); // only close once all data is read from client body
@@ -154,9 +149,15 @@ void Server::handleERROR(const std::string& status)
 {
 	_response.setStatus(status);
 	_response.setProtocol(PROTOCOL);
-	_response.createErrorBody();
+	if (this->_currentConfig.errorPage.count(status) == 1 && this->loopDetected == false)
+	{
+		this->loopDetected = true;
+		_response.createBodyFromFile("." + this->_currentConfig.errorPage[status]);
+	}
+	else
+		_response.createErrorBody();
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
-	_response.addHeaderField("Content-Type", "text/html; charset=utf-8");
+	// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 	_response.addDefaultHeaderFields();
 }
 
@@ -394,6 +395,7 @@ void Server::checkLocationMethod(const Request& request) const
 void Server::handleRequest(int fd)
 {
 	this->_response.clear();
+	this->loopDetected = false;
 	try
 	{
 		this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
@@ -415,7 +417,7 @@ void Server::handleRequest(int fd)
 		if (this->_requestHead.find("/cgi/") != std::string::npos)
 			cgi_handle(request, fd);
 		else if (request.getMethod() == "POST")
-			handlePOST(fd, request);
+			handlePOST(request);
 		else
 		{
 			handleGET(request);
@@ -426,7 +428,17 @@ void Server::handleRequest(int fd)
 		std::string code = exception.what();
 		if (_response.getMessageMap().count(code) != 1)
 			code = "500";
+		try
+		{
 		handleERROR(code);
+		}
+		catch(const std::exception& exception)
+		{
+			std::string code = exception.what();
+			if (_response.getMessageMap().count(code) != 1)
+				code = "500";
+			handleERROR(code);
+		}
 	}
 	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 	this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi

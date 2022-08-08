@@ -16,7 +16,6 @@
 #include <cstdio>
 #include <fcntl.h>
 #include <fstream>
-#include <sys/event.h>
 #include <map>
 #include <set>
 #include <csignal> // check if forbidden !!!!!!!!!!
@@ -31,6 +30,7 @@
 #define UPLOAD_DIR "./server/data/uploads/"
 
 #ifdef __APPLE__
+	#include <sys/event.h>
 	#include "SocketHandler.hpp"
 #else
 	#include "LinuxSocketHandler.hpp"
@@ -83,6 +83,7 @@ class Server
 		std::string _requestHead;
 		ConfigStruct _currentConfig;
 		std::string _currentLocationKey;
+		bool loopDetected;
 
 	// private Methods
 		static void handle_signal(int sig);

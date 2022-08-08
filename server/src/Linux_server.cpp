@@ -119,6 +119,9 @@ int main(int argc, char **argv)
 			delete config;
 			return (EXIT_FAILURE);
 	}
+
+/////////////////////////////////////////////////////////
+
 	int sockfd;
 	struct sockaddr_in serv_addr;
 	struct sockaddr_in cli_addr;
@@ -154,6 +157,8 @@ int main(int argc, char **argv)
 		std::cout << "Error listening on socket" << std::endl;
 		return 1;
 	}
+
+////////////////////////////////////////////////////////
 
 	int new_sockfd;
 	while(keep_running)

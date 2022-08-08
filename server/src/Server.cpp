@@ -14,7 +14,6 @@ Server::Server(Config* config): _config(config), _socketHandler(new SocketHandle
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
 	#endif
-	handle_signals();
 }
 
 Server::~Server(void)
@@ -23,30 +22,6 @@ Server::~Server(void)
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
 	#endif
-}
-
-
-void Server::handle_signal(int sig)
-{
-	if (sig == SIGINT)
-	{
-		std::cerr << BLUE << "SIGINT detected, terminating server now" << RESET << std::endl;
-		keep_running = 0;
-	}
-	else if (sig == SIGPIPE)
-	{
-		std::cerr << RED << "SIGPIPE detected, will end now" << RESET << std::endl;
-		keep_running = 0;
-	}
-}
-
-void	Server::handle_signals(void)
-{
-	signal(SIGQUIT, SIG_IGN);
-	signal(SIGINT, SIG_IGN);
-	// signal(SIGPIPE, SIG_IGN);
-	signal(SIGINT, handle_signal);
-	// signal(SIGPIPE, handle_signal);
 }
 
 void Server::runEventLoop()
@@ -61,7 +36,9 @@ void Server::runEventLoop()
 		}
 		for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
 		{
+			#ifdef SHOW_LOG_2
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
+			#endif
 			this->_socketHandler->acceptConnection(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
@@ -134,7 +111,7 @@ void Server::handlePOST(const Request& request)
 	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
 	std::string tmp = UPLOAD_DIR;
 	tmp.append("testFile.txt");
-	outFile.open(tmp); // AE body is not read anymore and therefore empty
+	outFile.open(tmp.c_str()); // AE body is not read anymore and therefore empty
 	if (outFile.is_open() == false)
 		throw std::exception();
 	outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;

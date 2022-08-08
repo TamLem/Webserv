@@ -83,6 +83,7 @@ class Server
 		std::string _requestHead;
 		ConfigStruct _currentConfig;
 		std::string _currentLocationKey;
+		bool loopDetected;
 
 	// private Methods
 		static void handle_signal(int sig);

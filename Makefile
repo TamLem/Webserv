@@ -60,7 +60,7 @@ endif
 
 OBJ_FILES	=	$(SRC_FILES:.cpp=.o)
 
-DEP			=	$(wildcard $(INC_DIR)*.hpp) $(wildcard $(INC_DIR)*/*.hpp)
+DEP			=	$(wildcard $(INC_DIR)*.hpp) $(wildcard $(INC_DIR)*/*.hpp) Makefile
 
 #paths
 SRC			=	$(addprefix $(SRC_DIR), $(SRC_FILES))
@@ -76,13 +76,13 @@ all: $(NAME)
 	@printf "\n"
 
 #compile the executable
-$(NAME): $(OBJ) $(DEP)
+$(NAME): $(OBJ)
 	@echo "$(YELLOW)Compiling [$(NAME)]...$(RESET)"
 	@$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 	@echo "$(GREEN)Finished [$(NAME)]$(RESET)"
 
 #compile objects
-$(OBJ_DIR)%.o:$(SRC_DIR)%.cpp
+$(OBJ_DIR)%.o:$(SRC_DIR)%.cpp $(DEP)
 	@mkdir -p $(OBJ_DIR)
 	@echo "$(YELLOW)Compiling [$@]...$(RESET)"
 	@$(CXX) $(CXXFLAGS) -I $(INC_DIR) -o $@ -c $<

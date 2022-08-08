@@ -1,5 +1,6 @@
 #include "Response.hpp"
 
+#include "Base.hpp"
 #include <string> //std::string
 #include <map> //std::map
 #include <sstream> //std::stringstream
@@ -10,12 +11,6 @@
 // #include <sys/types.h>  // opendir
 #include <unistd.h> // access
 #include <sys/stat.h> // stat
-
-#define RESET "\033[0m"
-#define GREEN "\033[32m"
-#define YELLOW "\033[33m"
-#define BLUE "\033[34m"
-#define RED "\033[31m"
 
 bool Response::isValidStatus(const std::string& status)
 {

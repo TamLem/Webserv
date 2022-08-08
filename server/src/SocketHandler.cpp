@@ -139,14 +139,22 @@ bool SocketHandler::addSocket(int fd)
 	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
 	EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
-	// EV_SET(&ev, fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
-	if (kevent(this->_kq, &ev, 1, NULL, 0, &timeout) == -1)
+	// EV_SET(&ev[1], fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
+	if (kevent(this->_kq, &ev, 1, this->_evList, 0, NULL) == -1)
 	{
 		std::cerr << RED << "Error adding socket to kqueue" << std::endl;
 		perror(NULL);
 		std::cerr << RESET;
 		return false;
 	}
+	// where socketfd is the socket you want to make non-blocking
+	// int status = fcntl(fd, F_SETFL, O_NONBLOCK);
+
+	// if (status == -1){
+	// 	perror("calling fcntl");
+	// 	exit(0);
+  // handle the error.  By the way, I've never seen fcntl fail in this way
+	// }
 	int val = 1;
 	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4); // is SO_NOSIGPIPE needed here ???????
 	this->_fd = fd;
@@ -160,7 +168,7 @@ int SocketHandler::getEvents()
 	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
 	std::cout << "num clients: " << _clients.size() << std::endl;
-	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, &timeout);
+	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, NULL);
 	return this->_numEvents;
 }
 
@@ -177,7 +185,7 @@ void SocketHandler::removeClient(int i, bool force)
 {
 	if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR) || force)
 	{
-		std::cout << "Removing client with fd: " << this->_fd << std::endl;
+		std::cout << RED << (force ? "Kicking client " : "Removing client") <<  "fd: " << RESET << this->_fd << std::endl;
 		close(this->_evList[i].ident);
 		int index = this->_getClient(this->_evList[i].ident);
 		if (index != -1)
@@ -298,23 +306,23 @@ std::string SocketHandler::getBuffer() const
 	return (this->_buffer);
 }
 
-int SocketHandler::getFD() const
+int SocketHandler::getFD(int i) const
 {
-	return (this->_fd);
+	return (this->_evList[i].ident);
 }
 
 // Setter
 void SocketHandler::setWriteable(int i)
 {
 	int fd = this->_evList[i].ident;
-	EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-	// struct kevent ev;
+	// EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+	struct kevent ev;
 	struct timespec timeout;
 
 	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
-	EV_SET(&this->_evList[i], fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
-	if (kevent(this->_kq, this->_evList, 1, NULL, 0, NULL) == -1)
+	EV_SET(&ev, fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
+	if (kevent(this->_kq, &ev, 1, this->_evList, 0, NULL) == -1)
 	{
 		std::cerr << RED << "Write Error adding socket to kqueue" << std::endl;
 		perror(NULL);

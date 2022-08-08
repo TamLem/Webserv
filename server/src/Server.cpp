@@ -53,26 +53,28 @@ void Server::runEventLoop()
 		{
 			this->_socketHandler->removeInactiveClients();	// remove inactive clients
 		}
-		for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
+		for (int i = 0; i < numEvents; ++i)
 		{
-			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
+			std::cout << "no. events: " << numEvents << " ev:" << i << std::endl;
 			this->_socketHandler->acceptConnection(i);
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
-				handleRequest(this->_socketHandler->getFD());
+				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+				handleRequest(this->_socketHandler->getFD(i));
 				this->_socketHandler->setWriteable(i);
 			}
-			if (this->_socketHandler->writeToClient(i) == true)
+			else if (this->_socketHandler->writeToClient(i) == true)
 			{
+				std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
 				//this->responseMap.count(i).respond()
 				//if (this->responseMap.count(i).isDone())
 					//close(fd)
 					//delete the (fd, pair)reponse
 				// this->_handleResponse(i);
-				if (this->_response.sendResponse(this->_socketHandler->getFD()) == true)
+				if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true)
 					this->_socketHandler->removeClient(i, true);
 			}
-			this->_socketHandler->removeClient(i);
+			// this->_socketHandler->removeClient(i);
 		// move the writeRequest here
 		}
 	}

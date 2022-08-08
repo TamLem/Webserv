@@ -10,7 +10,7 @@ else
 CXXFLAGS	=	-std=c++98 -Wall -Wextra #-Werror // please fix this Tam
 endif
 
-CXXFLAGS	+=	#-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds
+CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds
 
 CXXFLAGS	+=	-D SHOW_CONSTRUCTION
 

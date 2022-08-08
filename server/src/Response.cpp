@@ -157,92 +157,91 @@ static std::string intToHexString(T number)
 void Response::sendChunk(int i)
 {
 	const int clientFd = i;
+	if (this->_responseMap.count(i) == 0)
+	{
+		std::cout << RED << "No response found for fd: " << i << RESET << std::endl;
+		return ;
+	}
 	int total = this->_responseMap[i].total;
 	int bytesLeft = this->_responseMap[i].bytesLeft;
-	// int bytesSend = 0;
 
-	// while (bytesLeft && bytesSend < MAX_SEND_CHUNK_SIZE)
-	// {
-		int n = 0;
-		std::string buffer;
-		int bufferLength;
-		if (this->_responseMap[i].header.length() != 0)
-		{
-			buffer = this->_responseMap[i].header;
-			bufferLength = this->_responseMap[i].header.length();
+	int n = 0;
+	std::string buffer;
+	int bufferLength;
 
-			n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
+	if (this->_responseMap[i].header.length() != 0)
+	{
+		buffer = this->_responseMap[i].header;
+		bufferLength = this->_responseMap[i].header.length();
 
-			std::cout	<< YELLOW << "Message send >" << RESET << std::endl
-						<< this->_responseMap[i].header
-						<< YELLOW << "<" << RESET << std::endl;
-			this->_responseMap[i].header.clear();
+		n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
 
-			std::string test = CRLF;
-			std::cout << RED << BOLD << ">" << buffer << "< has a length of" << n << RESET << std::endl;
-			n = 0;
-		}
-		else if (total > MAX_SEND_CHUNK_SIZE && bytesLeft > MAX_SEND_CHUNK_SIZE)
-		{
-			buffer = intToHexString(MAX_SEND_CHUNK_SIZE) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft, MAX_SEND_CHUNK_SIZE) + CRLF;
-			bufferLength = MAX_SEND_CHUNK_SIZE + intToHexString(bytesLeft).length() + 4;
-			std::cout << YELLOW << "bufferLength: " << bufferLength << RESET << std::endl;
+		std::cout	<< YELLOW << "Message send >" << RESET << std::endl
+					<< this->_responseMap[i].header
+					<< YELLOW << "<" << RESET << std::endl;
+		this->_responseMap[i].header.clear();
 
-			n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
-			if (n > 0)
-				n -= 10;
+		std::string test = CRLF;
+		std::cout << RED << BOLD << ">" << buffer << "< has a length of" << n << RESET << std::endl;
+		n = 0;
+	}
+	else if (total > MAX_SEND_CHUNK_SIZE && bytesLeft > MAX_SEND_CHUNK_SIZE)
+	{
+		buffer = intToHexString(MAX_SEND_CHUNK_SIZE) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft, MAX_SEND_CHUNK_SIZE) + CRLF;
+		bufferLength = MAX_SEND_CHUNK_SIZE + intToHexString(bytesLeft).length() + 4;
+		std::cout << YELLOW << "bufferLength: " << bufferLength << RESET << std::endl;
 
-			// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
-			// 			<< intToHexString(MAX_SEND_CHUNK_SIZE) << CRLF << this->_responseMap[i].response.substr(total - bytesLeft, MAX_SEND_CHUNK_SIZE) << CRLF
-			// 			<< YELLOW << "<" << RESET << std::endl;
-		}
-		else if (total > MAX_SEND_CHUNK_SIZE && bytesLeft < MAX_SEND_CHUNK_SIZE)
-		{
-			buffer = intToHexString(bytesLeft) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft) + CRLF;
-			bufferLength = bytesLeft + intToHexString(bytesLeft).length() + 4; // same as buffer.length()
-			std::cout << YELLOW << "last bufferLength: " << bufferLength << RESET << std::endl;
-
-			n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
-			if (n > 0 )
-				n -= 4 + intToHexString(bytesLeft).length();
-
-			// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
-			// 			<< (intToHexString(MAX_SEND_CHUNK_SIZE) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft, (bytesLeft + intToHexString(bytesLeft).length())) + CRLF)
-			// 			<< YELLOW << "<" << RESET << std::endl;
-		}
-		else
-		{
-			buffer = this->_responseMap[i].response;
-			bufferLength = bytesLeft;
-			std::cout << YELLOW << "bufferLength: " << bufferLength << RESET << std::endl;
-
-			n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
-
-			// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
-			// 			<< this->_responseMap[i].response
-			// 			<< YELLOW << "<" << RESET << std::endl;
-		}
-		std::cout << BOLD << GREEN << "Bytes send to " << clientFd << ": " << n << RESET << std::endl;
+		n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
 		if (n > 0)
-		{
-			if (n > bytesLeft)
-				bytesLeft = 0;
-			else
-				bytesLeft -= n;
-			// bytesSend += n;
-			std::cout << BOLD << YELLOW << "Bytes left for " << clientFd << ": " << bytesLeft << RESET << std::endl;
-		}
-		else if (n == -1)
-		{
-			perror("send");
-			this->_responseMap.erase(i);
+			n -= 10;
+
+		// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
+		// 			<< intToHexString(MAX_SEND_CHUNK_SIZE) << CRLF << this->_responseMap[i].response.substr(total - bytesLeft, MAX_SEND_CHUNK_SIZE) << CRLF
+		// 			<< YELLOW << "<" << RESET << std::endl;
+	}
+	else if (total > MAX_SEND_CHUNK_SIZE && bytesLeft < MAX_SEND_CHUNK_SIZE)
+	{
+		buffer = intToHexString(bytesLeft) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft) + CRLF;
+		bufferLength = bytesLeft + intToHexString(bytesLeft).length() + 4; // same as buffer.length()
+		std::cout << YELLOW << "last bufferLength: " << bufferLength << RESET << std::endl;
+
+		n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
+		if (n > 0 )
+			n -= 4 + intToHexString(bytesLeft).length();
+
+		// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
+		// 			<< (intToHexString(MAX_SEND_CHUNK_SIZE) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft, (bytesLeft + intToHexString(bytesLeft).length())) + CRLF)
+		// 			<< YELLOW << "<" << RESET << std::endl;
+	}
+	else
+	{
+		buffer = this->_responseMap[i].response;
+		bufferLength = bytesLeft;
+
+		n = send(clientFd, (char *)buffer.c_str(), bufferLength, 0);
+
+		// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
+		// 			<< this->_responseMap[i].response
+		// 			<< YELLOW << "<" << RESET << std::endl;
+	}
+	std::cout << BOLD << GREEN << "Bytes send to " << clientFd << ": " << n << RESET << std::endl;
+	if (n > 0)
+	{
+		if (n > bytesLeft)
 			bytesLeft = 0;
-			// throw Response::InternalServerErrorException(); // check if this gets through to send an error to the fd !!!!!!!!!!
-			// maybe use the create errorHead + errorBody instead here ????
-		}
-		// else // this should never happen right?????
-		// 	break ;
-	// }
+		else
+			bytesLeft -= n;
+		// bytesSend += n;
+		std::cout << BOLD << YELLOW << "Bytes left for " << clientFd << ": " << bytesLeft << RESET << std::endl;
+	}
+	else if (n == -1)
+	{
+		perror("send");
+		this->_responseMap.erase(i);
+		bytesLeft = 0;
+		// throw Response::InternalServerErrorException(); // check if this gets through to send an error to the fd !!!!!!!!!!
+		// maybe use the create errorHead + errorBody instead here ????
+	}
 	if (bytesLeft)
 	{
 		this->_responseMap[i].bytesLeft = bytesLeft;
@@ -419,7 +418,9 @@ bool Response::sendResponse(int fd)
 			this->_responseMap[fd].response = this->body; // only put the body in here
 		}
 		else
+		{
 			this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
+		}
 		this->_responseMap[fd].total = this->_responseMap[fd].response.length();
 		this->_responseMap[fd].bytesLeft = this->_responseMap[fd].response.length();
 	}

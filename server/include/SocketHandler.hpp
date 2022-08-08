@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
+#include <fcntl.h>
 
 #include "Base.hpp"
 #include "Config.hpp"
@@ -97,7 +98,7 @@ class SocketHandler
 		int getNumEvents() const;
 		// const char *getBuffer() const;
 		std::string getBuffer() const;
-		int getFD() const;
+		int getFD(int i) const;
 
 	// Setter
 		void setWriteable(int i);

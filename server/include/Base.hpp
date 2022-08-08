@@ -43,6 +43,18 @@ struct LocationStruct
 	std::string indexPage;
 };
 
+// ReceiveStruct
+struct ReceiveStruct
+{
+	std::string header;
+	std::string target;
+	// std::string status;
+	// std::string statusMessage;
+	size_t total;
+	size_t bytesLeft;
+	int bufferSize;
+};
+
 // ConfigStruct
 struct ConfigStruct
 {

@@ -4,7 +4,7 @@
 #include <map> //std::map
 #include <sstream> //std::stringstream
 #include <iostream> //std::ios
-#include <fstream> //std::ifstream
+#include <fstream> //std::ifstream std::ofstream
 #include <sys/socket.h> // send
 #include <dirent.h> // dirent, opendir
 // #include <sys/types.h>  // opendir
@@ -131,6 +131,74 @@ int Response::sendall(const int sock_fd, char *buffer, const int len) const
 		std::cout << RED << "fd: " << sock_fd << " was closed after sending response" << RESET << std::endl;
 	#endif
 	return (0);
+}
+
+void Response::receiveChunk(int i)
+{
+	const int clientFd = i;
+	int total = this->_receiveMap[i].total;
+	int bytesLeft = this->_receiveMap[i].bytesLeft;
+
+	int n = 0;
+	std::ofstream buffer;
+	char *chunk = NULL;
+	buffer.open(this->_receiveMap[i].target, std::ios_base::app);
+	// int bufferLength;
+	if (total > this->_receiveMap[i].bufferSize && bytesLeft > this->_receiveMap[i].bufferSize)
+	{
+		std::cout << YELLOW << "bytesLeft: " << bytesLeft << RESET << std::endl;
+
+		n = read(clientFd, chunk, this->_receiveMap[i].bufferSize);
+
+		// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
+		// 			<< intToHexString(this->_receiveMap[i].bufferSize) << CRLF << this->_receiveMap[i].response.substr(total - bytesLeft, this->_receiveMap[i].bufferSize) << CRLF
+		// 			<< YELLOW << "<" << RESET << std::endl;
+	}
+	else /*if (total > this->_receiveMap[i].bufferSize && bytesLeft < this->_receiveMap[i].bufferSize)*/ // check if it works like that
+	{
+		std::cout << YELLOW << "last bytesLeft: " << bytesLeft << RESET << std::endl;
+		n = read(clientFd, chunk, bytesLeft);
+
+		// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
+		// 			<< (intToHexString(this->_receiveMap[i].bufferSize) + CRLF + this->_receiveMap[i].response.substr(total - bytesLeft, (bytesLeft + intToHexString(bytesLeft).length())) + CRLF)
+		// 			<< YELLOW << "<" << RESET << std::endl;
+	}
+	std::cout << BOLD << GREEN << "Bytes received from " << clientFd << ": " << n << RESET << std::endl;
+	if (n > 0)
+	{
+		if (n > bytesLeft)
+		{
+			std::cout << "CHECK n FOR RECEIVED BYTES!!!!!!!" << std::endl;
+			bytesLeft = 0;
+		}
+		else
+			bytesLeft -= n;
+		std::cout << BOLD << YELLOW << "Bytes left to read from " << clientFd << ": " << bytesLeft << RESET << std::endl;
+	}
+	else if (n == -1)
+	{
+		perror("send");
+		this->_receiveMap.erase(i);
+		bytesLeft = 0;
+		// throw Response::InternalServerErrorException(); // check if this gets through to send an error to the fd !!!!!!!!!!
+		// maybe use the create errorHead + errorBody instead here ????
+	}
+
+	if (bytesLeft)
+	{
+		this->_receiveMap[i].bytesLeft = bytesLeft;
+		buffer.close();
+	}
+	else
+	{
+		buffer.close();
+		// send response here!!!!!!!!!!!!!
+		// close(clientFd);
+		#ifdef SHOW_LOG
+			std::cout << RED << "fd: " << clientFd << " was closed after sending response" << RESET << std::endl;
+		#endif
+		this->_receiveMap.erase(i);
+	}
 }
 
 void Response::createErrorBody(void)

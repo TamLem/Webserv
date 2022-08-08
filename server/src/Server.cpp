@@ -130,15 +130,18 @@ void Server::handleGET(const Request& request)
 
 void Server::handlePOST(const Request& request)
 {
-	std::ofstream outFile;
+	// create and fill some temp response data structures, maybe even the
+	// std::ofstream outFile;
 	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
-	std::string tmp = UPLOAD_DIR;
-	tmp.append("testFile.txt");
+	// std::string tmp = UPLOAD_DIR;
+	this->_response.setTarget(i, request.getTarget()); // this maybe needs to be parsed???? put this target into the response class
+	// tmp.append("testFile.txt");
 	outFile.open(tmp); // AE body is not read anymore and therefore empty
 	if (outFile.is_open() == false)
 		throw std::exception();
+
 	outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;
-	outFile.close();
+	outFile.close(); // only close once all data is read from client body
 
 	_response.setProtocol(PROTOCOL);
 	_response.createBodyFromFile("./server/data/pages/post_test.html");

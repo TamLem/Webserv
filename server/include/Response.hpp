@@ -7,6 +7,7 @@
 #include <iostream> //std::ostream
 #include "Message.hpp"
 #include "Request.hpp"
+#include "Base.hpp"
 
 class Response : public Message
 {
@@ -19,12 +20,17 @@ class Response : public Message
 		std::string status;
 		std::string statusMessage;
 		std::map<std::string, std::string> messageMap;
+		std::map<size_t, ReceiveStruct> _receiveMap;
 		// std::string target;
 	// private Methods
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
 	protected:
 		int sendall(const int sock_fd, char *buffer, const int len) const;
+
+		void receiveChunk(int i);
+
+		void _addToReceiveMap(int i);
 	public:
 		Response(void);
 		~Response(void);
@@ -35,6 +41,7 @@ class Response : public Message
 		// void setTarget(const std::string&);
 		void setFd(int);
 		void setProtocol(const std::string&);
+		void setTarget(int i, std::string target);
 
 		// const std::string& getProtocol(void) const;
 		const std::string& getStatus(void) const;

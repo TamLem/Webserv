@@ -389,6 +389,7 @@ void Server::checkLocationMethod(const Request& request) const
 
 void Server::handleRequest(int fd)
 {
+	bool isCgi = false;
 	this->_response.clear();
 	this->loopDetected = false;
 	try
@@ -402,6 +403,8 @@ void Server::handleRequest(int fd)
 		//determine location
 		request.setTarget(this->percentDecoding(request.getTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
+		if (this->_requestHead.find("/cgi/") != std::string::npos)
+			isCgi = true;
 		#ifdef SHOW_LOG
 			std::cout  << YELLOW << "URI after percent-decoding: " << request.getTarget() << std::endl;
 		#endif
@@ -409,7 +412,7 @@ void Server::handleRequest(int fd)
 		request.setTarget("." + request.getTarget());
 		//check method
 		checkLocationMethod(request);
-		if (this->_requestHead.find("/cgi/") != std::string::npos)
+		if (isCgi == true)
 			cgi_handle(request, fd);
 		else if (request.getMethod() == "POST")
 			handlePOST(request);

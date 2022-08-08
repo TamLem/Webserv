@@ -77,7 +77,6 @@ all: $(NAME)
 
 #compile the executable
 $(NAME): $(OBJ) $(DEP)
-	@echo $(DEP)
 	@echo "$(YELLOW)Compiling [$(NAME)]...$(RESET)"
 	@$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 	@echo "$(GREEN)Finished [$(NAME)]$(RESET)"

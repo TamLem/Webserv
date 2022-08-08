@@ -151,9 +151,6 @@ void Server::handleERROR(const std::string& status)
 {
 	_response.setStatus(status);
 	_response.setProtocol(PROTOCOL);
-	std::cerr << BOLD << RED << "status: " << status << std::endl;
-	std::cerr << BOLD << RED << "count: " << this->_currentConfig.errorPage.count(status) << std::endl;
-	std::cerr << BOLD << RED << "path: " << this->_currentConfig.errorPage[status] << std::endl;
 	if (this->_currentConfig.errorPage.count(status) == 1 && this->loopDetected == false)
 	{
 		this->loopDetected = true;
@@ -437,7 +434,7 @@ void Server::handleRequest(int fd)
 		{
 		handleERROR(code);
 		}
-		catch(const std::exception& e)
+		catch(const std::exception& exception)
 		{
 			std::string code = exception.what();
 			if (_response.getMessageMap().count(code) != 1)

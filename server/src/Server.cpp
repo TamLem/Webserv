@@ -40,7 +40,7 @@ void Server::handle_signal(int sig)
 	}
 }
 
-void	Server::handle_signals(void)
+void Server::handle_signals(void)
 {
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, SIG_IGN);

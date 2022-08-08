@@ -128,9 +128,15 @@ void Server::handleERROR(const std::string& status)
 {
 	_response.setStatus(status);
 	_response.setProtocol(PROTOCOL);
-	_response.createErrorBody();
+	if (this->_currentConfig.errorPage.count(status) == 1 && this->loopDetected == false)
+	{
+		this->loopDetected = true;
+		_response.createBodyFromFile("." + this->_currentConfig.errorPage[status]);
+	}
+	else
+		_response.createErrorBody();
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
-	_response.addHeaderField("Content-Type", "text/html; charset=utf-8");
+	// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 	_response.addDefaultHeaderFields();
 }
 
@@ -368,6 +374,7 @@ void Server::checkLocationMethod(const Request& request) const
 void Server::handleRequest(int fd)
 {
 	this->_response.clear();
+	this->loopDetected = false;
 	try
 	{
 		this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
@@ -400,7 +407,17 @@ void Server::handleRequest(int fd)
 		std::string code = exception.what();
 		if (_response.getMessageMap().count(code) != 1)
 			code = "500";
+		try
+		{
 		handleERROR(code);
+		}
+		catch(const std::exception& exception)
+		{
+			std::string code = exception.what();
+			if (_response.getMessageMap().count(code) != 1)
+				code = "500";
+			handleERROR(code);
+		}
 	}
 	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 	this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi

@@ -5,7 +5,7 @@
 
 static std::string parseArgv(int argc, char **argv)
 {
-	std::string defaultConfPath = "config/www.conf";
+	std::string defaultConfPath = "server/config/test.conf";
 	if (argc == 1)
 	{
 		return (defaultConfPath);

@@ -15,7 +15,7 @@
 
 int main()
 {
-	int numConnections = 1;
+	int numConnections = 2;
 	while (numConnections > 0)
 	{
 
@@ -26,8 +26,8 @@ int main()
 		std::cout << RED << "Error creating socket" << std::endl << RESET;
 		return 1;
 	}
-	int val = 1;
-	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &val, 4);
+	// int val = 1;
+	// setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &val, 4);
 
 	struct sockaddr_in serv_addr;
 	serv_addr.sin_family = AF_INET;

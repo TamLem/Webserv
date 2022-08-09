@@ -46,7 +46,6 @@ struct client
 };
 
 void cgi_handle(Request& request, std::string buf, int fd);
-#define MAX_EVENTS 128
 
 static volatile int keep_running = 1;
 
@@ -101,6 +100,7 @@ class Server
 		void checkLocationMethod(const Request& request) const;
 		void handleGET(const Request&);
 		void handlePOST(const Request&);
+		void handleDELETE(const Request&);
 		void handleERROR(const std::string&);
 
 	// Exceptions

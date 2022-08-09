@@ -1,6 +1,8 @@
 #include "Server.hpp"
 #include "Config.hpp"
 #include "Cgi/Cgi.hpp"
+#include <dirent.h> // dirent, opendir
+#include <cstdio> // remove
 
 // Server::Server(void)
 // {
@@ -53,7 +55,10 @@ void Server::runEventLoop()
 {
 	while(keep_running)
 	{
+		
+		#ifdef SHOW_LOG_2
 		std::cout << "server running " << std::endl;
+		#endif
 		int numEvents = this->_socketHandler->getEvents();
 		if (numEvents == 0)
 		{
@@ -137,6 +142,50 @@ void Server::handlePOST(const Request& request)
 	_response.createBodyFromFile("./server/data/pages/post_test.html");
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
+	_response.setStatus("200");
+}
+
+static void staticRemoveDir(const std::string& path)
+{
+	struct dirent *entry = NULL;
+	DIR *dir = NULL;
+	dir = opendir(path.c_str());
+	while((entry = readdir(dir)))
+	{
+		DIR *sub_dir = NULL;
+		FILE *file = NULL;
+		std::string abs_path;
+		if(*(entry->d_name) != '.')
+		{
+			// sprintf(abs_path, "%s/%s", path, entry->d_name);
+			abs_path = path + "/" + entry->d_name;
+			if((sub_dir = opendir(abs_path.c_str())))
+			{
+				closedir(sub_dir);
+				staticRemoveDir(abs_path);
+			}
+			else 
+			{
+				if((file = fopen(abs_path.c_str(), "r")))
+				{
+					fclose(file);
+					// remove(abs_path.c_str());
+					std::cout << BOLD << RED << "Would have removed: " << abs_path << RESET <<std::endl;
+				}
+			}
+		}
+	}
+	remove(path.c_str());
+}
+
+void Server::handleDELETE(const Request& request)
+{
+	staticRemoveDir(request.getTarget());
+	_response.setProtocol(PROTOCOL);
+	// _response.createBodyFromFile("./server/data/pages/post_test.html");
+	_response.setBody("");
+	_response.addHeaderField("Server", this->_currentConfig.serverName);
+	// _response.addDefaultHeaderFields();
 	_response.setStatus("200");
 }
 
@@ -416,6 +465,8 @@ void Server::handleRequest(int fd)
 			cgi_handle(request, fd);
 		else if (request.getMethod() == "POST")
 			handlePOST(request);
+		else if (request.getMethod() == "DELETE")
+			handleDELETE(request);
 		else
 		{
 			handleGET(request);

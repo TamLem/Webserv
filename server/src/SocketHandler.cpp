@@ -158,7 +158,9 @@ int SocketHandler::getEvents()
 
 	timeout.tv_sec = 10;
 	timeout.tv_nsec = 0;
+	#ifdef SHOW_LOG_2
 	std::cout << "num clients: " << _clients.size() << std::endl;
+	#endif
 	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, &timeout);
 	return this->_numEvents;
 }
@@ -176,7 +178,9 @@ void SocketHandler::removeClient(int i) // can be void maybe
 {
 	if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR)  )
 	{
+		#ifdef SHOW_LOG_2
 		std::cout << "Removing client with fd: " << this->_fd << std::endl;
+		#endif
 		close(this->_evList[i].ident);
 		int index = this->_getClient(this->_evList[i].ident);
 		if (index != -1)

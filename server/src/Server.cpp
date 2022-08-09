@@ -52,11 +52,14 @@ void Server::runEventLoop()
 		if (numEvents == 0)
 		{
 			this->_socketHandler->removeInactiveClients();	// remove inactive clients
+			this->_response.clearResponseMap();
 		}
 		for (int i = 0; i < numEvents; ++i)
 		{
 			std::cout << "no. events: " << numEvents << " ev:" << i << std::endl;
 			this->_socketHandler->acceptConnection(i);
+			if (this->_socketHandler->removeClient(i) == true)
+				this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
 			if (this->_socketHandler->readFromClient(i) == true)
 			{
 				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
@@ -72,10 +75,11 @@ void Server::runEventLoop()
 					//delete the (fd, pair)reponse
 				// this->_handleResponse(i);
 				if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true)
-					this->_socketHandler->removeClient(i, true);
+				{
+					if (this->_socketHandler->removeClient(i, true) == true)
+						this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
+				}
 			}
-			this->_socketHandler->removeClient(i);
-		// move the writeRequest here
 		}
 	}
 }

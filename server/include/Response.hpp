@@ -48,6 +48,8 @@ class Response : public Message
 		void endChunkedMessage(int i, int n);
 
 		void clear(void);
+		void clearResponseMap();
+		void removeFromResponseMap(int fd);
 		// void init(const Request&);
 		// void init(const std::string&, int, const std::string&);
 		void addDefaultHeaderFields(void);

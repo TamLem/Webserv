@@ -45,6 +45,17 @@ void Response::clear(void)
 	target = "";
 }
 
+void Response::clearResponseMap()
+{
+	this->_responseMap.clear();
+}
+
+void Response::removeFromResponseMap(int fd)
+{
+	if (this->_responseMap.count(fd) == 1)
+		this->_responseMap.erase(fd);
+}
+
 Response::~Response(void)
 {
 	#ifdef SHOW_CONSTRUCTION

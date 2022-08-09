@@ -36,8 +36,8 @@ void SocketHandler::_initMainSockets()
 		}
 
 		// Set socket reusable from Time-Wait state
-		// int val = 1;
-		// setsockopt(tempFD, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
+		int val = 1;
+		setsockopt(tempFD, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
 
 		// initialize server address struct
 		struct sockaddr_in servAddr;
@@ -175,25 +175,27 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	return (this->_clients.size() - 1); // is this return value ever used??????
 }
 
-void SocketHandler::removeClient(int i, bool force)
+bool SocketHandler::removeClient(int i, bool force)
 {
 	if ((this->_evList[i].flags & EV_EOF ) /* || (this->_evList[i].flags & EV_CLEAR) */ || force)
 	{
-		std::cout << RED << (force ? "Kicking client " : "Removing client") <<  "fd: " << RESET << this->_fd << std::endl;
+		std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
 		close(this->_evList[i].ident);
 		int index = this->_getClient(this->_evList[i].ident);
 		if (index != -1)
 		{
 			this->_clients.erase(this->_clients.begin() + index);
-			EV_SET(&this->_evList[i], this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-			kevent(this->_kq, &this->_evList[i], 1, NULL, 0, NULL);
+			EV_SET(this->_evList, this->_evList[i].ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+			kevent(this->_kq, &this->_evList[i], 1, this->_evList, 0, NULL);
 			#ifdef SHOW_LOG
 				std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
 			#endif
+			return (true);
 		}
 		else
 			std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl;
 	}
+	return (false);
 }
 
 bool SocketHandler::readFromClient(int i)
@@ -201,10 +203,10 @@ bool SocketHandler::readFromClient(int i)
 	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].filter == EVFILT_READ)
 	{
 		this->_fd = this->_evList[i].ident;
-		int status = this->_getClient(this->_fd);
+		int status = this->_getClient(this->_evList[i].ident);
 		if (status == -1)
 		{
-			std::cerr << RED << "Error getting client for fd: " << this->_fd << std::endl;
+			std::cerr << RED << "read Error getting client for fd: " << this->_evList[i].ident << std::endl;
 			perror(NULL); // check if illegal
 			std::cerr << RESET;
 			return (false); // throw exception
@@ -220,10 +222,10 @@ bool SocketHandler::writeToClient(int i)
 	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].filter == EVFILT_WRITE)
 	{
 		this->_fd = this->_evList[i].ident;
-		int status = this->_getClient(this->_fd);
+		int status = this->_getClient(this->_evList[i].ident);
 		if (status == -1)
 		{
-			std::cerr << RED << "Error getting client for fd: " << this->_fd << std::endl;
+			std::cerr << RED << "write Error getting client for fd: " << this->_evList[i].ident << std::endl;
 			perror(NULL); // check if illegal
 			std::cerr << RESET;
 			return (false); // throw exception
@@ -310,7 +312,8 @@ int SocketHandler::getFD(int i) const
 void SocketHandler::setWriteable(int i)
 {
 	int fd = this->_evList[i].ident;
-	// EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+	EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+	kevent(this->_kq, &this->_evList[i], 1, this->_evList, 0, NULL);
 	struct kevent ev;
 	struct timespec timeout;
 

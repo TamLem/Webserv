@@ -29,11 +29,12 @@
 // defines for reading from client
 #define MAX_REQUEST_HEADER_SIZE 1024
 #define MAX_REQUEST_LINE_SIZE 512
-#define MAX_SEND_CHUNK_SIZE 1048576
+#define MAX_SEND_CHUNK_SIZE (100 * 1024)
 
 // ResponseStruct
 struct ResponseStruct
 {
+	std::string buffer;
 	std::string header;
 	std::string response;
 	// std::string status;

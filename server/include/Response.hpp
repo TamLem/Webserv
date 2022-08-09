@@ -45,6 +45,7 @@ class Response : public Message
 
 		std::string constructHeader(void);
 		std::string constructChunkedHeader(void);
+		void endChunkedMessage(int i, int n);
 
 		void clear(void);
 		// void init(const Request&);
@@ -54,6 +55,8 @@ class Response : public Message
 		void createIndex(const std::string&);
 		void createErrorBody(void);
 		bool sendResponse(int);
+
+	bool handleClientDisconnect(int fd);
 
 	class InvalidStatus : public std::exception
 	{
@@ -71,6 +74,10 @@ class Response : public Message
 	};
 
 	class InternalServerErrorException : public std::exception
+	{
+		const char* what() const throw();
+	};
+	class ClientDisconnectException : public std::exception
 	{
 		const char* what() const throw();
 	};

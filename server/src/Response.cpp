@@ -286,32 +286,6 @@ void Response::addDefaultHeaderFields(void)
 	}
 }
 
-bool Response::sendResponse(int fd)
-{
-// old start
-	// std::string response = this->constructHeader() + this->body;
-	// sendall(fd, (char *)response.c_str(), response.length());
-// old end
-	if (this->_responseMap.count(fd) == 0)
-	{
-		if (this->body.size() > MAX_SEND_CHUNK_SIZE)
-		{
-			this->_responseMap[fd].header = this->constructChunkedHeader();
-			this->_responseMap[fd].response = this->body; // only put the body in here
-		}
-		else
-		{
-			this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
-		}
-		this->_responseMap[fd].total = this->_responseMap[fd].response.length();
-		this->_responseMap[fd].bytesLeft = this->_responseMap[fd].response.length();
-	}
-	sendChunk(fd);
-	if (this->_responseMap.count(fd) == 0)
-		return (true);
-	return (false);
-}
-
 void Response::createMessageMap(void)
 {
 	//1xx informational response
@@ -416,4 +390,9 @@ const char* Response::InvalidProtocol::what() const throw() //AE is it good to h
 const char* Response::InternalServerErrorException::what() const throw()
 {
 	return ("500");
+}
+
+const char* Response::ClientDisconnectException::what() const throw()
+{
+	return ("client disconnected");
 }

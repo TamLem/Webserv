@@ -36,8 +36,8 @@ void SocketHandler::_initMainSockets()
 		}
 
 		// Set socket reusable from Time-Wait state
-		int val = 1;
-		setsockopt(tempFD, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
+		// int val = 1;
+		// setsockopt(tempFD, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
 
 		// initialize server address struct
 		struct sockaddr_in servAddr;
@@ -280,6 +280,7 @@ SocketHandler::~SocketHandler()
 {
 	for (std::vector<int>::const_iterator it = this->_serverFds.begin(); it != this->_serverFds.end(); ++it)
 		close(*it);
+	close(this->_kq);
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << RED << "SocketHandler Deconstructor called for " << this << RESET << std::endl;
 	#endif

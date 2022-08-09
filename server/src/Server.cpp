@@ -74,7 +74,7 @@ void Server::runEventLoop()
 				if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true)
 					this->_socketHandler->removeClient(i, true);
 			}
-			// this->_socketHandler->removeClient(i);
+			this->_socketHandler->removeClient(i);
 		// move the writeRequest here
 		}
 	}

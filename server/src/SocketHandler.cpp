@@ -148,13 +148,7 @@ bool SocketHandler::addSocket(int fd)
 		return false;
 	}
 	// where socketfd is the socket you want to make non-blocking
-	// int status = fcntl(fd, F_SETFL, O_NONBLOCK);
 
-	// if (status == -1){
-	// 	perror("calling fcntl");
-	// 	exit(0);
-  // handle the error.  By the way, I've never seen fcntl fail in this way
-	// }
 	int val = 1;
 	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4); // is SO_NOSIGPIPE needed here ???????
 	this->_fd = fd;
@@ -183,7 +177,7 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 
 void SocketHandler::removeClient(int i, bool force)
 {
-	if ((this->_evList[i].flags & EV_EOF ) || (this->_evList[i].flags & EV_CLEAR) || force)
+	if ((this->_evList[i].flags & EV_EOF ) /* || (this->_evList[i].flags & EV_CLEAR) */ || force)
 	{
 		std::cout << RED << (force ? "Kicking client " : "Removing client") <<  "fd: " << RESET << this->_fd << std::endl;
 		close(this->_evList[i].ident);
@@ -328,6 +322,14 @@ void SocketHandler::setWriteable(int i)
 		perror(NULL);
 		std::cerr << RESET;
 		return ;
+	}
+
+	int status = fcntl(fd, F_SETFL, O_NONBLOCK);
+
+	if (status == -1){
+		perror("calling fcntl");
+		exit(0);
+  		// handle the error.  By the way, I've never seen fcntl fail in this way
 	}
 	int val = 1;
 	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);

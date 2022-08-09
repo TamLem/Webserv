@@ -10,6 +10,16 @@
 // 	handle_signals();
 // }
 
+static std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace)
+{
+		size_t position = 0;
+		for ( position = str.find(tofind); position != std::string::npos; position = str.find(tofind,position) )
+		{
+				str.replace(position , tofind.length(), toreplace);
+		}
+		return(str);
+}
+
 void Server::handle_signal(int sig)
 {
 	if (sig == SIGINT)
@@ -104,19 +114,20 @@ void Server::handlePOST(const Request& request)
 {
 	std::ofstream outFile;
 	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
-	std::string tmp = UPLOAD_DIR;
-	tmp.append("testFile.txt");
-	outFile.open(tmp.c_str()); // AE body is not read anymore and therefore empty
+	std::string teststring = "myfile=Disaster-Girl.jpg"; // AE remove this
+	std::string file = staticReplaceInString(teststring, "myfile=", ""); // AE this has to be request.getBody() instead of teststring
+	std::string target = UPLOAD_DIR + file;
+	outFile.open(target.c_str()); // AE body is not read anymore and therefore empty
 	if (outFile.is_open() == false)
 		throw std::exception();
-	outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;
+	outFile << request.getBody();
 	outFile.close();
 
 	_response.setProtocol(PROTOCOL);
 	_response.createBodyFromFile("./server/data/pages/post_test.html");
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
-	_response.setStatus("200");
+	_response.setStatus("201");
 }
 
 static void staticRemoveTarget(const std::string& path)
@@ -341,16 +352,6 @@ void Server::matchLocation(Request& request)
 	#ifdef SHOW_LOG
 		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getTarget() << " for location: " << _currentLocationKey  << std::endl;
 	#endif
-}
-
-static std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace)
-{
-		size_t position = 0;
-		for ( position = str.find(tofind); position != std::string::npos; position = str.find(tofind,position) )
-		{
-				str.replace(position , tofind.length(), toreplace);
-		}
-		return(str);
 }
 
 static std::string staticPercentDecodingFix(std::string target)

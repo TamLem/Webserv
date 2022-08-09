@@ -145,8 +145,15 @@ void Server::handlePOST(const Request& request)
 	_response.setStatus("200");
 }
 
+static void staticRemoveFile(const std::string& path)
+{
+	if (remove(path.c_str()) != 0)
+		throw Response::ERROR_404();
+}
+
 static void staticRemoveDir(const std::string& path)
 {
+	std::cout << BOLD << BLUE << "staticRemoveDir with path: " << path << RESET <<std::endl;
 	struct dirent *entry = NULL;
 	DIR *dir = NULL;
 	dir = opendir(path.c_str());
@@ -155,10 +162,13 @@ static void staticRemoveDir(const std::string& path)
 		DIR *sub_dir = NULL;
 		FILE *file = NULL;
 		std::string abs_path;
-		if(*(entry->d_name) != '.')
+		std::string name = entry->d_name;
+		std::cout << RED << "name: " << name << RESET <<std::endl;
+		if(name != "." && name != "..")
 		{
-			// sprintf(abs_path, "%s/%s", path, entry->d_name);
-			abs_path = path + "/" + entry->d_name;
+			// sprintf(abs_path, "%s/%s", path,name);
+			abs_path = path + "/" + name;
+			std::cout << RED << "abs_path: " << abs_path << RESET <<std::endl;
 			if((sub_dir = opendir(abs_path.c_str())))
 			{
 				closedir(sub_dir);
@@ -169,18 +179,22 @@ static void staticRemoveDir(const std::string& path)
 				if((file = fopen(abs_path.c_str(), "r")))
 				{
 					fclose(file);
+					std::cout << BOLD << RED << "Removed: " << abs_path << RESET <<std::endl;
 					// remove(abs_path.c_str());
-					std::cout << BOLD << RED << "Would have removed: " << abs_path << RESET <<std::endl;
 				}
 			}
 		}
 	}
-	remove(path.c_str());
+	std::cout << BOLD << RED << "Removed: " << path << RESET <<std::endl;
+	// remove(path.c_str());
 }
 
 void Server::handleDELETE(const Request& request)
 {
-	staticRemoveDir(request.getTarget());
+	if (request.isFile == true)
+		staticRemoveFile(request.getTarget());
+	else
+		staticRemoveDir(request.getTarget().substr(0, request.getTarget().length() - 1));
 	_response.setProtocol(PROTOCOL);
 	// _response.createBodyFromFile("./server/data/pages/post_test.html");
 	_response.setBody("");

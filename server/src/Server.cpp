@@ -343,6 +343,40 @@ void Server::matchLocation(Request& request)
 	#endif
 }
 
+static std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace)
+{
+		size_t position = 0;
+		for ( position = str.find(tofind); position != std::string::npos; position = str.find(tofind,position) )
+		{
+				str.replace(position , tofind.length(), toreplace);
+		}
+		return(str);
+}
+
+static std::string staticPercentDecodingFix(std::string target)
+{
+	std::string accent;
+	accent += (const char)204;
+	accent += (const char)136;
+
+	std::string ü;
+	ü += (const char)195;
+	ü += (const char)188;
+
+	std::string ä;
+	ä += (const char)195;
+	ä += (const char)164;
+
+	std::string ö;
+	ö += (const char)195;
+	ö += (const char)182;
+
+	target = staticReplaceInString(target, "u" + accent, ü);
+	target = staticReplaceInString(target, "a" + accent, ä);
+	target = staticReplaceInString(target, "o" + accent, ö);
+	return (target);
+}
+
 std::string Server::percentDecoding(const std::string& str)
 {
 	std::stringstream tmp;
@@ -366,7 +400,7 @@ std::string Server::percentDecoding(const std::string& str)
 			i++;
 		}
 	}
-	return(tmp.str());
+	return (staticPercentDecodingFix(tmp.str()));
 }
 
 void Server::checkLocationMethod(const Request& request) const

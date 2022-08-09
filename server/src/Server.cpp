@@ -185,12 +185,18 @@ static void staticRemoveDir(const std::string& path)
 					fclose(file);
 					if (remove(abs_path.c_str()) == 0)
 						std::cout << BOLD << RED << "Removed: " << abs_path << RESET <<std::endl;
+					else
+						std::cout << BOLD << RED << "ERROR removing: " << abs_path << RESET <<std::endl;
+
 				}
 			}
 		}
 	}
 	if (remove(path.c_str()) == 0)
 		std::cout << BOLD << RED << "Removed: " << path << RESET <<std::endl;
+	else
+		std::cout << BOLD << RED << "ERROR removing: " << path << RESET <<std::endl;
+
 }
 
 void Server::handleDELETE(const Request& request)

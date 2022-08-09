@@ -121,15 +121,19 @@ void Server::handleGET(const Request& request)
 	_response.setStatus("200");
 }
 
-void Server::handlePOST(const Request& request)
+void Server::handlePOST(int clientFd, const Request& request)
 {
-	(void)request;
+	std::map<std::string, std::string> tempHeaderFields = request.getHeaderFields();
+	std::stringstream clientMaxBodySize;
+	clientMaxBodySize << this->_currentConfig.clientMaxBodySize;
+	if (tempHeaderFields.count("Content-Length") == 0)
+		throw Server::LengthRequiredException();
+	else if (tempHeaderFields["Content-Length"] > clientMaxBodySize.str())
+		throw Server::ContentTooLargeException();
 	// create and fill some temp response data structures, maybe even the
 	// std::ofstream outFile;
 	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
 	// std::string tmp = UPLOAD_DIR;
-	// int i = clientFd
-	// this->_response.setTarget(i, request.getTarget()); // this maybe needs to be parsed???? put this target into the response class
 	// tmp.append("testFile.txt");
 	// outFile.open(tmp); // AE body is not read anymore and therefore empty
 	// if (outFile.is_open() == false)
@@ -138,11 +142,14 @@ void Server::handlePOST(const Request& request)
 	// outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;
 	// outFile.close(); // only close once all data is read from client body
 
-	_response.setProtocol(PROTOCOL);
-	_response.createBodyFromFile("./server/data/pages/post_test.html");
-	_response.addHeaderField("Server", this->_currentConfig.serverName);
-	_response.addDefaultHeaderFields();
-	_response.setStatus("200");
+	this->_response.setProtocol(PROTOCOL);
+	// _response.createBodyFromFile("./server/data/pages/post_test.html");
+	this->_response.addHeaderField("Server", this->_currentConfig.serverName);
+	// _response.addDefaultHeaderFields();
+	this->_response.setStatus("201");
+	this->_response.setPostTarget(clientFd, request.getTarget()); // put target into the response class
+	this->_response.setPostLength(clientFd, (request.getHeaderFields()));
+	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
 }
 
 void Server::handleERROR(const std::string& status)
@@ -398,29 +405,35 @@ void Server::handleRequest(int fd)
 	this->loopDetected = false;
 	try
 	{
-		this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
-		Request request(this->_requestHead);
-		this->applyCurrentConfig(request);
-		//normalize target (in Request)
-		//compression (merge slashes)
-		//resolve relative paths
-		//determine location
-		request.setTarget(this->percentDecoding(request.getTarget()));
-		request.setQuery(this->percentDecoding(request.getQuery()));
-		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "URI after percent-decoding: " << request.getTarget() << std::endl;
-		#endif
-		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
-		request.setTarget("." + request.getTarget());
-		//check method
-		checkLocationMethod(request);
-		if (this->_requestHead.find("/cgi/") != std::string::npos)
-			cgi_handle(request, fd);
-		else if (request.getMethod() == "POST")
-			handlePOST(request);
+		// if (this->_response._receiveMap.count(fd) == 1)
+		if (this->_response.checkReceiveExistance(fd) == 1)
+			this->_response.receiveChunk(fd);
 		else
 		{
-			handleGET(request);
+			this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
+			Request request(this->_requestHead);
+			this->applyCurrentConfig(request);
+			//normalize target (in Request)
+			//compression (merge slashes)
+			//resolve relative paths
+			//determine location
+			request.setTarget(this->percentDecoding(request.getTarget()));
+			request.setQuery(this->percentDecoding(request.getQuery()));
+			#ifdef SHOW_LOG
+				std::cout  << YELLOW << "URI after percent-decoding: " << request.getTarget() << std::endl;
+			#endif
+			this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
+			request.setTarget("." + request.getTarget());
+			//check method
+			checkLocationMethod(request);
+			if (this->_requestHead.find("/cgi/") != std::string::npos)
+				cgi_handle(request, fd);
+			else if (request.getMethod() == "POST")
+				handlePOST(fd, request);
+			else
+			{
+				handleGET(request);
+			}
 		}
 	}
 	catch (std::exception& exception)
@@ -476,7 +489,7 @@ void Server::_readRequestHead(int fd)
 			#ifdef SHOW_LOG
 				std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
 			#endif
-			throw Server::InternatServerErrorException();
+			throw Server::InternalServerErrorException();
 		}
 		else if (n == 0) // read reached eof
 			break ;
@@ -523,7 +536,7 @@ void Server::_readRequestHead(int fd)
 }
 
 // Exceptions
-const char* Server::InternatServerErrorException::what(void) const throw()
+const char* Server::InternalServerErrorException::what(void) const throw()
 {
 	return ("500");
 }
@@ -554,4 +567,14 @@ const char* Server::InvalidHex::what() const throw()
 const char* Server::MethodNotAllowed::what() const throw()
 {
 	return ("405");
+}
+
+const char* Server::LengthRequiredException::what() const throw()
+{
+	return ("411");
+}
+
+const char* Server::ContentTooLargeException::what() const throw()
+{
+	return ("413");
 }

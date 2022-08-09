@@ -28,12 +28,13 @@ class Response : public Message
 	protected:
 		int sendall(const int sock_fd, char *buffer, const int len) const;
 
-		void receiveChunk(int i);
 
 		void _addToReceiveMap(int i);
 	public:
 		Response(void);
 		~Response(void);
+
+		void receiveChunk(int i);
 
 		// void setProtocol(const std::string&);
 		void setStatus(const std::string&);
@@ -41,7 +42,10 @@ class Response : public Message
 		// void setTarget(const std::string&);
 		void setFd(int);
 		void setProtocol(const std::string&);
-		void setTarget(int i, std::string target);
+		void setPostTarget(int clientFd, std::string target);
+		void setPostLength(int clientFd, std::map<std::string, std::string> headerFields);
+		void setPostBufferSize(int clientFd, size_t bufferSize);
+		bool checkReceiveExistance(int clientFd);
 
 		// const std::string& getProtocol(void) const;
 		const std::string& getStatus(void) const;

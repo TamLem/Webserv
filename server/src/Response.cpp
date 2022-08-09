@@ -64,10 +64,21 @@ void Response::setBody(const std::string& body)
 	this->body = body;
 }
 
-// void Response::setTarget(const std::string& target)
-// {
-// 	this->target = target;
-// }
+void Response::setPostTarget(int clientFd, std::string target)
+{
+	this->_receiveMap[clientFd].target = target;
+}
+
+void Response::setPostLength(int clientFd, std::map<std::string, std::string> headerFields)
+{
+	this->_receiveMap[clientFd].total = headerFields["Content-Length"];
+	this->_receiveMap[clientFd].bytesLeft = length;
+}
+
+void Response::setPostBufferSize(int clientFd, size_t bufferSize)
+{
+	this->_receiveMap[clientFd].bufferSize = bufferSize;
+}
 
 void Response::setProtocol(const std::string& protocol)
 {

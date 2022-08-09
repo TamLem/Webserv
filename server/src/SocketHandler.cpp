@@ -37,7 +37,7 @@ void SocketHandler::_initMainSockets()
 
 		// Set socket reusable from Time-Wait state
 		int val = 1;
-		setsockopt(tempFD, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
+		setsockopt(tempFD, SOL_SOCKET, SO_NOSIGPIPE, &val, 4); // is SO_NOSIGPIPE needed here ???????
 
 		// initialize server address struct
 		struct sockaddr_in servAddr;

@@ -100,11 +100,11 @@ class Server
 		std::string percentDecoding(const std::string&);
 		void checkLocationMethod(const Request& request) const;
 		void handleGET(const Request&);
-		void handlePOST(const Request&); // maybe passs fd to this function
+		void handlePOST(int clientFd, const Request&); // maybe passs fd to this function
 		void handleERROR(const std::string&);
 
 	// Exceptions
-		class InternatServerErrorException : public std::exception
+		class InternalServerErrorException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();
@@ -128,6 +128,16 @@ class Server
 		};
 
 		class MethodNotAllowed : public std::exception
+		{
+			const char* what() const throw();
+		};
+
+		class LengthRequiredException : public std::exception
+		{
+			const char* what() const throw();
+		};
+
+		class ContentTooLargeException : public std::exception
 		{
 			const char* what() const throw();
 		};

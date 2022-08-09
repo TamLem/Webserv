@@ -302,6 +302,11 @@ const std::string& Request::getFragment(void) const
 	return (this->fragment);
 }
 
+const std::map<std::string, std::string>& Request::getHeaderFields() const
+{
+	return (this->headerFields);
+}
+
 // const std::string& Request::getProtocol(void) const
 // {
 // 	return (this->protocol);

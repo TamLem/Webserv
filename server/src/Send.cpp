@@ -15,6 +15,7 @@
 
 bool Response::sendResponse(int fd)
 {
+	// return true;
 	// std::cout << "MAX_SEND_CHUNK_SIZE: " << MAX_SEND_CHUNK_SIZE << std::endl;
 // old start
 	// std::string response = this->constructHeader() + this->body;
@@ -41,9 +42,9 @@ bool Response::sendResponse(int fd)
 	catch(const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
-		return (true); 
+		return (true);
 	}
-	
+
 	if (this->_responseMap.count(fd) == 0)
 		return (true);
 	return (false);
@@ -187,7 +188,7 @@ void Response::sendChunk(int i)
 		// 			<< this->_responseMap[i].response
 		// 			<< YELLOW << "<" << RESET << std::endl;
 	}
-	std::cout << BOLD << GREEN << "Bytes send to " << clientFd << ": " << n << RESET << std::endl;
+	std::cout << BOLD << GREEN << "Bytes send to " << clientFd << ": " << n << " (" << this->_responseMap[i].bytesLeft << " bytes remaining)" << RESET << std::endl;
 	endChunkedMessage(i, n);
 }
 

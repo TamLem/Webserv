@@ -103,6 +103,7 @@ class Server
 		void handleDELETE(const Request&);
 		void handleERROR(const std::string&);
 
+	public:
 	// Exceptions
 		class InternatServerErrorException : public std::exception
 		{

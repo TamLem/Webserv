@@ -40,7 +40,6 @@ void Request::parseMessage(const std::string& message)
 		parseBody(stream);
 }
 
-//AE check what happens for space before method and multiple spaces or
 void Request::parseStartLine(std::istringstream& stream)
 {
 	std::vector<std::string> tokens;
@@ -226,7 +225,6 @@ void Request::parseBody(std::istringstream& stream)
 	int length = 0;
 
 	while (stream.eof() == false)
-	// while (length < this->headerFields["Content-Length"]) AE length check, how to ptotect agains invalid chars?
 	{
 		std::string line;
 

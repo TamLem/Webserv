@@ -79,22 +79,6 @@ void Server::runEventLoop()
 	}
 }
 
-// static void staticAutoIndex(const Request& request)
-// {
-// 	DIR *d;
-// 	struct dirent *dir;
-// 	d = opendir(request.getTarget());
-// 	if (d)
-// 	{
-// 		while ((dir = readdir(d)) != NULL)
-// 		{
-// 			// printf("%s\n", dir->d_name);
-// 			std::cout << dir->d_name << std::endl
-// 		}
-// 		closedir(d);
-// 	}
-// }
-
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
@@ -105,22 +89,12 @@ void Server::handleGET(const Request& request)
 		|| this->_currentConfig.autoIndex == true)
 		{
 			_response.createIndex(request.getTarget());
-			// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 		}
 		else
-		{
-			// std::cerr << BOLD << RED << "target1:" << request.getTarget() << RESET << std::endl;
-			// std::cerr << BOLD << RED << "indexPage:" << request.indexPage << RESET << std::endl;
 			_response.createBodyFromFile(request.getTarget() + request.indexPage);
-			// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
-		}
 	}
 	else
-	{
-			// std::cerr << BOLD << RED << "target2:" << request.getTarget() << RESET << std::endl;
 		_response.createBodyFromFile(request.getTarget() + request.indexPage);
-		// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
-	}
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
@@ -151,7 +125,6 @@ static void staticRemoveTarget(const std::string& path)
 		throw Response::ERROR_404();
 	if (remove(path.c_str()) != 0)
 	{
-		// std::cout << BOLD << RED << "ERRNO: " << errno << RESET <<std::endl;
 		if (errno == EACCES)
 			throw Response::ERROR_403();
 		if (errno == ENOTEMPTY)
@@ -161,61 +134,12 @@ static void staticRemoveTarget(const std::string& path)
 	}
 }
 
-// static void staticRemoveDir(const std::string& path)
-// {
-// 	/*// std::cout << BOLD << BLUE << "staticRemoveDir with path: " << path << RESET <<std::endl;
-// 	struct dirent *entry = NULL;
-// 	DIR *dir = NULL;
-// 	dir = opendir(path.c_str());
-// 	while((entry = readdir(dir)))
-// 	{
-// 		DIR *sub_dir = NULL;
-// 		FILE *file = NULL;
-// 		std::string abs_path;
-// 		std::string name = entry->d_name;
-// 		// std::cout << RED << "name: " << name << RESET <<std::endl;
-// 		if(name != "." && name != "..")
-// 		{
-// 			// sprintf(abs_path, "%s/%s", path,name);
-// 			abs_path = path + "/" + name;
-// 			// std::cout << RED << "abs_path: " << abs_path << RESET <<std::endl;
-// 			if((sub_dir = opendir(abs_path.c_str())))
-// 			{
-// 				closedir(sub_dir);
-// 				staticRemoveDir(abs_path);
-// 			}
-// 			else 
-// 			{
-// 				if((file = fopen(abs_path.c_str(), "r"))) //change to access
-// 				{
-// 					fclose(file);
-// 					if (remove(abs_path.c_str()) == 0)
-// 						std::cout << BOLD << RED << "Removed: " << abs_path << RESET <<std::endl;
-// 					else
-// 						std::cout << BOLD << RED << "ERROR removing: " << abs_path << RESET <<std::endl;
-
-// 				}
-// 			}
-// 		}
-// 	}*/
-// 	if (remove(path.c_str()) == 0)
-// 		std::cout << BOLD << RED << "Removed: " << path << RESET <<std::endl;
-// 	else
-// 		std::cout << BOLD << RED << "ERROR removing: " << path << RESET <<std::endl;
-
-// }
-
 void Server::handleDELETE(const Request& request)
 {
-	// if (request.isFile == true)
-		staticRemoveTarget(request.getTarget());
-	// else
-	// 	staticRemoveDir(request.getTarget().substr(0, request.getTarget().length() - 1));
+	staticRemoveTarget(request.getTarget());
 	_response.setProtocol(PROTOCOL);
-	// _response.createBodyFromFile("./server/data/pages/post_test.html");
 	_response.setBody("");
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
-	// _response.addDefaultHeaderFields();
 	_response.setStatus("200");
 }
 
@@ -231,7 +155,6 @@ void Server::handleERROR(const std::string& status)
 	else
 		_response.createErrorBody();
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
-	// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 	_response.addDefaultHeaderFields();
 }
 
@@ -334,7 +257,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 	#endif
 	int i = 0;
 	int segments = 0;
-	if (target.length() >= path.length()) //path has to be checked until the end and segments need to be counted
+	if (target.length() >= path.length())
 	{
 		while (path[i] != '\0')
 		{
@@ -347,7 +270,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 				segments++;
 			i++;
 		}
-		if (target[i - 1] != '\0' && target[i - 1] != '/') // carefull with len = 0!!!!!!!!!!!
+		if (target[i - 1] != '\0' && target[i - 1] != '/')
 			segments = 0;
 	}
 	if (segments > max_count)
@@ -363,12 +286,8 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 			request.isFile = false;
 			if (it->second.indexPage.empty() == false)
 				request.indexPage = it->second.indexPage;
-				// result += it->second.indexPage;
 			else
 				request.indexPage = this->_currentConfig.indexPage;
-				// result += this->_currentConfig.indexPage;
-			// else
-			// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 		}
 		request.setTarget(result);
 		_currentLocationKey = it->first;
@@ -387,10 +306,6 @@ void Server::routeDefault(Request& request)
 	{
 		request.isFile = false;
 		request.indexPage = this->_currentConfig.indexPage;
-		// if (this->_currentConfig.autoIndex == false)
-			// result += this->_currentConfig.indexPage;
-		// else
-		// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 	}
 	request.setTarget(result);
 	_currentLocationKey = "";
@@ -431,21 +346,18 @@ void Server::matchLocation(Request& request)
 std::string Server::percentDecoding(const std::string& str)
 {
 	std::stringstream tmp;
-	// std::string str = request.getTarget();
 	char c;
 	int i = 0;
 	while (str[i] != '\0')
 	{
 		if (str[i] == '%')
 		{
-			// valid ascii check
 			if (str[i + 1] == '\0' || str[i + 2] == '\0')
 				throw InvalidHex();
 			c = char(strtol(str.substr(i + 1, 2).c_str(), NULL, 16));
 			if (c == 0)
 				throw InvalidHex();
 			tmp << c;
-			// std::cerr << RED << str.substr(i + 1, 2) << RESET << std::endl;
 			i += 3;
 		}
 		else
@@ -454,7 +366,6 @@ std::string Server::percentDecoding(const std::string& str)
 			i++;
 		}
 	}
-	// request.setTarget(tmp.str());
 	return(tmp.str());
 }
 

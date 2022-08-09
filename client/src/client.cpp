@@ -15,7 +15,8 @@
 
 int main()
 {
-	int numConnections = 2;
+	int numConnections = 50; // us this to determine how many interrupted connection you want to have
+	// while (true) // use this to bomb a server
 	while (numConnections > 0)
 	{
 
@@ -64,6 +65,7 @@ int main()
 		close(sockfd);
 		// memset(buffer, 0, sizeof(buffer));
 		--numConnections;
+		usleep(10000); // change this to bomb it faster
 	}
 
 	return 0;

@@ -346,3 +346,8 @@ const char* Request::InvalidProtocol::what() const throw()
 {
 	return ("505");
 }
+
+const char* Request::DirectoryNotEmpty::what() const throw()
+{
+	return ("400");
+}

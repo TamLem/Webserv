@@ -80,6 +80,6 @@ class Response : public Message
 
 std::ostream& operator<<(std::ostream&, const Response&);
 
-bool fileExists(const std::string&);
+bool targetExists(const std::string&);
 
 #endif

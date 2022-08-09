@@ -243,7 +243,7 @@ void Response::createBodyFromFile(const std::string& target)
 	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
 	if (access(target.c_str(), F_OK) != 0 && errno == EACCES)
 		throw ERROR_403();
-	if (fileExists(target) == false || staticTargetIsDir(target) == true)
+	if (targetExists(target) == false || staticTargetIsDir(target) == true)
 		throw ERROR_404();
 	std::ifstream file(target.c_str(), std::ios::binary);
 	if (file.is_open())
@@ -387,7 +387,7 @@ const char* Response::ERROR_500::what() const throw()
 	return ("500");
 }
 
-bool fileExists(const std::string& target)
+bool targetExists(const std::string& target)
 {
 	struct stat statStruct;
 

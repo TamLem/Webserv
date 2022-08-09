@@ -102,6 +102,11 @@ class Request : public Message
 	{
 		const char* what() const throw();
 	};
+
+	class DirectoryNotEmpty : public std::exception
+	{
+		const char* what() const throw();
+	};
 };
 
 std::ostream& operator<<(std::ostream&, const Request&);

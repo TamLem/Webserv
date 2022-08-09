@@ -98,7 +98,7 @@ void Server::runEventLoop()
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	if (request.isFile == false && fileExists(request.getTarget() + request.indexPage) == false)
+	if (request.isFile == false && targetExists(request.getTarget() + request.indexPage) == false)
 	{
 		if ((this->_currentLocationKey.empty() == false
 		&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
@@ -145,69 +145,72 @@ void Server::handlePOST(const Request& request)
 	_response.setStatus("200");
 }
 
-static void staticRemoveFile(const std::string& path)
+static void staticRemoveTarget(const std::string& path)
 {
-	if (fileExists(path) == false)
+	if (targetExists(path) == false)
 		throw Response::ERROR_404();
 	if (remove(path.c_str()) != 0)
 	{
+		// std::cout << BOLD << RED << "ERRNO: " << errno << RESET <<std::endl;
 		if (errno == EACCES)
 			throw Response::ERROR_403();
+		if (errno == ENOTEMPTY)
+			throw Request::DirectoryNotEmpty();
 		else
 			throw Response::ERROR_500();
 	}
 }
 
-static void staticRemoveDir(const std::string& path)
-{
-	// std::cout << BOLD << BLUE << "staticRemoveDir with path: " << path << RESET <<std::endl;
-	struct dirent *entry = NULL;
-	DIR *dir = NULL;
-	dir = opendir(path.c_str());
-	while((entry = readdir(dir)))
-	{
-		DIR *sub_dir = NULL;
-		FILE *file = NULL;
-		std::string abs_path;
-		std::string name = entry->d_name;
-		// std::cout << RED << "name: " << name << RESET <<std::endl;
-		if(name != "." && name != "..")
-		{
-			// sprintf(abs_path, "%s/%s", path,name);
-			abs_path = path + "/" + name;
-			// std::cout << RED << "abs_path: " << abs_path << RESET <<std::endl;
-			if((sub_dir = opendir(abs_path.c_str())))
-			{
-				closedir(sub_dir);
-				staticRemoveDir(abs_path);
-			}
-			else 
-			{
-				if((file = fopen(abs_path.c_str(), "r"))) //change to access
-				{
-					fclose(file);
-					if (remove(abs_path.c_str()) == 0)
-						std::cout << BOLD << RED << "Removed: " << abs_path << RESET <<std::endl;
-					else
-						std::cout << BOLD << RED << "ERROR removing: " << abs_path << RESET <<std::endl;
+// static void staticRemoveDir(const std::string& path)
+// {
+// 	/*// std::cout << BOLD << BLUE << "staticRemoveDir with path: " << path << RESET <<std::endl;
+// 	struct dirent *entry = NULL;
+// 	DIR *dir = NULL;
+// 	dir = opendir(path.c_str());
+// 	while((entry = readdir(dir)))
+// 	{
+// 		DIR *sub_dir = NULL;
+// 		FILE *file = NULL;
+// 		std::string abs_path;
+// 		std::string name = entry->d_name;
+// 		// std::cout << RED << "name: " << name << RESET <<std::endl;
+// 		if(name != "." && name != "..")
+// 		{
+// 			// sprintf(abs_path, "%s/%s", path,name);
+// 			abs_path = path + "/" + name;
+// 			// std::cout << RED << "abs_path: " << abs_path << RESET <<std::endl;
+// 			if((sub_dir = opendir(abs_path.c_str())))
+// 			{
+// 				closedir(sub_dir);
+// 				staticRemoveDir(abs_path);
+// 			}
+// 			else 
+// 			{
+// 				if((file = fopen(abs_path.c_str(), "r"))) //change to access
+// 				{
+// 					fclose(file);
+// 					if (remove(abs_path.c_str()) == 0)
+// 						std::cout << BOLD << RED << "Removed: " << abs_path << RESET <<std::endl;
+// 					else
+// 						std::cout << BOLD << RED << "ERROR removing: " << abs_path << RESET <<std::endl;
 
-				}
-			}
-		}
-	}
-	if (remove(path.c_str()) == 0)
-		std::cout << BOLD << RED << "Removed: " << path << RESET <<std::endl;
-	else
-		std::cout << BOLD << RED << "ERROR removing: " << path << RESET <<std::endl;
+// 				}
+// 			}
+// 		}
+// 	}*/
+// 	if (remove(path.c_str()) == 0)
+// 		std::cout << BOLD << RED << "Removed: " << path << RESET <<std::endl;
+// 	else
+// 		std::cout << BOLD << RED << "ERROR removing: " << path << RESET <<std::endl;
 
-}
+// }
 
 void Server::handleDELETE(const Request& request)
 {
-	if (request.isFile == true)
-		staticRemoveFile(request.getTarget());
-	else
-		staticRemoveDir(request.getTarget().substr(0, request.getTarget().length() - 1));
+	// if (request.isFile == true)
+		staticRemoveTarget(request.getTarget());
+	// else
+	// 	staticRemoveDir(request.getTarget().substr(0, request.getTarget().length() - 1));
 	_response.setProtocol(PROTOCOL);
 	// _response.createBodyFromFile("./server/data/pages/post_test.html");
 	_response.setBody("");

@@ -149,7 +149,7 @@ void Response::createErrorBody(void)
 	this->body = body.str();
 }
 
-void Response::createIndex(const std::string& path)
+void Response::createIndex(const Request& request)
 {
 	std::stringstream body;
 	body <<
@@ -161,7 +161,9 @@ void Response::createIndex(const std::string& path)
 	</head>\n\
 	<body bgcolor=\"FFFFFF\">\n\
 	<center>\n\
-	<h1 style=\"color:black\">Index of/\n\
+	<h1 style=\"color:black\">Index of "
+	<< request.getDecodedTarget()
+	<< "\n\
 	</h1>\n\
 	</center>\n\
 	<div style=\"margin-left:0%\">\n\
@@ -169,7 +171,7 @@ void Response::createIndex(const std::string& path)
 	DIR *dir;
 	struct dirent *dirStruct;
 	std::string name;
-	dir = opendir(path.c_str());
+	dir = opendir(request.getRoutedTarget().c_str());
 	if (dir)
 	{
 		while ((dirStruct = readdir(dir)) != NULL)

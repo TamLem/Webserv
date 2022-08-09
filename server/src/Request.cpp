@@ -265,9 +265,14 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 // 	this->protocol = protocol;
 // }
 
-void Request::setTarget(const std::string& target)
+void Request::setDecodedTarget(const std::string& target)
 {
-	this->target = target;
+	this->decodedTarget = target;
+}
+
+void Request::setRoutedTarget(const std::string& target)
+{
+	this->routedTarget = target;
 }
 
 void Request::setQuery(const std::string& query)
@@ -288,6 +293,16 @@ const std::string& Request::getUrl(void) const
 const std::string& Request::getTarget(void) const
 {
 	return (this->target);
+}
+
+const std::string& Request::getDecodedTarget(void) const
+{
+	return (this->decodedTarget);
+}
+
+const std::string& Request::getRoutedTarget(void) const
+{
+	return (this->routedTarget);
 }
 
 const std::string& Request::getQuery(void) const

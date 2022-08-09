@@ -92,19 +92,19 @@ void Server::runEventLoop()
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	if (request.isFile == false && targetExists(request.getTarget() + request.indexPage) == false)
+	if (request.isFile == false && targetExists(request.getRoutedTarget() + request.indexPage) == false)
 	{
 		if ((this->_currentLocationKey.empty() == false
 		&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
 		|| this->_currentConfig.autoIndex == true)
 		{
-			_response.createIndex(request.getTarget());
+			_response.createIndex(request);
 		}
 		else
-			_response.createBodyFromFile(request.getTarget() + request.indexPage);
+			_response.createBodyFromFile(request.getRoutedTarget() + request.indexPage);
 	}
 	else
-		_response.createBodyFromFile(request.getTarget() + request.indexPage);
+		_response.createBodyFromFile(request.getRoutedTarget() + request.indexPage);
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
@@ -147,7 +147,7 @@ static void staticRemoveTarget(const std::string& path)
 
 void Server::handleDELETE(const Request& request)
 {
-	staticRemoveTarget(request.getTarget());
+	staticRemoveTarget(request.getRoutedTarget());
 	_response.setProtocol(PROTOCOL);
 	_response.setBody("");
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
@@ -247,10 +247,10 @@ int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::c
 		else
 			result = it->second.root;
 		result += target.substr(target.find_last_of('/') + 1);
-		request.setTarget(result);
+		request.setRoutedTarget("." + result);
 		_currentLocationKey = it->first;
 		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getTarget() << " for location: " << _currentLocationKey  << std::endl;
+			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << std::endl;
 		#endif
 		return (0);
 	}
@@ -300,10 +300,10 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 			else
 				request.indexPage = this->_currentConfig.indexPage;
 		}
-		request.setTarget(result);
+		request.setRoutedTarget("." + result);
 		_currentLocationKey = it->first;
 		#ifdef SHOW_LOG_2
-			std::cout  << YELLOW << "DIR MATCH!: " << request.getTarget() << " for location: " << _currentLocationKey << std::endl;
+			std::cout  << YELLOW << "DIR MATCH!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << std::endl;
 		#endif
 	}
 }
@@ -312,13 +312,13 @@ void Server::routeDefault(Request& request)
 {
 	std::string result;
 
-	result = this->_currentConfig.root + request.getTarget().substr(1);
+	result = this->_currentConfig.root + request.getDecodedTarget().substr(1);
 	if (*result.rbegin() == '/')
 	{
 		request.isFile = false;
 		request.indexPage = this->_currentConfig.indexPage;
 	}
-	request.setTarget(result);
+	request.setRoutedTarget("." + result);
 	_currentLocationKey = "";
 	#ifdef SHOW_LOG
 		std::cout  << YELLOW << "DEFAULT ";
@@ -328,7 +328,7 @@ void Server::routeDefault(Request& request)
 void Server::matchLocation(Request& request)
 {
 	int max_count = 0;
-	std::string target = request.getTarget();
+	std::string target = request.getDecodedTarget();
 	#ifdef SHOW_LOG_2
 	std::cout  << RED << "target: " << target << std::endl;
 	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
@@ -350,7 +350,7 @@ void Server::matchLocation(Request& request)
 	if (max_count == 0)
 		routeDefault(request);
 	#ifdef SHOW_LOG
-		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getTarget() << " for location: " << _currentLocationKey  << std::endl;
+		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << std::endl;
 	#endif
 }
 
@@ -426,15 +426,15 @@ void Server::handleRequest(int fd)
 		//compression (merge slashes)
 		//resolve relative paths
 		//determine location
-		request.setTarget(this->percentDecoding(request.getTarget()));
+		request.setDecodedTarget(this->percentDecoding(request.getTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
 		if (this->_requestHead.find("/cgi/") != std::string::npos)
 			isCgi = true;
 		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "URI after percent-decoding: " << request.getTarget() << std::endl;
+			std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
 		#endif
 		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
-		request.setTarget("." + request.getTarget());
+		// request.setRoutedTarget("." + request.getRoutedTarget());
 		//check method
 		checkLocationMethod(request);
 		if (isCgi == true)

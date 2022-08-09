@@ -147,12 +147,15 @@ void Server::handlePOST(const Request& request)
 
 static void staticRemoveFile(const std::string& path)
 {
-	if (access(path.c_str(), F_OK) != 0 && errno == EACCES)
-		throw Response::ERROR_403();
 	if (fileExists(path) == false)
 		throw Response::ERROR_404();
 	if (remove(path.c_str()) != 0)
-		throw Response::ERROR_500();
+	{
+		if (errno == EACCES)
+			throw Response::ERROR_403();
+		else
+			throw Response::ERROR_500();
+	}
 }
 
 static void staticRemoveDir(const std::string& path)
@@ -180,7 +183,7 @@ static void staticRemoveDir(const std::string& path)
 			}
 			else 
 			{
-				if((file = fopen(abs_path.c_str(), "r")))
+				if((file = fopen(abs_path.c_str(), "r"))) //change to access
 				{
 					fclose(file);
 					if (remove(abs_path.c_str()) == 0)

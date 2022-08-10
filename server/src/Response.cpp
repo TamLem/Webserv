@@ -260,7 +260,6 @@ static bool staticTargetIsDir(const std::string& target)
 void Response::createBodyFromFile(const std::string& target)
 {
 	std::stringstream tempBody;
-	std::ifstream file(target.c_str(), std::ios::binary); // @aenglert is this still needed?
 	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
 	if (access(target.c_str(), F_OK) != 0 && errno == EACCES)
 		throw ERROR_403();

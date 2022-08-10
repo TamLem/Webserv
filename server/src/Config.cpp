@@ -179,13 +179,11 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 {
 	ConfigStruct confStruct;
 	confStruct.serverName = "";
-	confStruct.listen = std::map<std::string, unsigned short>();
 	confStruct.root = "";
-	confStruct.cgi = "";
-	confStruct.cgiBin = "cgi-bin";
+	confStruct.cgiBin = "";
 	confStruct.indexPage = "";
-	confStruct.clientBodyBufferSize = 64000;
-	confStruct.clientMaxBodySize = 2560000;
+	confStruct.clientBodyBufferSize = (4 * 1024);
+	confStruct.clientMaxBodySize = (100 * 1024 * 1024);
 	confStruct.autoIndex = false;
 
 	return (confStruct);
@@ -264,7 +262,7 @@ void Config::printCluster()
 		"\tindex_page " << this->strGetIndexPage() << std::endl << \
 		"\tclient_body_buffer_size " << this->strGetClientBodyBufferSize() << std::endl << \
 		"\tclient_max_body_size " << this->strGetClientMaxBodySize() << std::endl << \
-		"\tcgi " << this->strGetCgi() << std::endl << \
+		"\tcgi\n" << this->strGetCgi() << std::endl << \
 		"\tcgi_bin " << this->strGetCgiBin() << std::endl << \
 		this->strGetLocation() << std::endl << \
 		"\terror_page\n" << this->strGetErrorPage() << \
@@ -328,7 +326,7 @@ size_t Config::getClientMaxBodySize() const
 	return (this->_conf.clientMaxBodySize);
 }
 
-const std::string Config::getCgi() const
+const std::map<std::string, std::string> Config::getCgi() const
 {
 	return (this->_conf.cgi);
 }
@@ -402,8 +400,11 @@ const std::string Config::strGetClientMaxBodySize() const
 
 const std::string Config::strGetCgi() const
 {
-	std::string print = getCgi();
-	return (print);
+	std::stringstream print;
+	std::map<std::string, std::string>::const_iterator it = this->_conf.cgi.begin();
+	for (; it != this->_conf.cgi.end(); ++it)
+		print << "\t\t" << it->first << " " << it->second << std::endl;
+	return (print.str());
 }
 
 const std::string Config::strGetCgiBin() const

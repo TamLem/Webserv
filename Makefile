@@ -16,7 +16,7 @@ CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -f
 
 CXXFLAGS	+=	-D SHOW_LOG #enables the printing of surface-level logs, server-side only
 
-# CXXFLAGS	+=	-D SHOW_LOG_2 #enables the printing of deep-level logs, server-side only
+CXXFLAGS	+=	-D SHOW_LOG_2 #enables the printing of deep-level logs, server-side only
 
 #directories
 PWD			=	$(shell pwd)
@@ -112,7 +112,7 @@ re: fclean all
 
 #run rule
 run: all
-	./$(NAME) server/config/test.conf
+	./$(NAME) server/config/ae.conf
 
 #phony
 .PHONY: all clean fclean re run

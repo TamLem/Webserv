@@ -162,7 +162,8 @@ int SocketHandler::getEvents()
 	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
 	#ifdef SHOW_LOG_2
-	std::cout << "num clients: " << _clients.size() << std::endl;
+		std::cout << "num clients: " << _clients.size() << std::endl;
+	#endif
 	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, NULL);
 	return this->_numEvents;
 }

@@ -4,21 +4,6 @@
 #include <dirent.h> // dirent, opendir
 #include <cstdio> // remove
 
-Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
-{
-	#ifdef SHOW_CONSTRUCTION
-		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
-	#endif
-	handle_signals();
-}
-
-Server::~Server(void)
-{
-	delete _socketHandler;
-	#ifdef SHOW_CONSTRUCTION
-		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
-	#endif
-}
 
 void Server::handle_signal(int sig)
 {

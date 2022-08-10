@@ -61,7 +61,7 @@ struct ConfigStruct
 	std::string								serverName;
 	std::map<std::string, unsigned short>	listen;
 	std::string								root;
-	std::string								cgi;
+	std::map<std::string, std::string>		cgi;
 	std::string								cgiBin;
 	size_t									clientBodyBufferSize;
 

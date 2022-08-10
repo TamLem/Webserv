@@ -307,7 +307,68 @@ unsigned short SingleServerConfig::_checkListen(std::string value)
 
 void SingleServerConfig::_handleCgi(std::string line)
 {
-	std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
+	#ifdef SHOW_LOG_2
+		std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
+	#endif
+
+	if (line.substr(0, line.find_first_of(WHITESPACE)) != "cgi")
+	{
+		std::cout << RED << line.substr(0, line.find_first_of(WHITESPACE)) << RESET << std::endl;
+		throw SingleServerConfig::InvalidKeyException();
+	}
+	else
+	{
+		std::string key = line.substr(line.find_first_of(WHITESPACE) + 1);
+		std::string value = key.substr(key.find_first_of(WHITESPACE) + 1);
+		key = key.substr(0, key.find_first_of(WHITESPACE));
+		if (key.find_first_not_of(WHITESPACE) != 0)
+		{
+			std::cout << RED << line << RESET << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		if (key[0] != '.' || key.find("/") != std::string::npos)
+		{
+			std::cout << RED << key << RESET << std::endl;
+			throw SingleServerConfig::InvalidFileExtensionException();
+		}
+		else if (key.find(".") != std::string::npos && key.substr(key.find_first_of(".") + 1).find_first_of(".") != std::string::npos)
+		{
+			std::cout << RED << key << RESET << std::endl;
+			throw SingleServerConfig::InvalidFileExtensionException();
+		}
+		else if (value.find_first_of(WHITESPACE) != std::string::npos)
+		{
+			std::cout << RED << line << RESET << std::endl;
+			throw SingleServerConfig::InvalidWhitespaceException();
+		}
+		else if (this->_conf->cgi.count(key) == 1)
+		{
+			std::cout << RED << key << RESET << std::endl;
+			throw SingleServerConfig::DuplicateCgiExtensionException();
+		}
+		else if (value[0] == '.')
+		{
+			std::cout << RED << value << RESET << std::endl;
+			throw SingleServerConfig::InvalidCgiHandlerException();
+		}
+		else if (value.find(".") != std::string::npos && value.substr(value.find_first_of(".") + 1).find_first_of(".") != std::string::npos)
+		{
+			std::cout << RED << value << RESET << std::endl;
+			throw SingleServerConfig::InvalidCgiHandlerException();
+		}
+		else if (value.find("/") != std::string::npos && value[value.length() - 1] == '/')
+		{
+			std::cout << RED << value << RESET << std::endl;
+			throw SingleServerConfig::InvalidCgiHandlerException();
+		}
+		else
+		{
+			this->_conf->cgi.insert(std::make_pair<std::string, std::string>(key, value));
+			#ifdef SHOW_LOG_2
+				std::cout << "key >" << BLUE << key << RESET << "< value >" << YELLOW << value << RESET << "< added successfully to ConfigStruct" << std::endl;
+			#endif
+		}
+	}
 }
 
 enum
@@ -860,4 +921,19 @@ const char* SingleServerConfig::MissingIndexException::what(void) const throw()
 const char* SingleServerConfig::InvalidPathException::what(void) const throw()
 {
 	return ("↑↑↑ this path is invalid, no use of '.' and has to be like : \"/path/\"");
+}
+
+const char* SingleServerConfig::DuplicateCgiExtensionException::what(void) const throw()
+{
+	return ("↑↑↑ this extension is already in use");
+}
+
+const char* SingleServerConfig::InvalidFileExtensionException::what(void) const throw()
+{
+	return ("↑↑↑ this file extension is invalid, please provide without any \'/\' and only one leading \'.\'");
+}
+
+const char* SingleServerConfig::InvalidCgiHandlerException::what(void) const throw()
+{
+	return ("↑↑↑ this file extension is invalid, please provide without any trailing \'/\' and only one not leading \'.\'");
 }

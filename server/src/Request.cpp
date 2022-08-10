@@ -244,7 +244,7 @@ void Request::addMethods(void)
 std::ostream& operator<<(std::ostream& out, const Request& request)
 {
 	out << request.getMethod() << " "
-	<< request.getTarget() << " "
+	<< request.getRawTarget() << " "
 	<< request.getProtocol() << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = request.getHeaderFields().begin(); it != request.getHeaderFields().end(); ++it)
 	{
@@ -290,7 +290,7 @@ const std::string& Request::getUrl(void) const
 	return (this->url);
 }
 
-const std::string& Request::getTarget(void) const
+const std::string& Request::getRawTarget(void) const
 {
 	return (this->target);
 }

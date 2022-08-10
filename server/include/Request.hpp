@@ -61,7 +61,7 @@ class Request : public Message
 
 		const std::string& getMethod(void) const;
 		const std::string& getUrl(void) const;
-		const std::string& getTarget(void) const;
+		const std::string& getRawTarget(void) const;
 		const std::string& getDecodedTarget(void) const;
 		const std::string& getRoutedTarget(void) const;
 		const std::string& getQuery(void) const;

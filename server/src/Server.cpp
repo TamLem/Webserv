@@ -426,7 +426,7 @@ void Server::handleRequest(int fd)
 		//compression (merge slashes)
 		//resolve relative paths
 		//determine location
-		request.setDecodedTarget(this->percentDecoding(request.getTarget()));
+		request.setDecodedTarget(this->percentDecoding(request.getRawTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
 		if (this->_requestHead.find("/cgi/") != std::string::npos)
 			isCgi = true;

@@ -16,10 +16,9 @@
 #include <cstdio>
 #include <fcntl.h>
 #include <fstream>
-#include <sys/event.h>
 #include <map>
 #include <set>
-#include <csignal> // check if forbidden !!!!!!!!!!
+#include <csignal>
 
 /* our includes */
 #include "Config.hpp"
@@ -31,6 +30,7 @@
 #define UPLOAD_DIR "./server/data/uploads/"
 
 #ifdef __APPLE__
+	#include <sys/event.h>
 	#include "SocketHandler.hpp"
 #else
 	#include "LinuxSocketHandler.hpp"
@@ -46,7 +46,6 @@ struct client
 };
 
 void cgi_handle(Request& request, std::string buf, int fd);
-#define MAX_EVENTS 128
 
 static volatile int keep_running = 1;
 
@@ -83,6 +82,7 @@ class Server
 		std::string _requestHead;
 		ConfigStruct _currentConfig;
 		std::string _currentLocationKey;
+		bool loopDetected;
 
 	// private Methods
 		static void handle_signal(int sig);
@@ -100,6 +100,7 @@ class Server
 		void checkLocationMethod(const Request& request) const;
 		void handleGET(const Request&);
 		void handlePOST(const Request&);
+		void handleDELETE(const Request&);
 		void handleERROR(const std::string&);
 
 		void _handleResponse(int i);

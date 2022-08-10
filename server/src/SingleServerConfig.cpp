@@ -30,7 +30,7 @@ enum
 	index_page,
 	client_body_buffer_size,
 	client_max_body_size,
-	// cgi, //only needed if we do bonus
+	cgi,
 	cgi_bin,
 	location,
 	error_page,
@@ -46,7 +46,7 @@ std::string configVariables[]=
 	"index_page",
 	"client_body_buffer_size",
 	"client_max_body_size",
-	// "cgi", // only needed if we do bonus
+	"cgi",
 	"cgi_bin",
 	"location",
 	"error_page"
@@ -239,11 +239,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		break ;
 	}
 
-	// case (cgi): // only needed if we do bonus
-	// {
-	// 	this->_handleCgi(keyValue);
-	// 	break ;
-	// }
+	case (cgi):
+	{
+		this->_handleCgi(keyValue);
+		break ;
+	}
 
 	case (cgi_bin):
 	{
@@ -287,7 +287,7 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 	#endif
 }
 
-void SingleServerConfig::_handleListen(std::string keyValue)// currently just a dummy function
+void SingleServerConfig::_handleListen(std::string keyValue)// currently just a prototype
 {
 	(void)keyValue;
 	// put code from switch case
@@ -305,11 +305,10 @@ unsigned short SingleServerConfig::_checkListen(std::string value)
 	return (port);
 }
 
-// void SingleServerConfig::_handleCgi(std::string line) // only needed if we do bonus
-// {
-// 	(void)line;
-// 	// std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
-// }
+void SingleServerConfig::_handleCgi(std::string line)
+{
+	std::cout << BLUE << "in _handleCgi: >" << YELLOW << line << BLUE << "<" RESET << std::endl;
+}
 
 enum
 {
@@ -487,13 +486,9 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 		}
 		}
 	}
-	if (!foundRoot || !foundMethod)
+	if (!foundRoot && !foundMethod && !foundAutoIndex && !foundIndex)
 	{
-		if (!foundRoot)
-			std::cout << RED << "No root found in location " << key << RESET << std::endl;
-		else
-			std::cout << RED << "No method found in location " << key << RESET << std::endl;
-
+			std::cout << RED << "No parameter found inside location block, please provide at least one of the following: root, method, autoindex, index_page" << RESET << std::endl;
 		throw SingleServerConfig::InvalidLocationException();
 	}
 
@@ -590,7 +585,6 @@ void SingleServerConfig::_handleLocation(std::string block)
 	}
 }
 
-// think about usig the already existing map in Server from aenglert instead !!!!!!
 std::string validErrorCodes[] =
 {
 	"100",

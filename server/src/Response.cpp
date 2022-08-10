@@ -1,5 +1,6 @@
 #include "Response.hpp"
 
+#include "Base.hpp"
 #include <string> //std::string
 #include <map> //std::map
 #include <sstream> //std::stringstream
@@ -8,16 +9,8 @@
 #include <sys/socket.h> // send
 #include <dirent.h> // dirent, opendir
 // #include <sys/types.h>  // opendir
-#include <unistd.h>
+#include <unistd.h> // access
 #include <sys/stat.h> // stat
-
-#include <iomanip> // setfill
-
-#define RESET "\033[0m"
-#define GREEN "\033[32m"
-#define YELLOW "\033[33m"
-#define BLUE "\033[34m"
-#define RED "\033[31m"
 
 bool Response::isValidStatus(const std::string& status)
 {
@@ -267,10 +260,13 @@ static bool staticTargetIsDir(const std::string& target)
 void Response::createBodyFromFile(const std::string& target)
 {
 	std::stringstream tempBody;
-	std::ifstream file(target.c_str(), std::ios::binary);
+	std::ifstream file(target.c_str(), std::ios::binary); // @aenglert is this still needed?
 	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
-	if (staticTargetIsDir(target))
+	if (access(target.c_str(), F_OK) != 0 && errno == EACCES)
+		throw ERROR_403();
+	if (targetExists(target) == false || staticTargetIsDir(target) == true)
 		throw ERROR_404();
+	std::ifstream file(target.c_str(), std::ios::binary);
 	if (file.is_open())
 	{
 		// std::cerr << BOLD << RED << "open" << RESET << std::endl;
@@ -280,9 +276,7 @@ void Response::createBodyFromFile(const std::string& target)
 	}
 	else
 	{
-		perror(NULL);
-		throw ERROR_404();
-		//404 response
+		throw ERROR_500();
 	}
 }
 
@@ -393,6 +387,11 @@ const char* Response::ERROR_404::what() const throw()
 	return ("404");
 }
 
+const char* Response::ERROR_403::what() const throw()
+{
+	return ("403");
+}
+
 const char* Response::InvalidProtocol::what() const throw() //AE is it good to have different codes for request/response?
 {
 	return ("500");
@@ -402,8 +401,21 @@ const char* Response::InternalServerErrorException::what() const throw()
 {
 	return ("500");
 }
+const char* Response::ERROR_500::what() const throw()
+{
+	return ("500");
+}
 
 const char* Response::ClientDisconnectException::what() const throw()
 {
 	return ("client disconnected");
+}
+
+bool targetExists(const std::string& target)
+{
+	struct stat statStruct;
+
+	if (stat(target.c_str(), &statStruct) == 0)
+			return (true);
+	return (false);
 }

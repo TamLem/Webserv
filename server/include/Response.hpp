@@ -66,7 +66,17 @@ class Response : public Message
 		const char* what() const throw();
 	};
 
+	class ERROR_500 : public std::exception
+	{
+		const char* what() const throw();
+	};
+
 	class ERROR_404 : public Message::BadRequest
+	{
+		const char* what() const throw();
+	};
+
+	class ERROR_403 : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};
@@ -87,5 +97,7 @@ class Response : public Message
 };
 
 std::ostream& operator<<(std::ostream&, const Response&);
+
+bool targetExists(const std::string&);
 
 #endif

@@ -1,7 +1,8 @@
 #include "Server.hpp"
 #include "Config.hpp"
 #include "Cgi/Cgi.hpp"
-#include <sys/stat.h> // stat
+#include <dirent.h> // dirent, opendir
+#include <cstdio> // remove
 
 Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
 {
@@ -19,7 +20,6 @@ Server::~Server(void)
 	#endif
 }
 
-
 void Server::handle_signal(int sig)
 {
 	if (sig == SIGINT)
@@ -34,7 +34,7 @@ void Server::handle_signal(int sig)
 	}
 }
 
-void	Server::handle_signals(void)
+void Server::handle_signals(void)
 {
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
@@ -43,11 +43,32 @@ void	Server::handle_signals(void)
 	// signal(SIGPIPE, handle_signal);
 }
 
+Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
+{
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
+	#endif
+	#ifdef __APPLE__
+		handle_signals();
+	#endif
+}
+
+Server::~Server(void)
+{
+	delete _socketHandler;
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
+	#endif
+}
+
 void Server::runEventLoop()
 {
 	while(keep_running)
 	{
+
+		#ifdef SHOW_LOG_2
 		std::cout << "server running " << std::endl;
+		#endif
 		int numEvents = this->_socketHandler->getEvents();
 		if (numEvents == 0)
 		{
@@ -56,7 +77,9 @@ void Server::runEventLoop()
 		}
 		for (int i = 0; i < numEvents; ++i)
 		{
-			std::cout << "no. events: " << numEvents << " ev:" << i << std::endl;
+			#ifdef SHOW_LOG_2
+			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
+			#endif
 			this->_socketHandler->acceptConnection(i);
 			if (this->_socketHandler->removeClient(i) == true)
 				this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
@@ -84,15 +107,6 @@ void Server::runEventLoop()
 	}
 }
 
-static bool staticFileExists(const std::string& target)
-{
-	struct stat statStruct;
-
-	if (stat(target.c_str(), &statStruct) == 0)
-			return (true);
-	return (false);
-}
-
 // static void staticAutoIndex(const Request& request)
 // {
 // 	DIR *d;
@@ -112,7 +126,7 @@ static bool staticFileExists(const std::string& target)
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	if (request.isFile == false && staticFileExists(request.getTarget() + request.indexPage) == false)
+	if (request.isFile == false && targetExists(request.getTarget() + request.indexPage) == false)
 	{
 		if ((this->_currentLocationKey.empty() == false
 		&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
@@ -146,7 +160,7 @@ void Server::handlePOST(const Request& request)
 	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
 	std::string tmp = UPLOAD_DIR;
 	tmp.append("testFile.txt");
-	outFile.open(tmp); // AE body is not read anymore and therefore empty
+	outFile.open(tmp.c_str()); // AE body is not read anymore and therefore empty
 	if (outFile.is_open() == false)
 		throw std::exception();
 	outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;
@@ -159,11 +173,91 @@ void Server::handlePOST(const Request& request)
 	_response.setStatus("200");
 }
 
+static void staticRemoveTarget(const std::string& path)
+{
+	if (targetExists(path) == false)
+		throw Response::ERROR_404();
+	if (remove(path.c_str()) != 0)
+	{
+		// std::cout << BOLD << RED << "ERRNO: " << errno << RESET <<std::endl;
+		if (errno == EACCES)
+			throw Response::ERROR_403();
+		if (errno == ENOTEMPTY)
+			throw Request::DirectoryNotEmpty();
+		else
+			throw Response::ERROR_500();
+	}
+}
+
+// static void staticRemoveDir(const std::string& path)
+// {
+// 	/*// std::cout << BOLD << BLUE << "staticRemoveDir with path: " << path << RESET <<std::endl;
+// 	struct dirent *entry = NULL;
+// 	DIR *dir = NULL;
+// 	dir = opendir(path.c_str());
+// 	while((entry = readdir(dir)))
+// 	{
+// 		DIR *sub_dir = NULL;
+// 		FILE *file = NULL;
+// 		std::string abs_path;
+// 		std::string name = entry->d_name;
+// 		// std::cout << RED << "name: " << name << RESET <<std::endl;
+// 		if(name != "." && name != "..")
+// 		{
+// 			// sprintf(abs_path, "%s/%s", path,name);
+// 			abs_path = path + "/" + name;
+// 			// std::cout << RED << "abs_path: " << abs_path << RESET <<std::endl;
+// 			if((sub_dir = opendir(abs_path.c_str())))
+// 			{
+// 				closedir(sub_dir);
+// 				staticRemoveDir(abs_path);
+// 			}
+// 			else
+// 			{
+// 				if((file = fopen(abs_path.c_str(), "r"))) //change to access
+// 				{
+// 					fclose(file);
+// 					if (remove(abs_path.c_str()) == 0)
+// 						std::cout << BOLD << RED << "Removed: " << abs_path << RESET <<std::endl;
+// 					else
+// 						std::cout << BOLD << RED << "ERROR removing: " << abs_path << RESET <<std::endl;
+
+// 				}
+// 			}
+// 		}
+// 	}*/
+// 	if (remove(path.c_str()) == 0)
+// 		std::cout << BOLD << RED << "Removed: " << path << RESET <<std::endl;
+// 	else
+// 		std::cout << BOLD << RED << "ERROR removing: " << path << RESET <<std::endl;
+
+// }
+
+void Server::handleDELETE(const Request& request)
+{
+	// if (request.isFile == true)
+		staticRemoveTarget(request.getTarget());
+	// else
+	// 	staticRemoveDir(request.getTarget().substr(0, request.getTarget().length() - 1));
+	_response.setProtocol(PROTOCOL);
+	// _response.createBodyFromFile("./server/data/pages/post_test.html");
+	_response.setBody("");
+	_response.addHeaderField("Server", this->_currentConfig.serverName);
+	// _response.addDefaultHeaderFields();
+	_response.setStatus("200");
+}
+
 void Server::handleERROR(const std::string& status)
 {
 	_response.setStatus(status);
 	_response.setProtocol(PROTOCOL);
-	_response.createErrorBody();
+	if (this->_currentConfig.errorPage.count(status) == 1 && this->loopDetected == false)
+	{
+		this->loopDetected = true;
+		_response.createBodyFromFile("." + this->_currentConfig.errorPage[status]);
+	}
+	else
+		_response.createErrorBody();
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 	_response.addDefaultHeaderFields();
@@ -281,7 +375,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 				segments++;
 			i++;
 		}
-		if (target[i - 1] != '\0' && target[i - 1] != '/') // carefull with len = 0!!!!!!!!!!!
+		if (target[i - 1] != '\0' && target[i - 1] != '/')
 			segments = 0;
 	}
 	if (segments > max_count)
@@ -402,7 +496,9 @@ void Server::checkLocationMethod(const Request& request) const
 
 void Server::handleRequest(int fd)
 {
+	bool isCgi = false;
 	this->_response.clear();
+	this->loopDetected = false;
 	try
 	{
 		this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
@@ -414,6 +510,8 @@ void Server::handleRequest(int fd)
 		//determine location
 		request.setTarget(this->percentDecoding(request.getTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
+		if (this->_requestHead.find("/cgi/") != std::string::npos) // needs to be changed so it accepts the cgi-bin instead andd also the file extensions
+			isCgi = true; // pass the relevant ConfigStruct to CGI
 		#ifdef SHOW_LOG
 			std::cout  << YELLOW << "URI after percent-decoding: " << request.getTarget() << std::endl;
 		#endif
@@ -421,10 +519,12 @@ void Server::handleRequest(int fd)
 		request.setTarget("." + request.getTarget());
 		//check method
 		checkLocationMethod(request);
-		if (this->_requestHead.find("/cgi/") != std::string::npos)
+		if (isCgi == true)
 			cgi_handle(request, fd);
 		else if (request.getMethod() == "POST")
 			handlePOST(request);
+		else if (request.getMethod() == "DELETE")
+			handleDELETE(request);
 		else
 		{
 			handleGET(request);
@@ -435,7 +535,17 @@ void Server::handleRequest(int fd)
 		std::string code = exception.what();
 		if (_response.getMessageMap().count(code) != 1)
 			code = "500";
+		try
+		{
 		handleERROR(code);
+		}
+		catch(const std::exception& exception)
+		{
+			std::string code = exception.what();
+			if (_response.getMessageMap().count(code) != 1)
+				code = "500";
+			handleERROR(code);
+		}
 	}
 	// lseek(fd,0,SEEK_END);
 	//create a response object and add it to responseMap
@@ -539,7 +649,7 @@ const char* Server::FirstLineTooLongException::what(void) const throw()
 
 void cgi_handle(Request& request, int fd)
 {
-	Cgi newCgi(request);
+	Cgi newCgi(request); // pass ConfigStruct here
 
 	newCgi.printEnv();
 	newCgi.cgi_response(fd);

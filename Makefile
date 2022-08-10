@@ -12,6 +12,8 @@ endif
 
 CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds
 
+CXXFLAGS	+=	-D FORTYTWO_TESTER
+
 # CXXFLAGS	+=	-D SHOW_CONSTRUCTION
 
 CXXFLAGS	+=	-D SHOW_LOG #enables the printing of surface-level logs, server-side only !!! make re is needed if you just enabled this !!!

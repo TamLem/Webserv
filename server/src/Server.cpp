@@ -439,7 +439,7 @@ void Server::handleRequest(int fd)
 		checkLocationMethod(request);
 		if (isCgi == true)
 			cgi_handle(request, fd);
-		else if (request.getMethod() == "POST")
+		else if (request.getMethod() == "POST" || request.getMethod() == "PUT")
 			handlePOST(request);
 		else if (request.getMethod() == "DELETE")
 			handleDELETE(request);

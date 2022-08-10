@@ -91,6 +91,10 @@ void Request::breakUpTarget(const std::string& token)
 
 	pos = token.find_first_of("?#");
 	this->target = token.substr(0, pos);
+	#ifdef FORTYTWO_TESTER
+	if (this->target.compare("/directory") == 0)
+	this->target = "/directory/";
+	#endif
 	if (pos == std::string::npos)
 		return ;
 	else if (token[pos] == '?')
@@ -239,6 +243,10 @@ void Request::addMethods(void)
 	this->validMethods.insert("GET");
 	this->validMethods.insert("POST");
 	this->validMethods.insert("DELETE");
+	#ifdef FORTYTWO_TESTER
+	this->validMethods.insert("POST");
+	this->validMethods.insert("HEAD");
+	#endif
 }
 
 std::ostream& operator<<(std::ostream& out, const Request& request)

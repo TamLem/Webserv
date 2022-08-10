@@ -169,17 +169,7 @@ void Response::createErrorBody(void)
 	this->body = body.str();
 }
 
-// static std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace)
-// {
-// 		size_t position = 0;
-// 		for ( position = str.find(tofind); position != std::string::npos; position = str.find(tofind,position) )
-// 		{
-// 				str.replace(position , tofind.length(), toreplace);
-// 		}
-// 		return(str);
-// }
-
-void Response::createIndex(const std::string& path)
+void Response::createIndex(const Request& request)
 {
 	std::stringstream body;
 	body <<
@@ -191,50 +181,40 @@ void Response::createIndex(const std::string& path)
 	</head>\n\
 	<body bgcolor=\"FFFFFF\">\n\
 	<center>\n\
-	<h1 style=\"color:black\">Index of/\n\
+	<h1 style=\"color:black\">Index of "
+	<< request.getDecodedTarget()
+	<< "\n\
 	</h1>\n\
 	</center>\n\
 	<div style=\"margin-left:0%\">\n\
 	<ul>";
-	DIR *d;
-	struct dirent *dir;
+	DIR *dir;
+	struct dirent *dirStruct;
 	std::string name;
-	// d = opendir(target.substr(0, target.find_last_of('/')).c_str()); // AE better keep path and file seperate
-	d = opendir(path.c_str()); // AE better keep path and file seperate
-	if (d)
+	dir = opendir(request.getRoutedTarget().c_str());
+	if (dir)
 	{
-		while ((dir = readdir(d)) != NULL)
+		while ((dirStruct = readdir(dir)) != NULL)
 		{
-			name = dir->d_name;
-			// name = staticReplaceInString(name, "u%CC%88", "ü");
-			// name = staticReplaceInString(name, "a%CC%88", "ä");
-			// name = staticReplaceInString(name, "o%CC%88", "ö");
-			// if (dir->d_type == DT_REG) //only files
-			// {
-				// std::cerr << BOLD << RED << "dir: " << name << RESET << std::endl;
-				// if (strcmp(name, "..") == 0)
-				if (name.compare("..") == 0)
-				{
-					body << "<li><a href=\"" << name << "\">" << "Parent Directory" << "</a></li>\n";
-				}
-				// else if (strlen(name) != 0 && strcmp(name, ".") != 0)
-				else if (name.length() != 0 && name.compare(".") != 0)
-				{
-					if (dir->d_type == DT_DIR)
-						body << "<li><a href=\"" << name << "/\">" << name << "</a></li>\n";
-					else
-						body << "<li><a href=\"" << name << "\">" << name << "</a></li>\n";
-				}
-
-				// body << "<li style=\"color:blue\">" << name << "<li/>";
-			// }
+			name = dirStruct->d_name;
+			if (name.compare("..") == 0)
+			{
+				body << "<li><a href=\"" << name << "\">" << "Parent Directory" << "</a></li>\n";
+			}
+			else if (name.length() != 0 && name.compare(".") != 0)
+			{
+				if (dirStruct->d_type == DT_DIR)
+					body << "<li><a href=\"" << name << "/\">" << name << "</a></li>\n";
+				else
+					body << "<li><a href=\"" << name << "\">" << name << "</a></li>\n";
+			}
 		}
 		body <<
 		"</div>\n\
 		</body>\n\
 		</html>";
 		this->body = body.str();
-		closedir(d);
+		closedir(dir);
 	}
 	else
 	{

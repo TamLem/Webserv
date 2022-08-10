@@ -5,6 +5,16 @@
 #include <cstdio> // remove
 
 
+static std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace)
+{
+		size_t position = 0;
+		for ( position = str.find(tofind); position != std::string::npos; position = str.find(tofind,position) )
+		{
+				str.replace(position , tofind.length(), toreplace);
+		}
+		return(str);
+}
+
 void Server::handle_signal(int sig)
 {
 	if (sig == SIGINT)
@@ -92,48 +102,22 @@ void Server::runEventLoop()
 	}
 }
 
-// static void staticAutoIndex(const Request& request)
-// {
-// 	DIR *d;
-// 	struct dirent *dir;
-// 	d = opendir(request.getTarget());
-// 	if (d)
-// 	{
-// 		while ((dir = readdir(d)) != NULL)
-// 		{
-// 			// printf("%s\n", dir->d_name);
-// 			std::cout << dir->d_name << std::endl
-// 		}
-// 		closedir(d);
-// 	}
-// }
-
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	if (request.isFile == false && targetExists(request.getTarget() + request.indexPage) == false)
+	if (request.isFile == false && targetExists(request.getRoutedTarget() + request.indexPage) == false)
 	{
 		if ((this->_currentLocationKey.empty() == false
 		&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
 		|| this->_currentConfig.autoIndex == true)
 		{
-			_response.createIndex(request.getTarget());
-			// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
+			_response.createIndex(request);
 		}
 		else
-		{
-			// std::cerr << BOLD << RED << "target1:" << request.getTarget() << RESET << std::endl;
-			// std::cerr << BOLD << RED << "indexPage:" << request.indexPage << RESET << std::endl;
-			_response.createBodyFromFile(request.getTarget() + request.indexPage);
-			// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
-		}
+			_response.createBodyFromFile(request.getRoutedTarget() + request.indexPage);
 	}
 	else
-	{
-			// std::cerr << BOLD << RED << "target2:" << request.getTarget() << RESET << std::endl;
-		_response.createBodyFromFile(request.getTarget() + request.indexPage);
-		// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
-	}
+		_response.createBodyFromFile(request.getRoutedTarget() + request.indexPage);
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
 	_response.setStatus("200");
@@ -143,19 +127,20 @@ void Server::handlePOST(const Request& request)
 {
 	std::ofstream outFile;
 	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
-	std::string tmp = UPLOAD_DIR;
-	tmp.append("testFile.txt");
-	outFile.open(tmp.c_str()); // AE body is not read anymore and therefore empty
+	std::string teststring = "myfile=Disaster-Girl.jpg"; // AE remove this
+	std::string file = staticReplaceInString(teststring, "myfile=", ""); // AE this has to be request.getBody() instead of teststring
+	std::string target = UPLOAD_DIR + file;
+	outFile.open(target.c_str()); // AE body is not read anymore and therefore empty
 	if (outFile.is_open() == false)
 		throw std::exception();
-	outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;
+	outFile << request.getBody();
 	outFile.close();
 
 	_response.setProtocol(PROTOCOL);
 	_response.createBodyFromFile("./server/data/pages/post_test.html");
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
-	_response.setStatus("200");
+	_response.setStatus("201");
 }
 
 static void staticRemoveTarget(const std::string& path)
@@ -164,7 +149,6 @@ static void staticRemoveTarget(const std::string& path)
 		throw Response::ERROR_404();
 	if (remove(path.c_str()) != 0)
 	{
-		// std::cout << BOLD << RED << "ERRNO: " << errno << RESET <<std::endl;
 		if (errno == EACCES)
 			throw Response::ERROR_403();
 		if (errno == ENOTEMPTY)
@@ -174,61 +158,12 @@ static void staticRemoveTarget(const std::string& path)
 	}
 }
 
-// static void staticRemoveDir(const std::string& path)
-// {
-// 	/*// std::cout << BOLD << BLUE << "staticRemoveDir with path: " << path << RESET <<std::endl;
-// 	struct dirent *entry = NULL;
-// 	DIR *dir = NULL;
-// 	dir = opendir(path.c_str());
-// 	while((entry = readdir(dir)))
-// 	{
-// 		DIR *sub_dir = NULL;
-// 		FILE *file = NULL;
-// 		std::string abs_path;
-// 		std::string name = entry->d_name;
-// 		// std::cout << RED << "name: " << name << RESET <<std::endl;
-// 		if(name != "." && name != "..")
-// 		{
-// 			// sprintf(abs_path, "%s/%s", path,name);
-// 			abs_path = path + "/" + name;
-// 			// std::cout << RED << "abs_path: " << abs_path << RESET <<std::endl;
-// 			if((sub_dir = opendir(abs_path.c_str())))
-// 			{
-// 				closedir(sub_dir);
-// 				staticRemoveDir(abs_path);
-// 			}
-// 			else
-// 			{
-// 				if((file = fopen(abs_path.c_str(), "r"))) //change to access
-// 				{
-// 					fclose(file);
-// 					if (remove(abs_path.c_str()) == 0)
-// 						std::cout << BOLD << RED << "Removed: " << abs_path << RESET <<std::endl;
-// 					else
-// 						std::cout << BOLD << RED << "ERROR removing: " << abs_path << RESET <<std::endl;
-
-// 				}
-// 			}
-// 		}
-// 	}*/
-// 	if (remove(path.c_str()) == 0)
-// 		std::cout << BOLD << RED << "Removed: " << path << RESET <<std::endl;
-// 	else
-// 		std::cout << BOLD << RED << "ERROR removing: " << path << RESET <<std::endl;
-
-// }
-
 void Server::handleDELETE(const Request& request)
 {
-	// if (request.isFile == true)
-		staticRemoveTarget(request.getTarget());
-	// else
-	// 	staticRemoveDir(request.getTarget().substr(0, request.getTarget().length() - 1));
+	staticRemoveTarget(request.getRoutedTarget());
 	_response.setProtocol(PROTOCOL);
-	// _response.createBodyFromFile("./server/data/pages/post_test.html");
 	_response.setBody("");
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
-	// _response.addDefaultHeaderFields();
 	_response.setStatus("200");
 }
 
@@ -244,7 +179,6 @@ void Server::handleERROR(const std::string& status)
 	else
 		_response.createErrorBody();
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
-	// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 	_response.addDefaultHeaderFields();
 }
 
@@ -326,10 +260,10 @@ int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::c
 		else
 			result = it->second.root;
 		result += target.substr(target.find_last_of('/') + 1);
-		request.setTarget(result);
+		request.setRoutedTarget("." + result);
 		_currentLocationKey = it->first;
 		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getTarget() << " for location: " << _currentLocationKey  << std::endl;
+			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << std::endl;
 		#endif
 		return (0);
 	}
@@ -347,7 +281,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 	#endif
 	int i = 0;
 	int segments = 0;
-	if (target.length() >= path.length()) //path has to be checked until the end and segments need to be counted
+	if (target.length() >= path.length())
 	{
 		while (path[i] != '\0')
 		{
@@ -376,17 +310,13 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 			request.isFile = false;
 			if (it->second.indexPage.empty() == false)
 				request.indexPage = it->second.indexPage;
-				// result += it->second.indexPage;
 			else
 				request.indexPage = this->_currentConfig.indexPage;
-				// result += this->_currentConfig.indexPage;
-			// else
-			// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 		}
-		request.setTarget(result);
+		request.setRoutedTarget("." + result);
 		_currentLocationKey = it->first;
 		#ifdef SHOW_LOG_2
-			std::cout  << YELLOW << "DIR MATCH!: " << request.getTarget() << " for location: " << _currentLocationKey << std::endl;
+			std::cout  << YELLOW << "DIR MATCH!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << std::endl;
 		#endif
 	}
 }
@@ -395,17 +325,13 @@ void Server::routeDefault(Request& request)
 {
 	std::string result;
 
-	result = this->_currentConfig.root + request.getTarget().substr(1);
+	result = this->_currentConfig.root + request.getDecodedTarget().substr(1);
 	if (*result.rbegin() == '/')
 	{
 		request.isFile = false;
 		request.indexPage = this->_currentConfig.indexPage;
-		// if (this->_currentConfig.autoIndex == false)
-			// result += this->_currentConfig.indexPage;
-		// else
-		// 	std::cerr << BOLD << RED << "ERROR: autoindex not implemented!" << RESET << std::endl;
 	}
-	request.setTarget(result);
+	request.setRoutedTarget("." + result);
 	_currentLocationKey = "";
 	#ifdef SHOW_LOG
 		std::cout  << YELLOW << "DEFAULT ";
@@ -415,7 +341,7 @@ void Server::routeDefault(Request& request)
 void Server::matchLocation(Request& request)
 {
 	int max_count = 0;
-	std::string target = request.getTarget();
+	std::string target = request.getDecodedTarget();
 	#ifdef SHOW_LOG_2
 	std::cout  << RED << "target: " << target << std::endl;
 	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
@@ -437,28 +363,49 @@ void Server::matchLocation(Request& request)
 	if (max_count == 0)
 		routeDefault(request);
 	#ifdef SHOW_LOG
-		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getTarget() << " for location: " << _currentLocationKey  << std::endl;
+		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << std::endl;
 	#endif
+}
+
+static std::string staticPercentDecodingFix(std::string target)
+{
+	std::string accent;
+	accent += (const char)204;
+	accent += (const char)136;
+
+	std::string ü;
+	ü += (const char)195;
+	ü += (const char)188;
+
+	std::string ä;
+	ä += (const char)195;
+	ä += (const char)164;
+
+	std::string ö;
+	ö += (const char)195;
+	ö += (const char)182;
+
+	target = staticReplaceInString(target, "u" + accent, ü);
+	target = staticReplaceInString(target, "a" + accent, ä);
+	target = staticReplaceInString(target, "o" + accent, ö);
+	return (target);
 }
 
 std::string Server::percentDecoding(const std::string& str)
 {
 	std::stringstream tmp;
-	// std::string str = request.getTarget();
 	char c;
 	int i = 0;
 	while (str[i] != '\0')
 	{
 		if (str[i] == '%')
 		{
-			// valid ascii check
 			if (str[i + 1] == '\0' || str[i + 2] == '\0')
 				throw InvalidHex();
 			c = char(strtol(str.substr(i + 1, 2).c_str(), NULL, 16));
 			if (c == 0)
 				throw InvalidHex();
 			tmp << c;
-			// std::cerr << RED << str.substr(i + 1, 2) << RESET << std::endl;
 			i += 3;
 		}
 		else
@@ -467,8 +414,7 @@ std::string Server::percentDecoding(const std::string& str)
 			i++;
 		}
 	}
-	// request.setTarget(tmp.str());
-	return(tmp.str());
+	return (staticPercentDecodingFix(tmp.str()));
 }
 
 void Server::checkLocationMethod(const Request& request) const
@@ -493,15 +439,15 @@ void Server::handleRequest(int fd)
 		//compression (merge slashes)
 		//resolve relative paths
 		//determine location
-		request.setTarget(this->percentDecoding(request.getTarget()));
+		request.setDecodedTarget(this->percentDecoding(request.getRawTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
-		if (this->_requestHead.find("/cgi/") != std::string::npos) // needs to be changed so it accepts the cgi-bin instead andd also the file extensions
+		if (this->_requestHead.find("/cgi/") != std::string::npos || this->_requestHead.find(".bla") != std::string::npos) // needs to be changed so it accepts the cgi-bin instead andd also the file extensions
 			isCgi = true; // pass the relevant ConfigStruct to CGI
 		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "URI after percent-decoding: " << request.getTarget() << std::endl;
+			std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
 		#endif
 		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
-		request.setTarget("." + request.getTarget());
+		// request.setRoutedTarget("." + request.getRoutedTarget());
 		//check method
 		checkLocationMethod(request);
 		if (isCgi == true)
@@ -509,7 +455,7 @@ void Server::handleRequest(int fd)
 			this->applyCurrentConfig(request);
 			cgi_handle(request, fd, this->_currentConfig);
 		}
-		else if (request.getMethod() == "POST")
+		else if (request.getMethod() == "POST" || request.getMethod() == "PUT")
 			handlePOST(request);
 		else if (request.getMethod() == "DELETE")
 			handleDELETE(request);

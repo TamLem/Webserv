@@ -54,7 +54,7 @@ class Response : public Message
 		// void init(const std::string&, int, const std::string&);
 		void addDefaultHeaderFields(void);
 		void createBodyFromFile(const std::string&);
-		void createIndex(const std::string&);
+		void createIndex(const Request&);
 		void createErrorBody(void);
 		bool sendResponse(int);
 		bool sendRes(int);

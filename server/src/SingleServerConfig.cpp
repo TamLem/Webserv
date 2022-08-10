@@ -483,7 +483,11 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 					throw SingleServerConfig::InvalidWhitespaceException();
 				}
 				std::string tempValue = value.substr(0, value.find_first_of(WHITESPACE));
+				#ifdef FORTYTWO_TESTER
+				if((tempValue == "GET" || tempValue == "POST" || tempValue == "PUT" || tempValue == "DELETE") && locationStruct.allowedMethods.count(tempValue) == 0) // AE this section could be like this if bools are not needed. maybe set of allowed methods (from request) can be used for check instead of hardcoded methods
+				#else
 				if((tempValue == "GET" || tempValue == "POST" || tempValue == "DELETE") && locationStruct.allowedMethods.count(tempValue) == 0) // AE this section could be like this if bools are not needed. maybe set of allowed methods (from request) can be used for check instead of hardcoded methods
+				#endif
 					locationStruct.allowedMethods.insert(tempValue);
 				else
 				{

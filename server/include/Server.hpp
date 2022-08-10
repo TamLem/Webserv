@@ -102,8 +102,9 @@ class Server
 		void handlePOST(const Request&);
 		void handleDELETE(const Request&);
 		void handleERROR(const std::string&);
-
 		void _handleResponse(int i);
+
+	public:
 
 	// Exceptions
 		class InternatServerErrorException : public std::exception

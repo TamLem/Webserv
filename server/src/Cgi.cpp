@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-Cgi::Cgi(Request &request): _isPhp(false)
+Cgi::Cgi(Request &request, ConfigStruct configStruct): _isPhp(false), _confStruct(configStruct)
 {
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Cgi Constructor called for " << this << RESET << std::endl;

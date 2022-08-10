@@ -65,7 +65,7 @@ void Server::runEventLoop()
 {
 	while(keep_running)
 	{
-		
+
 		#ifdef SHOW_LOG_2
 		std::cout << "server running " << std::endl;
 		#endif
@@ -428,8 +428,8 @@ void Server::handleRequest(int fd)
 		//determine location
 		request.setDecodedTarget(this->percentDecoding(request.getRawTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
-		if (this->_requestHead.find("/cgi/") != std::string::npos || this->_requestHead.find(".bla") != std::string::npos)
-			isCgi = true;
+		if (this->_requestHead.find("/cgi/") != std::string::npos || this->_requestHead.find(".bla") != std::string::npos) // needs to be changed so it accepts the cgi-bin instead andd also the file extensions
+			isCgi = true; // pass the relevant ConfigStruct to CGI
 		#ifdef SHOW_LOG
 			std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
 		#endif
@@ -565,7 +565,7 @@ const char* Server::FirstLineTooLongException::what(void) const throw()
 
 void cgi_handle(Request& request, int fd)
 {
-	Cgi newCgi(request);
+	Cgi newCgi(request); // pass ConfigStruct here
 
 	newCgi.printEnv();
 	newCgi.cgi_response(fd);

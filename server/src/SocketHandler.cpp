@@ -37,7 +37,7 @@ void SocketHandler::_initMainSockets()
 
 		// Set socket reusable from Time-Wait state
 		int val = 1;
-		setsockopt(tempFD, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
+		setsockopt(tempFD, SOL_SOCKET, SO_REUSEADDR, &val, 4);
 
 		// initialize server address struct
 		struct sockaddr_in servAddr;
@@ -147,7 +147,7 @@ bool SocketHandler::addSocket(int fd)
 		return false;
 	}
 	int val = 1;
-	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4); // is SO_NOSIGPIPE needed here ???????
+	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
 	this->_fd = fd;
 	return true;
 }
@@ -171,7 +171,7 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	c.fd = fd;
 	c.addr = addr;
 	this->_clients.push_back(c);
-	return (this->_clients.size() - 1); // is this return value ever used??????
+	return (this->_clients.size() - 1);
 }
 
 void SocketHandler::removeClient(int i) // can be void maybe

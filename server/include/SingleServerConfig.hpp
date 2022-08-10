@@ -35,7 +35,7 @@ class SingleServerConfig
 
 		void _handleListen(std::string keyValue);
 		unsigned short _checkListen(std::string value);
-		// void _handleCgi(std::string line); // only needed if we do bonus
+		void _handleCgi(std::string line);
 		void _handleLocation(std::string line);
 		void _handleErrorPage(std::string line);
 
@@ -49,7 +49,6 @@ class SingleServerConfig
 
 	public:
 	// Constructors
-		// SingleServerConfig();
 		SingleServerConfig(std::string server, ConfigStruct *conf);
 
 	// Deconstructors

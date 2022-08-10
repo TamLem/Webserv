@@ -10,15 +10,15 @@ else
 CXXFLAGS	=	-std=c++98 -Wall -Wextra #-Werror // please fix this Tam
 endif
 
-CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds
+CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
 
 CXXFLAGS	+=	-D FORTYTWO_TESTER
 
-# CXXFLAGS	+=	-D SHOW_CONSTRUCTION
+# CXXFLAGS	+=	-D SHOW_CONSTRUCTION # enables the printing of constructor/destructor messages
 
-CXXFLAGS	+=	-D SHOW_LOG #enables the printing of surface-level logs, server-side only !!! make re is needed if you just enabled this !!!
+CXXFLAGS	+=	-D SHOW_LOG #enables the printing of surface-level logs, server-side only
 
-# CXXFLAGS	+=	-D SHOW_LOG_2 #enables the printing of deep-level logs, server-side only !!! make re is needed if you just enabled this !!!
+# CXXFLAGS	+=	-D SHOW_LOG_2 #enables the printing of deep-level logs, server-side only
 
 #directories
 PWD			=	$(shell pwd)

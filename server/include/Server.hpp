@@ -18,7 +18,7 @@
 #include <fstream>
 #include <map>
 #include <set>
-#include <csignal> // check if forbidden !!!!!!!!!!
+#include <csignal>
 
 /* our includes */
 #include "Config.hpp"
@@ -45,8 +45,7 @@ struct client
 	struct sockaddr_in addr;
 };
 
-void cgi_handle(Request& request, std::string buf, int fd);
-#define MAX_EVENTS 128
+void cgi_handle(Request& request, std::string buf, int fd); // what tf is this @Tam
 
 static volatile int keep_running = 1;
 
@@ -68,7 +67,7 @@ class Server
 
 		// void run(void);
 
-		void handleRequest(/*const std::string&, */int);
+		void handleRequest(int);
 	private:
 	// defines only to not have undefined behaviour
 		Server(const Server&);
@@ -79,7 +78,7 @@ class Server
 		SocketHandler *_socketHandler;
 
 		std::vector <client> _clients;
-		Response _response;
+		Response _response;// needs to go away
 		std::string _requestHead;
 		ConfigStruct _currentConfig;
 		std::string _currentLocationKey;
@@ -102,6 +101,11 @@ class Server
 		void handleGET(const Request&);
 		void handlePOST(int clientFd, const Request&); // maybe passs fd to this function
 		void handleERROR(const std::string&);
+		void _handleResponse(int i);
+
+		bool _isCgiRequest(std::string requestHead);
+
+	public:
 
 	// Exceptions
 		class InternalServerErrorException : public std::exception
@@ -143,6 +147,6 @@ class Server
 		};
 };
 
-void cgi_handle(Request& request, int fd);
+void cgi_handle(Request& request, int fd, ConfigStruct configStruct);
 
 #endif

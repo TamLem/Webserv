@@ -1,5 +1,6 @@
 #include "Response.hpp"
 
+#include "Base.hpp"
 #include <string> //std::string
 #include <map> //std::map
 #include <sstream> //std::stringstream
@@ -10,12 +11,6 @@
 // #include <sys/types.h>  // opendir
 #include <unistd.h> // access
 #include <sys/stat.h> // stat
-
-#define RESET "\033[0m"
-#define GREEN "\033[32m"
-#define YELLOW "\033[33m"
-#define BLUE "\033[34m"
-#define RED "\033[31m"
 
 bool Response::isValidStatus(const std::string& status)
 {
@@ -43,10 +38,20 @@ void Response::clear(void)
 	target = "";
 }
 
+void Response::clearResponseMap()
+{
+	this->_responseMap.clear();
+}
+
+void Response::removeFromResponseMap(int fd)
+{
+	if (this->_responseMap.count(fd) == 1)
+		this->_responseMap.erase(fd);
+}
+
 Response::~Response(void)
 {
 	#ifdef SHOW_CONSTRUCTION
-		// std::cout << "messageMap: " << this->messageMap.size() << std::endl;
 		std::cout << RED << "Response Deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -116,12 +121,22 @@ std::string Response::constructHeader(void)
 	return (stream.str());
 }
 
+std::string Response::constructChunkedHeader(void)
+{
+	std::stringstream stream;
+
+	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
+	// stream << "Content-Type: " << "image/jpg" << CRLF;
+	stream << "Transfer-Encoding: chunked" << CRLFTWO;
+
+	return (stream.str());
+}
+
 int Response::sendall(const int sock_fd, char *buffer, const int len) const
 {
 	int total;
 	int bytesleft;
 	int n;
-	// int i = 0;
 
 	total = len;
 	bytesleft = len;
@@ -233,17 +248,7 @@ void Response::createErrorBody(void)
 	this->body = body.str();
 }
 
-// static std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace)
-// {
-// 		size_t position = 0;
-// 		for ( position = str.find(tofind); position != std::string::npos; position = str.find(tofind,position) )
-// 		{
-// 				str.replace(position , tofind.length(), toreplace);
-// 		}
-// 		return(str);
-// }
-
-void Response::createIndex(const std::string& path)
+void Response::createIndex(const Request& request)
 {
 	std::stringstream body;
 	body <<
@@ -255,50 +260,40 @@ void Response::createIndex(const std::string& path)
 	</head>\n\
 	<body bgcolor=\"FFFFFF\">\n\
 	<center>\n\
-	<h1 style=\"color:black\">Index of/\n\
+	<h1 style=\"color:black\">Index of "
+	<< request.getDecodedTarget()
+	<< "\n\
 	</h1>\n\
 	</center>\n\
 	<div style=\"margin-left:0%\">\n\
 	<ul>";
-	DIR *d;
-	struct dirent *dir;
+	DIR *dir;
+	struct dirent *dirStruct;
 	std::string name;
-	// d = opendir(target.substr(0, target.find_last_of('/')).c_str()); // AE better keep path and file seperate
-	d = opendir(path.c_str()); // AE better keep path and file seperate
-	if (d)
+	dir = opendir(request.getRoutedTarget().c_str());
+	if (dir)
 	{
-		while ((dir = readdir(d)) != NULL)
+		while ((dirStruct = readdir(dir)) != NULL)
 		{
-			name = dir->d_name;
-			// name = staticReplaceInString(name, "u%CC%88", "ü");
-			// name = staticReplaceInString(name, "a%CC%88", "ä");
-			// name = staticReplaceInString(name, "o%CC%88", "ö");
-			// if (dir->d_type == DT_REG) //only files
-			// {
-				// std::cerr << BOLD << RED << "dir: " << name << RESET << std::endl;
-				// if (strcmp(name, "..") == 0)
-				if (name.compare("..") == 0)
-				{
-					body << "<li><a href=\"" << name << "\">" << "Parent Directory" << "</a></li>\n";
-				}
-				// else if (strlen(name) != 0 && strcmp(name, ".") != 0)
-				else if (name.length() != 0 && name.compare(".") != 0)
-				{
-					if (dir->d_type == DT_DIR)
-						body << "<li><a href=\"" << name << "/\">" << name << "</a></li>\n";
-					else
-						body << "<li><a href=\"" << name << "\">" << name << "</a></li>\n";
-				}
-
-				// body << "<li style=\"color:blue\">" << name << "<li/>";
-			// }
+			name = dirStruct->d_name;
+			if (name.compare("..") == 0)
+			{
+				body << "<li><a href=\"" << name << "\">" << "Parent Directory" << "</a></li>\n";
+			}
+			else if (name.length() != 0 && name.compare(".") != 0)
+			{
+				if (dirStruct->d_type == DT_DIR)
+					body << "<li><a href=\"" << name << "/\">" << name << "</a></li>\n";
+				else
+					body << "<li><a href=\"" << name << "\">" << name << "</a></li>\n";
+			}
 		}
 		body <<
 		"</div>\n\
 		</body>\n\
 		</html>";
 		this->body = body.str();
-		closedir(d);
+		closedir(dir);
 	}
 	else
 	{
@@ -323,19 +318,19 @@ static bool staticTargetIsDir(const std::string& target)
 
 void Response::createBodyFromFile(const std::string& target)
 {
-	std::stringstream body;
+	std::stringstream tempBody;
 	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
-	if (fileExists(target) == false || staticTargetIsDir(target) == true)
-		throw ERROR_404();
-	else if (access(target.c_str(), R_OK) != 0)
+	if (access(target.c_str(), F_OK) != 0 && errno == EACCES)
 		throw ERROR_403();
+	if (targetExists(target) == false || staticTargetIsDir(target) == true)
+		throw ERROR_404();
 	std::ifstream file(target.c_str(), std::ios::binary);
 	if (file.is_open())
 	{
 		// std::cerr << BOLD << RED << "open" << RESET << std::endl;
-		body << file.rdbuf();
+		tempBody << file.rdbuf();
 		file.close();
-		this->body = body.str();
+		this->body = tempBody.str();
 	}
 	else
 	{
@@ -352,12 +347,6 @@ void Response::addDefaultHeaderFields(void)
 		contentLength << this->body.length();
 		addHeaderField("Content-Length", contentLength.str());
 	}
-}
-
-void Response::sendResponse(int fd)
-{
-	std::string response = this->constructHeader() + this->body;
-	sendall(fd, (char *)response.c_str(), response.length());
 }
 
 void Response::createMessageMap(void)
@@ -466,12 +455,21 @@ const char* Response::InvalidProtocol::what() const throw() //AE is it good to h
 	return ("500");
 }
 
+const char* Response::InternalServerErrorException::what() const throw()
+{
+	return ("500");
+}
 const char* Response::ERROR_500::what() const throw()
 {
 	return ("500");
 }
 
-bool fileExists(const std::string& target)
+const char* Response::ClientDisconnectException::what() const throw()
+{
+	return ("client disconnected");
+}
+
+bool targetExists(const std::string& target)
 {
 	struct stat statStruct;
 

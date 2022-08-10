@@ -24,14 +24,23 @@ using std::endl;
 class Cgi
 {
 	private:
+	// defines only to not have undefined behaviour
+		Cgi();
+		Cgi(const Cgi&);
+		Cgi& operator=(const Cgi&);
+
+	// private variables
 		char** _env;
 		string _method;
 		string _scriptName;
 		string _pathInfo;
 		string _queryString;
 		bool	_isPhp;
+		ConfigStruct _confStruct;
+		bool	_isTester;
+		string  _docRoot;
 	public:
-		Cgi(Request &request);
+		Cgi(Request &request, ConfigStruct confStruct);
 
 		~Cgi();
 
@@ -45,6 +54,8 @@ class Cgi
 	void setEnv(Request &request);
 	void cgi_response(int fd);
 	void phpHandler(Request &req);
+	void blaHandler(Request &req);
+
 };
 
 

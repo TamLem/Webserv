@@ -20,11 +20,10 @@
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
+#include <fcntl.h>
 
 #include "Base.hpp"
 #include "Config.hpp"
-
-#define MAX_EVENTS 128
 
 // struct ServerStruct
 // {
@@ -89,16 +88,18 @@ class SocketHandler
 		void acceptConnection(int i);
 		bool addSocket(int fd);
 		bool readFromClient(int i);
-		void removeClient(int fd);
+		bool writeToClient(int i);
+		bool removeClient(int fd, bool force = false);
 		void removeInactiveClients();
 
 	// Getter
 		int getNumEvents() const;
 		// const char *getBuffer() const;
 		std::string getBuffer() const;
-		int getFD() const;
+		int getFD(int i) const;
 
 	// Setter
+		void setWriteable(int i);
 
 };
 #endif // SOCKETHANDLER_HPP

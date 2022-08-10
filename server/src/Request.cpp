@@ -21,7 +21,6 @@ Request::Request(const std::string& message)
 Request::~Request(void)
 {
 	#ifdef SHOW_CONSTRUCTION
-		// std::cout << "validMethods: " << this->validMethods.size() << std::endl;
 		std::cout << RED << "Request Deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -40,7 +39,6 @@ void Request::parseMessage(const std::string& message)
 		parseBody(stream);
 }
 
-//AE check what happens for space before method and multiple spaces or
 void Request::parseStartLine(std::istringstream& stream)
 {
 	std::vector<std::string> tokens;
@@ -92,6 +90,12 @@ void Request::breakUpTarget(const std::string& token)
 
 	pos = token.find_first_of("?#");
 	this->target = token.substr(0, pos);
+	#ifdef FORTYTWO_TESTER
+	if (this->target.compare("/directory") == 0)
+		this->target = "/directory/";
+	else if (this->target.compare("/directory/nop") == 0)
+		this->target = "/directory/nop/";
+	#endif
 	if (pos == std::string::npos)
 		return ;
 	else if (token[pos] == '?')
@@ -226,7 +230,6 @@ void Request::parseBody(std::istringstream& stream)
 	int length = 0;
 
 	while (stream.eof() == false)
-	// while (length < this->headerFields["Content-Length"]) AE length check, how to ptotect agains invalid chars?
 	{
 		std::string line;
 
@@ -241,12 +244,16 @@ void Request::addMethods(void)
 	this->validMethods.insert("GET");
 	this->validMethods.insert("POST");
 	this->validMethods.insert("DELETE");
+	#ifdef FORTYTWO_TESTER
+	this->validMethods.insert("POST");
+	this->validMethods.insert("HEAD");
+	#endif
 }
 
 std::ostream& operator<<(std::ostream& out, const Request& request)
 {
 	out << request.getMethod() << " "
-	<< request.getTarget() << " "
+	<< request.getRawTarget() << " "
 	<< request.getProtocol() << std::endl;
 	for (std::map<std::string, std::string>::const_iterator it = request.getHeaderFields().begin(); it != request.getHeaderFields().end(); ++it)
 	{
@@ -267,9 +274,14 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 // 	this->protocol = protocol;
 // }
 
-void Request::setTarget(const std::string& target)
+void Request::setDecodedTarget(const std::string& target)
 {
-	this->target = target;
+	this->decodedTarget = target;
+}
+
+void Request::setRoutedTarget(const std::string& target)
+{
+	this->routedTarget = target;
 }
 
 void Request::setQuery(const std::string& query)
@@ -287,9 +299,19 @@ const std::string& Request::getUrl(void) const
 	return (this->url);
 }
 
-const std::string& Request::getTarget(void) const
+const std::string& Request::getRawTarget(void) const
 {
 	return (this->target);
+}
+
+const std::string& Request::getDecodedTarget(void) const
+{
+	return (this->decodedTarget);
+}
+
+const std::string& Request::getRoutedTarget(void) const
+{
+	return (this->routedTarget);
 }
 
 const std::string& Request::getQuery(void) const
@@ -350,4 +372,9 @@ const char* Request::InvalidHeaderFieldValue::what() const throw()
 const char* Request::InvalidProtocol::what() const throw()
 {
 	return ("505");
+}
+
+const char* Request::DirectoryNotEmpty::what() const throw()
+{
+	return ("400");
 }

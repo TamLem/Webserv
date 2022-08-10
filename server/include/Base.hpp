@@ -28,16 +28,27 @@
 
 // defines for reading from client
 #define MAX_REQUEST_HEADER_SIZE 1024
+#define MAX_EVENTS 128
 #define MAX_REQUEST_LINE_SIZE 512
+#define MAX_SEND_CHUNK_SIZE (4 * 1024)
+
+// ResponseStruct
+struct ResponseStruct
+{
+	std::string buffer;
+	std::string header;
+	std::string response;
+	// std::string status;
+	// std::string statusMessage;
+	size_t total;
+	size_t bytesLeft;
+};
 
 // LocationStruct
 struct LocationStruct
 {
 	bool isDir;
 	bool autoIndex;
-	// bool getAllowed;
-	// bool postAllowed;
-	// bool deleteAllowed;
 	std::set<std::string> allowedMethods;
 	std::string root;
 	std::string indexPage;
@@ -62,7 +73,7 @@ struct ConfigStruct
 	std::string								serverName;
 	std::map<std::string, unsigned short>	listen;
 	std::string								root;
-	// std::vector<std::string>				cgi;
+	std::map<std::string, std::string>		cgi;
 	std::string								cgiBin;
 	size_t									clientBodyBufferSize;
 
@@ -72,8 +83,6 @@ struct ConfigStruct
 	std::map<std::string, LocationStruct>	location;
 	std::map<std::string, std::string>		errorPage;
 	bool									autoIndex;
-	// bool									showLog; // this might make more sense to be controlled via Makefile since it is difficult to do it for each server-block individually
-	// bool									chunkedTransfer;
 };
 
 #endif // BASE_HPP

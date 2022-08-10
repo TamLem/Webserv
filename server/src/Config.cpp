@@ -6,15 +6,15 @@ void Config::_openConfigFile()
 	this->_configFile.open(this->_configPath.c_str());
 	if (!this->_configFile.is_open())
 	{
-		// std::cerr << RED << "Error when opening " << this->_configPath << RESET << std::endl;
-		// << "check for spelling errors in the name and check for read-rights of the file" << std::endl;
 		throw Config::FileOpenException();
 	}
 }
 
 void Config::_checkBrackets(std::string all)
 {
-	// std::cout << ">" << GREEN << all << RESET << "<" << std::endl;
+	#ifdef SHOW_LOG_2
+		std::cout << "passed into _checkBrackets \n>" << GREEN << all << RESET << "<" << std::endl;
+	#endif
 
 	std::stringstream streamBuffer;
 	streamBuffer << all;
@@ -28,18 +28,14 @@ void Config::_checkBrackets(std::string all)
 		if (buffer.length() == 0)
 			continue ;
 		serverStream << buffer << std::endl; // fill stringstream for the SingleServerConfig
-		// std::cerr << ">" << YELLOW << buffer << RESET << "< got written into serverStream" << std::endl;
 		if (buffer.find("server {") != std::string::npos && buffer.find_first_of("#;") > buffer.find("server {"))
 		{
-			// std::cout << BLUE << "opened server brackets with >" << buffer << "<" << RESET << std::endl;
 			if (buffer.substr(buffer.find("server {") + 8).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("server {") + 8).find_first_of("#;") || (buffer.find_first_not_of(WHITESPACE) != buffer.find("server {")))
 			{
-				// std::cerr << "1>" << RED << buffer << RESET << "<" << std::endl;
 				throw Config::WrongConfigSyntaxException();
 			}
 			else if (openServer == true)
 			{
-				// std::cerr << "1>" << RED << buffer << RESET << "<" << std::endl;
 				throw Config::ServerInsideServerException();
 			}
 			else
@@ -47,7 +43,6 @@ void Config::_checkBrackets(std::string all)
 		}
 		else if (buffer.find("location ") != std::string::npos && buffer.find_first_of("#;") > buffer.find("location "))
 		{
-			// std::cout << BLUE << "opened location brackets with >" << buffer << "<" << RESET << std::endl;
 			if (buffer.find(" {") == std::string::npos || buffer.find(" {") > buffer.find_first_of("#;"))
 			{
 				std::cout << RED << buffer << std::endl;
@@ -63,24 +58,21 @@ void Config::_checkBrackets(std::string all)
 		}
 		else if (buffer.find("}") != std::string::npos && buffer.find_first_of("#;") > buffer.find("}"))
 		{
-			// std::cerr << GREEN << "found this to close a bracket >" << buffer << "<" << RESET << std::endl;
 			if (buffer.substr(buffer.find("}") + 1).find_first_not_of(WHITESPACE) < buffer.substr(buffer.find("}") + 1).find_first_of("#;") || buffer.find_first_not_of(WHITESPACE) != buffer.find("}"))
 			{
-				// std::cerr << "3>" << RED << buffer << RESET << "<" << std::endl;
 				throw Config::WrongConfigSyntaxException();
 			}
 			else if (openLocation)
 			{
-				// std::cout << YELLOW << "closed location brackets with >" << buffer << "<" << RESET << std::endl;
 				openLocation = false;
 			}
 			else
 			{
-				// std::cout << YELLOW << "closed server brackets with >" << buffer << "<" << RESET << std::endl;
 				openServer = false;
 				this->_parseServerBlock(serverStream.str());
 				serverStream.clear();
 				serverStream.str(std::string());
+				buffer.clear();
 			}
 		}
 	}
@@ -113,7 +105,6 @@ void Config::_parseServerBlock(std::string serverBlock)
 		std::getline(serverStream, buffer);
 		if (buffer.length() == 0)
 			continue ;
-		// std::cerr << YELLOW << "before: >" << buffer << "<" << RESET << std::endl;
 		size_t start = buffer.find_first_not_of(WHITESPACE); // clear out all the leading whitespaces
 		if (start == std::string::npos)
 			continue ;
@@ -122,7 +113,6 @@ void Config::_parseServerBlock(std::string serverBlock)
 		{
 			end = buffer.find_last_not_of(WHITESPACE);
 			buffer = buffer.substr(start, (end - start + 1));
-			// std::cerr << BLUE << "if: >" << buffer << "<" << RESET << std::endl;
 		}
 		else
 		{
@@ -130,19 +120,16 @@ void Config::_parseServerBlock(std::string serverBlock)
 			buffer = buffer.substr(start, (end - start + 1));
 			end = buffer.find_last_not_of(WHITESPACE);
 			buffer = buffer.substr(0, end + 1);
-			// std::cerr << BLUE << "else: >" << buffer << "<" << RESET << std::endl;
 		}
 		if (serverFound == false && buffer.find("server {") != std::string::npos)
 		{
 			serverFound = true;
-			// std::cout << YELLOW << "server { found: >" << buffer << "<" << RESET << std::endl;
 		}
-		else if (serverFound == true && buffer.find("server {") != std::string::npos) // with new_ implementation not needed, check though !!!!!!!
+		else if (serverFound == true && buffer.find("server {") != std::string::npos)
 		{
-			// std::cerr << "2>" << RED << buffer << RESET << "<" << std::endl;
 			throw Config::ServerInsideServerException();
 		}
-		if (serverFound == false && buffer.length() > 0) // might never be triggered, check this!!!!!!
+		if (serverFound == false && buffer.length() > 0)
 		{
 			throw Config::InvalidCharException();
 		}
@@ -183,7 +170,6 @@ void Config::_createConfigStruct(std::string server)
 		serverName = "default";
 		this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
 	}
-	// std::cout << GREEN << "size: " << this->_cluster.size() << RESET << std::endl;
 	#ifdef SHOW_LOG_2
 		std::cout << GREEN << "added server " << serverName << " to cluster" << RESET << std::endl;
 	#endif
@@ -193,29 +179,14 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 {
 	ConfigStruct confStruct;
 	confStruct.serverName = "";
-	confStruct.listen = std::map<std::string, unsigned short>();
 	confStruct.root = "";
-	confStruct.autoIndex = false;
+	confStruct.cgiBin = "";
 	confStruct.indexPage = "";
-	// confStruct.chunkedTransfer = false; // maybe not needed because it is always chunked ????????
-	confStruct.clientBodyBufferSize = 64000;
-	confStruct.clientMaxBodySize = 256000;
-	// confStruct.cgi = std::vector<std::string>();
-	confStruct.cgiBin = "cgi-bin";
-	confStruct.location = std::map<std::string, LocationStruct>();
-	confStruct.errorPage = std::map<std::string, std::string>();
-	// confStruct.showLog = false;
+	confStruct.clientBodyBufferSize = (4 * 1024);
+	confStruct.clientMaxBodySize = (100 * 1024 * 1024);
+	confStruct.autoIndex = false;
 
 	return (confStruct);
-}
-
-void Config::_freeConfigStruct()
-{
-	// check if freeing is needed!!!!!!!!!!!!!
-	// this->_conf.listen.clear();
-	// this->_conf.cgi.clear();
-	// this->_conf.location.clear();
-	// this->_conf.errorPage.clear();
 }
 
 void Config::_readConfigFile()
@@ -291,7 +262,7 @@ void Config::printCluster()
 		"\tindex_page " << this->strGetIndexPage() << std::endl << \
 		"\tclient_body_buffer_size " << this->strGetClientBodyBufferSize() << std::endl << \
 		"\tclient_max_body_size " << this->strGetClientMaxBodySize() << std::endl << \
-		/* "\tcgi " << a->strGetCgi() << std::endl << \*/ // only needed if we do bonus
+		"\tcgi\n" << this->strGetCgi() << std::endl << \
 		"\tcgi_bin " << this->strGetCgiBin() << std::endl << \
 		this->strGetLocation() << std::endl << \
 		"\terror_page\n" << this->strGetErrorPage() << \
@@ -313,7 +284,7 @@ const ConfigStruct& Config::getConfigStruct(std::string hostName) // use this fu
 	else
 	{
 		#ifdef SHOW_LOG
-			std::cout << std::endl << RED << BOLD << "!!!!! DEFAULT STRUCT IS NOW BEEING USED !!!!!" << RESET << std::endl << std::endl;
+			std::cout << std::endl << RED << BOLD << "!!!!! DEFAULT CONFIG STRUCT IS NOW BEEING USED !!!!!" << RESET << std::endl << std::endl;
 		#endif
 		this->applyConfig(defaultConfig);
 	}
@@ -355,10 +326,10 @@ size_t Config::getClientMaxBodySize() const
 	return (this->_conf.clientMaxBodySize);
 }
 
-// const std::vector<std::string> Config::getCgi() const // only needed if we do bonus
-// {
-// 	return (this->_conf.cgi);
-// }
+const std::map<std::string, std::string> Config::getCgi() const
+{
+	return (this->_conf.cgi);
+}
 
 const std::string Config::getCgiBin() const
 {
@@ -427,17 +398,14 @@ const std::string Config::strGetClientMaxBodySize() const
 	return (print.str());
 }
 
-// const std::string Config::strGetCgi() const // only needed if we do bonus
-// {
-// 	std::string print = "";
-// 	size_t size = this->_conf.cgi.size();
-// 	for (size_t i = 0; i < size; ++i)
-// 	{
-// 		print.append(this->_conf.cgi[i]);
-// 		print.append(" ");
-// 	}
-// 	return (print);
-// }
+const std::string Config::strGetCgi() const
+{
+	std::stringstream print;
+	std::map<std::string, std::string>::const_iterator it = this->_conf.cgi.begin();
+	for (; it != this->_conf.cgi.end(); ++it)
+		print << "\t\t" << it->first << " " << it->second << std::endl;
+	return (print.str());
+}
 
 const std::string Config::strGetCgiBin() const
 {
@@ -484,10 +452,6 @@ bool Config::applyConfig(std::string serverName)
 }
 
 // Exceptions
-// brackets can not be opened and closed on the same line
-// no content after the opening bracket on same line, comments are ok
-// no content on closing bracket line, cmments are ok
-// incomplete brackets
 const char* Config::InvalidBracketsException::what(void) const throw()
 {
 	return ("Invalid brackets in .conf file");

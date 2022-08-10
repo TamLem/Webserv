@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-Cgi::Cgi(Request &request): _isPhp(false)
+Cgi::Cgi(Request &request, ConfigStruct configStruct): _isPhp(false), _confStruct(configStruct)
 {
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Cgi Constructor called for " << this << RESET << std::endl;
@@ -13,6 +13,10 @@ Cgi::Cgi(Request &request): _isPhp(false)
 	if (url.find(".php") != string::npos)
 	{
 		phpHandler(request);
+	}
+	else if (url.find(".bla") != string::npos)
+	{
+		blaHandler(request);
 	}
 	else
 	{
@@ -96,6 +100,20 @@ void Cgi::phpHandler(Request &req)
 	_isPhp = true;
 }
 
+void Cgi::blaHandler(Request &req)
+{
+	_docRoot = "/Users/aenglert/testfolder/webserv/42tester";
+	string filePath = req.getUrl();
+	_pathInfo = _docRoot + filePath;
+	cout << "url :" << _pathInfo << endl;
+
+	_env = new char*[2];
+	_env[0] = strdup(_pathInfo.data());
+	_env[1] = NULL;
+
+	_isTester = true;
+}
+
 void Cgi::cgi_response(int fd)
 {
 	std::string file;
@@ -107,6 +125,14 @@ void Cgi::cgi_response(int fd)
 	if (_isPhp)
 	{
 		executable = "php-cgi";
+		args = new char *[3];
+		args[0] = strdup(executable.c_str());
+		args[1] = strdup(_pathInfo.c_str());
+		args[2] = NULL;
+	}
+	else if (_isTester)
+	{
+		executable = _docRoot + "/cgi_tester";
 		args = new char *[3];
 		args[0] = strdup(executable.c_str());
 		args[1] = strdup(_pathInfo.c_str());

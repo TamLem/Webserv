@@ -25,10 +25,10 @@ class Config
 		Config(const Config&);
 		Config& operator=(const Config&);
 
-		std::ifstream	_configFile;
-		std::string		_configPath;
+		std::ifstream	_configFile; // only used temporarily
+		std::string		_configPath; // this will be the path passed as argv
 
-		std::map<std::string, ConfigStruct> _cluster;
+		std::map<std::string, ConfigStruct> _cluster; // this saves all the config files with servername/hostname a key
 		ConfigStruct _conf; // only a temp used for printing and getters
 
 
@@ -38,7 +38,6 @@ class Config
 		void _parseServerBlock(std::string serverBlock);
 		void _createConfigStruct(std::string server);
 		ConfigStruct _initConfigStruct();
-		void _freeConfigStruct(); // currently empty
 		void _readConfigFile();
 		const std::string _printLocationStruct(LocationStruct locationStruct) const;
 
@@ -64,7 +63,7 @@ class Config
 		const std::string getIndexPage() const;
 		size_t getClientBodyBufferSize() const;
 		size_t getClientMaxBodySize() const;
-		// const std::vector<std::string> getCgi() const; // only needed if we do bonus
+		const std::map<std::string, std::string> getCgi() const;
 		const std::string getCgiBin() const;
 		const std::map<std::string, LocationStruct> getLocation() const;
 		const std::map<std::string, std::string> getErrorPage() const;
@@ -77,15 +76,14 @@ class Config
 		const std::string strGetIndexPage() const;
 		const std::string strGetClientBodyBufferSize() const;
 		const std::string strGetClientMaxBodySize() const;
-		// const std::string strGetCgi() const; // only needed if we do bonus
+		const std::string strGetCgi() const;
 		const std::string strGetCgiBin() const;
 		const std::string strGetLocation() const;
 		const std::string strGetErrorPage() const;
 
-	// private: //maybe private for the setters adds more security
 	// Setter
-		void setConfigPath(std::string configPath); // set to private??????
-		bool applyConfig(std::string serverName); // check if moving it to private makes sense
+		void setConfigPath(std::string configPath);
+		bool applyConfig(std::string serverName);
 
 	// public:
 	// Exceptions

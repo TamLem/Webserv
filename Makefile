@@ -10,13 +10,15 @@ else
 CXXFLAGS	=	-std=c++98 -Wall -Wextra #-Werror // please fix this Tam
 endif
 
-CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds
+CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
 
-CXXFLAGS	+=	-D SHOW_CONSTRUCTION
+CXXFLAGS	+=	-D FORTYTWO_TESTER
 
-CXXFLAGS	+=	-D SHOW_LOG #enables the printing of surface-level logs, server-side only !!! make re is needed if you just enabled this !!!
+# CXXFLAGS	+=	-D SHOW_CONSTRUCTION # enables the printing of constructor/destructor messages
 
-# CXXFLAGS	+=	-D SHOW_LOG_2 #enables the printing of deep-level logs, server-side only !!! make re is needed if you just enabled this !!!
+# CXXFLAGS	+=	-D SHOW_LOG #enables the printing of surface-level logs, server-side only
+
+# CXXFLAGS	+=	-D SHOW_LOG_2 #enables the printing of deep-level logs, server-side only
 
 #directories
 PWD			=	$(shell pwd)
@@ -41,6 +43,7 @@ SRC_FILES	=	main.cpp \
 				Server.cpp \
 				Message.cpp \
 				Response.cpp \
+				Send.cpp 	\
 				Cgi.cpp		\
 				Request.cpp \
 				Config.cpp \
@@ -59,6 +62,8 @@ SRC_FILES	=	main.cpp \
 endif
 
 OBJ_FILES	=	$(SRC_FILES:.cpp=.o)
+
+DEP			=	$(wildcard $(INC_DIR)*.hpp) $(wildcard $(INC_DIR)*/*.hpp) Makefile
 
 #paths
 SRC			=	$(addprefix $(SRC_DIR), $(SRC_FILES))
@@ -80,7 +85,7 @@ $(NAME): $(OBJ)
 	@echo "$(GREEN)Finished [$(NAME)]$(RESET)"
 
 #compile objects
-$(OBJ_DIR)%.o:$(SRC_DIR)%.cpp
+$(OBJ_DIR)%.o:$(SRC_DIR)%.cpp $(DEP)
 	@mkdir -p $(OBJ_DIR)
 	@echo "$(YELLOW)Compiling [$@]...$(RESET)"
 	@$(CXX) $(CXXFLAGS) -I $(INC_DIR) -o $@ -c $<

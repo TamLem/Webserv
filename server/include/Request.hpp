@@ -25,6 +25,8 @@ class Request : public Message
 		std::string method;
 		std::string url; // AE remove
 		// std::string target;
+		std::string decodedTarget;
+		std::string routedTarget;
 		std::string query;
 		std::string fragment;
 	// private Methods
@@ -53,12 +55,15 @@ class Request : public Message
 		~Request(void);
 
 		// void setMethod(const std::string&);
-		void setTarget(const std::string&);
+		void setDecodedTarget(const std::string&);
+		void setRoutedTarget(const std::string&);
 		void setQuery(const std::string&);
 
 		const std::string& getMethod(void) const;
 		const std::string& getUrl(void) const;
-		const std::string& getTarget(void) const;
+		const std::string& getRawTarget(void) const;
+		const std::string& getDecodedTarget(void) const;
+		const std::string& getRoutedTarget(void) const;
 		const std::string& getQuery(void) const;
 		const std::string& getFragment(void) const;
 		std::map<std::string, std::string>& getHeaderFields() const;
@@ -100,6 +105,11 @@ class Request : public Message
 	};
 
 	class InvalidProtocol : public std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class DirectoryNotEmpty : public std::exception
 	{
 		const char* what() const throw();
 	};

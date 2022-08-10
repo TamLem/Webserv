@@ -60,7 +60,7 @@ void Server::runEventLoop()
 			this->_socketHandler->acceptConnection(i);
 			if (this->_socketHandler->removeClient(i) == true)
 				this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
-			if (this->_socketHandler->readFromClient(i) == true)
+			else if (this->_socketHandler->readFromClient(i) == true)
 			{
 				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
 				handleRequest(this->_socketHandler->getFD(i));

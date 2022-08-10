@@ -57,6 +57,7 @@ class Response : public Message
 		void createIndex(const std::string&);
 		void createErrorBody(void);
 		bool sendResponse(int);
+		bool sendRes(int);
 
 	bool handleClientDisconnect(int fd);
 

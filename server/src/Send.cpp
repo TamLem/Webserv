@@ -12,6 +12,29 @@
 
 #include <iomanip> // setfill
 
+//optional one for the server to send the response to the client
+bool Response::sendRes(int fd)
+{
+	if (this->_responseMap.count(fd) == 0)
+	{
+		this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
+	}
+	int n = send(fd, this->_responseMap[fd].response.c_str(), this->_responseMap[fd].response.size(), 0);
+	if (n == -1)
+	{
+		std::cerr << RED << "send Error sending response for fd: " << fd << std::endl;
+		perror(NULL); // check if illegal
+		std::cerr << RESET;
+		return (true); // throw exception
+	}
+	if (n == (int)this->_responseMap[fd].response.size())
+	{
+		this->_responseMap.erase(fd);
+		return (true);
+	}
+	this->_responseMap[fd].response = this->_responseMap[fd].response.substr(n);
+	return (false);
+}
 
 bool Response::sendResponse(int fd)
 {
@@ -70,6 +93,7 @@ bool Response::handleClientDisconnect(int fd)
 	this->_responseMap.erase(fd);
 	throw Response::ClientDisconnectException();
 }
+
 
 void Response::sendChunk(int i)
 {

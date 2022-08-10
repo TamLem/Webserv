@@ -505,7 +505,10 @@ void Server::handleRequest(int fd)
 		//check method
 		checkLocationMethod(request);
 		if (isCgi == true)
-			cgi_handle(request, fd);
+		{
+			this->applyCurrentConfig(request);
+			cgi_handle(request, fd, this->_currentConfig);
+		}
 		else if (request.getMethod() == "POST")
 			handlePOST(request);
 		else if (request.getMethod() == "DELETE")
@@ -632,9 +635,9 @@ const char* Server::FirstLineTooLongException::what(void) const throw()
 	return ("414");
 }
 
-void cgi_handle(Request& request, int fd)
+void cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 {
-	Cgi newCgi(request); // pass ConfigStruct here
+	Cgi newCgi(request, configStruct);
 
 	newCgi.printEnv();
 	newCgi.cgi_response(fd);

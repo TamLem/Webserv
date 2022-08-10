@@ -45,7 +45,7 @@ struct client
 	struct sockaddr_in addr;
 };
 
-void cgi_handle(Request& request, std::string buf, int fd);
+void cgi_handle(Request& request, std::string buf, int fd); // what tf is this @Tam
 
 static volatile int keep_running = 1;
 
@@ -67,7 +67,7 @@ class Server
 
 		// void run(void);
 
-		void handleRequest(/*const std::string&, */int);
+		void handleRequest(int);
 	private:
 	// defines only to not have undefined behaviour
 		Server(const Server&);
@@ -135,6 +135,6 @@ class Server
 		};
 };
 
-void cgi_handle(Request& request, int fd);
+void cgi_handle(Request& request, int fd, ConfigStruct configStruct);
 
 #endif

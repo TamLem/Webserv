@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-Cgi::Cgi(Request &request): _scriptExists(true)
+Cgi::Cgi(Request &request, ConfigStruct configStruct): _scriptExists(true), _confStruct(configStruct)
 {
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Cgi Constructor called for " << this << RESET << std::endl;
@@ -94,6 +94,20 @@ void Cgi::printEnv()
 	{
 		cout << it->first << ": " << it->second << endl;
 	}
+}
+
+void Cgi::blaHandler(Request &req)
+{
+	_docRoot = "/Users/aenglert/testfolder/webserv/42tester";
+	string filePath = req.getUrl();
+	_pathInfo = _docRoot + filePath;
+	cout << "url :" << _pathInfo << endl;
+
+	_env = new char*[2];
+	_env[0] = strdup(_pathInfo.data());
+	_env[1] = NULL;
+
+	_isTester = true;
 }
 
 void Cgi::cgi_response(int fd)

@@ -37,7 +37,7 @@ void SocketHandler::_initMainSockets()
 
 		// Set socket reusable from Time-Wait state
 		int val = 1;
-		setsockopt(tempFD, SOL_SOCKET, SO_REUSEADDR, &val, 4); // is SO_NOSIGPIPE needed here ???????
+		setsockopt(tempFD, SOL_SOCKET, SO_REUSEADDR, &val, 4);
 
 		// initialize server address struct
 		struct sockaddr_in servAddr;
@@ -150,7 +150,7 @@ bool SocketHandler::addSocket(int fd)
 	// where socketfd is the socket you want to make non-blocking
 
 	int val = 1;
-	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4); // is SO_NOSIGPIPE needed here ???????
+	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
 	this->_fd = fd;
 	return true;
 }
@@ -161,7 +161,9 @@ int SocketHandler::getEvents()
 
 	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
-	std::cout << "num clients: " << _clients.size() << std::endl;
+	#ifdef SHOW_LOG_2
+		std::cout << "num clients: " << _clients.size() << std::endl;
+	#endif
 	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, NULL);
 	return this->_numEvents;
 }
@@ -172,14 +174,16 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	c.fd = fd;
 	c.addr = addr;
 	this->_clients.push_back(c);
-	return (this->_clients.size() - 1); // is this return value ever used??????
+	return (this->_clients.size() - 1);
 }
 
 bool SocketHandler::removeClient(int i, bool force)
 {
 	if ((this->_evList[i].flags & EV_EOF ) /* || (this->_evList[i].flags & EV_CLEAR) */ || force)
 	{
-		std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
+		#ifdef SHOW_LOG_2
+			std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
+		#endif
 		close(this->_evList[i].ident);
 		int index = this->_getClient(this->_evList[i].ident);
 		if (index != -1)
@@ -330,10 +334,10 @@ void SocketHandler::setWriteable(int i)
 
 	int status = fcntl(fd, F_SETFL, O_NONBLOCK);
 
-	if (status == -1){
+	if (status == -1)
+	{
 		perror("calling fcntl");
 		exit(0);
-  		// handle the error.  By the way, I've never seen fcntl fail in this way
 	}
 	int val = 1;
 	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);

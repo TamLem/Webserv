@@ -54,7 +54,7 @@ class Response : public Message
 		// void init(const std::string&, int, const std::string&);
 		void addDefaultHeaderFields(void);
 		void createBodyFromFile(const std::string&);
-		void createIndex(const std::string&);
+		void createIndex(const Request&);
 		void createErrorBody(void);
 		bool sendResponse(int);
 		bool sendRes(int);
@@ -66,7 +66,17 @@ class Response : public Message
 		const char* what() const throw();
 	};
 
+	class ERROR_500 : public std::exception
+	{
+		const char* what() const throw();
+	};
+
 	class ERROR_404 : public Message::BadRequest
+	{
+		const char* what() const throw();
+	};
+
+	class ERROR_403 : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};
@@ -87,5 +97,7 @@ class Response : public Message
 };
 
 std::ostream& operator<<(std::ostream&, const Response&);
+
+bool targetExists(const std::string&);
 
 #endif

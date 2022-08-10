@@ -25,8 +25,6 @@
 #include "Base.hpp"
 #include "Config.hpp"
 
-#define MAX_EVENTS 128
-
 // struct ServerStruct
 // {
 // 	unsigned short fd;

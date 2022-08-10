@@ -148,7 +148,13 @@ bool SocketHandler::addSocket(int fd)
 		return false;
 	}
 	// where socketfd is the socket you want to make non-blocking
+	int status = fcntl(fd, F_SETFL, O_NONBLOCK);
 
+	if (status == -1)
+	{
+		perror("calling fcntl");
+		exit(0);
+	}
 	int val = 1;
 	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
 	this->_fd = fd;
@@ -324,6 +330,38 @@ void SocketHandler::setWriteable(int i)
 	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
 	EV_SET(&ev, fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
+	if (kevent(this->_kq, &ev, 1, this->_evList, 0, NULL) == -1)
+	{
+		std::cerr << RED << "Write Error adding socket to kqueue" << std::endl;
+		perror(NULL);
+		std::cerr << RESET;
+		return ;
+	}
+
+	int status = fcntl(fd, F_SETFL, O_NONBLOCK);
+
+	if (status == -1)
+	{
+		perror("calling fcntl");
+		exit(0);
+	}
+	int val = 1;
+	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
+	this->_fd = fd;
+	return ;
+}
+
+void SocketHandler::setReadable(int i)
+{
+	int fd = this->_evList[i].ident;
+	EV_SET(&this->_evList[i], 0, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+	kevent(this->_kq, &this->_evList[i], 1, this->_evList, 0, NULL);
+	struct kevent ev;
+	struct timespec timeout;
+
+	timeout.tv_sec = 20;
+	timeout.tv_nsec = 0;
+	EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
 	if (kevent(this->_kq, &ev, 1, this->_evList, 0, NULL) == -1)
 	{
 		std::cerr << RED << "Write Error adding socket to kqueue" << std::endl;

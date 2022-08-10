@@ -100,6 +100,7 @@ class SocketHandler
 
 	// Setter
 		void setWriteable(int i);
+		void setReadable(int i);
 
 };
 #endif // SOCKETHANDLER_HPP

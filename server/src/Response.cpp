@@ -1,17 +1,5 @@
 #include "Response.hpp"
 
-#include "Base.hpp"
-#include <string> //std::string
-#include <map> //std::map
-#include <sstream> //std::stringstream
-#include <iostream> //std::ios
-#include <fstream> //std::ifstream std::ofstream
-#include <sys/socket.h> // send
-#include <dirent.h> // dirent, opendir
-// #include <sys/types.h>  // opendir
-#include <unistd.h> // access
-#include <sys/stat.h> // stat
-
 bool Response::isValidStatus(const std::string& status)
 {
 	if (this->messageMap.count(status))
@@ -74,15 +62,66 @@ void Response::setPostTarget(int clientFd, std::string target)
 	this->_receiveMap[clientFd].target = target;
 }
 
+static size_t _strToSizeT(std::string str)
+{
+	size_t out = 0;
+	std::stringstream buffer;
+	#ifdef __APPLE__
+		buffer << SIZE_T_MAX;
+	#else
+		buffer << "18446744073709551615";
+	#endif
+	std::string sizeTMax = buffer.str();
+	if (str.find("-") != std::string::npos && str.find_first_of(DECIMAL) != std::string::npos && str.find("-") == str.find_first_of(DECIMAL) - 1)
+	{
+		std::cout << str << std::endl;
+		throw Response::NegativeDecimalsNotAllowedException();
+	}
+	else if (str.find_first_of(DECIMAL) != std::string::npos)
+	{
+		std::string number = str.substr(str.find_first_of(DECIMAL));
+		if (number.find_first_not_of(WHITESPACE) != std::string::npos)
+			number = number.substr(0, number.find_first_not_of(DECIMAL));
+		if (str.length() >= sizeTMax.length() && sizeTMax.compare(number) > 0)
+		{
+			std::cout << RED << ">" << number << RESET << std::endl;
+			throw Response::SizeTOverflowException();
+		}
+		else
+			std::istringstream(str) >> out;
+	}
+	return (out);
+}
+
 void Response::setPostLength(int clientFd, std::map<std::string, std::string> headerFields)
 {
-	this->_receiveMap[clientFd].total = headerFields["Content-Length"];
+	size_t length = 0;
+	if (headerFields.count("Conten-Length"))
+	{
+		std::cout << headerFields["Content-Length"] << std::endl;
+		length = _strToSizeT(headerFields["Content-Length"]);
+	}
+	else
+	{
+		std::cout << headerFields["content-length"] << std::endl;
+		length = _strToSizeT(headerFields["content-length"]);
+	}
+
+	this->_receiveMap[clientFd].total = length;
 	this->_receiveMap[clientFd].bytesLeft = length;
 }
 
 void Response::setPostBufferSize(int clientFd, size_t bufferSize)
 {
 	this->_receiveMap[clientFd].bufferSize = bufferSize;
+}
+
+bool Response::checkReceiveExistance(int clientFd)
+{
+	if (this->_receiveMap.count(clientFd) == 1)
+		return (true);
+	else
+		return (false);
 }
 
 void Response::setProtocol(const std::string& protocol)
@@ -157,74 +196,6 @@ int Response::sendall(const int sock_fd, char *buffer, const int len) const
 		std::cout << RED << "fd: " << sock_fd << " was closed after sending response" << RESET << std::endl;
 	#endif
 	return (0);
-}
-
-void Response::receiveChunk(int i)
-{
-	const int clientFd = i;
-	int total = this->_receiveMap[i].total;
-	int bytesLeft = this->_receiveMap[i].bytesLeft;
-
-	int n = 0;
-	std::ofstream buffer;
-	char *chunk = NULL;
-	buffer.open(this->_receiveMap[i].target.c_str(), std::ios_base::app);
-	// int bufferLength;
-	if (total > this->_receiveMap[i].bufferSize && bytesLeft > this->_receiveMap[i].bufferSize)
-	{
-		std::cout << YELLOW << "bytesLeft: " << bytesLeft << RESET << std::endl;
-
-		n = read(clientFd, chunk, this->_receiveMap[i].bufferSize);
-
-		// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
-		// 			<< intToHexString(this->_receiveMap[i].bufferSize) << CRLF << this->_receiveMap[i].response.substr(total - bytesLeft, this->_receiveMap[i].bufferSize) << CRLF
-		// 			<< YELLOW << "<" << RESET << std::endl;
-	}
-	else /*if (total > this->_receiveMap[i].bufferSize && bytesLeft < this->_receiveMap[i].bufferSize)*/ // check if it works like that
-	{
-		std::cout << YELLOW << "last bytesLeft: " << bytesLeft << RESET << std::endl;
-		n = read(clientFd, chunk, bytesLeft);
-
-		// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
-		// 			<< (intToHexString(this->_receiveMap[i].bufferSize) + CRLF + this->_receiveMap[i].response.substr(total - bytesLeft, (bytesLeft + intToHexString(bytesLeft).length())) + CRLF)
-		// 			<< YELLOW << "<" << RESET << std::endl;
-	}
-	std::cout << BOLD << GREEN << "Bytes received from " << clientFd << ": " << n << RESET << std::endl;
-	if (n > 0)
-	{
-		if (n > bytesLeft)
-		{
-			std::cout << "CHECK n FOR RECEIVED BYTES!!!!!!!" << std::endl;
-			bytesLeft = 0;
-		}
-		else
-			bytesLeft -= n;
-		std::cout << BOLD << YELLOW << "Bytes left to read from " << clientFd << ": " << bytesLeft << RESET << std::endl;
-	}
-	else if (n == -1)
-	{
-		perror("send");
-		this->_receiveMap.erase(i);
-		bytesLeft = 0;
-		// throw Response::InternalServerErrorException(); // check if this gets through to send an error to the fd !!!!!!!!!!
-		// maybe use the create errorHead + errorBody instead here ????
-	}
-
-	if (bytesLeft)
-	{
-		this->_receiveMap[i].bytesLeft = bytesLeft;
-		buffer.close();
-	}
-	else
-	{
-		buffer.close();
-		// send response here!!!!!!!!!!!!!
-		// close(clientFd);
-		#ifdef SHOW_LOG
-			std::cout << RED << "fd: " << clientFd << " was closed after sending response" << RESET << std::endl;
-		#endif
-		this->_receiveMap.erase(i);
-	}
 }
 
 void Response::createErrorBody(void)
@@ -476,4 +447,14 @@ bool targetExists(const std::string& target)
 	if (stat(target.c_str(), &statStruct) == 0)
 			return (true);
 	return (false);
+}
+
+const char* Response::SizeTOverflowException::what(void) const throw()
+{
+	return ("413");
+}
+
+const char* Response::NegativeDecimalsNotAllowedException::what(void) const throw()
+{
+	return ("400");
 }

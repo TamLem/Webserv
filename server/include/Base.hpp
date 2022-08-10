@@ -57,7 +57,6 @@ struct LocationStruct
 // ReceiveStruct
 struct ReceiveStruct
 {
-	std::string header;
 	std::string target;
 	// std::string status;
 	// std::string statusMessage;

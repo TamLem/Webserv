@@ -61,7 +61,7 @@ void Server::runEventLoop()
 	while(keep_running)
 	{
 
-		#ifdef SHOW_LOG_2
+		#ifdef SHOW_LOG
 		std::cout << "server running " << std::endl;
 		#endif
 		int numEvents = this->_socketHandler->getEvents();
@@ -72,7 +72,7 @@ void Server::runEventLoop()
 		}
 		for (int i = 0; i < numEvents; ++i)
 		{
-			#ifdef SHOW_LOG_2
+			#ifdef SHOW_LOG
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
 			#endif
 			this->_socketHandler->acceptConnection(i);
@@ -82,7 +82,10 @@ void Server::runEventLoop()
 			{
 				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
 				handleRequest(this->_socketHandler->getFD(i));
-				this->_socketHandler->setWriteable(i);
+				if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == true)
+					this->_socketHandler->setReadable(i);
+				else
+					this->_socketHandler->setWriteable(i);
 			}
 			else if (this->_socketHandler->writeToClient(i) == true)
 			{
@@ -125,13 +128,15 @@ void Server::handleGET(const Request& request)
 
 void Server::handlePOST(int clientFd, const Request& request)
 {
+	std::cout << "handlePost entered for" << clientFd << std::endl;
 	std::map<std::string, std::string> tempHeaderFields = request.getHeaderFields();
 	std::stringstream clientMaxBodySize;
 	clientMaxBodySize << this->_currentConfig.clientMaxBodySize;
-	if (tempHeaderFields.count("Content-Length") == 0)
+	if (tempHeaderFields.count("Content-Length") == 0 && tempHeaderFields.count("content-length") == 0)
 		throw Server::LengthRequiredException();
 	else if (tempHeaderFields["Content-Length"] > clientMaxBodySize.str())
 		throw Server::ContentTooLargeException();
+	std::cout << "got past the first exceptions" << std::endl;
 	// create and fill some temp response data structures, maybe even the
 	// std::ofstream outFile;
 	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
@@ -149,7 +154,7 @@ void Server::handlePOST(int clientFd, const Request& request)
 	this->_response.addHeaderField("Server", this->_currentConfig.serverName);
 	// _response.addDefaultHeaderFields();
 	this->_response.setStatus("201");
-	this->_response.setPostTarget(clientFd, request.getTarget()); // put target into the response class
+	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // put target into the response class
 	this->_response.setPostLength(clientFd, (request.getHeaderFields()));
 	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
 	// std::string teststring = "myfile=Disaster-Girl.jpg"; // AE remove this
@@ -502,7 +507,7 @@ void Server::handleRequest(int fd)
 				cgi_handle(request, fd, this->_currentConfig);
 			}
 			else if (request.getMethod() == "POST" || request.getMethod() == "PUT")
-				handlePOST(request);
+				handlePOST(fd, request);
 			else if (request.getMethod() == "DELETE")
 				handleDELETE(request);
 			else

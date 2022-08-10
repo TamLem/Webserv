@@ -8,13 +8,11 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct): _scriptExists(true), _con
 		std::cout << GREEN << "Cgi Constructor called for " << this << RESET << std::endl;
 	#endif
 
-	//temp
-	_handlers["php"] = "php-cgi";
-	_handlers["bla"] = "cgi-tester";
+	_docRoot = configStruct.root;
 
 	_method = request.getMethod();
-	string url = request.getTarget();
-	string extension = url.substr(url.find_last_of(".") + 1);
+	string url = request.getDecodedTarget();
+	string extension = url.substr(url.find_last_of("."));
 	cout << "extension: " << extension << endl;
 
 	if (url.find("/cgi/") == string::npos)
@@ -28,18 +26,20 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct): _scriptExists(true), _con
 		if (scriptNameEnd == (int)string::npos)
 			scriptNameEnd = url.find("?", scriptNameStart);
 		_scriptName = url.substr(scriptNameStart, scriptNameEnd - scriptNameStart);
+		_scriptName = "." + _docRoot + "cgi-bin/" + _scriptName;
 		_pathInfo = (scriptNameEnd != (int)string::npos ) ? 
 			url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";	
 	}
 	else
 	{
-		if (_handlers.count(extension) != 0)
+		if (_confStruct.cgi.count(extension) != 0)
 		{
-			_scriptName = _handlers[extension];
+			_scriptName = _confStruct.cgi[extension];
 		}
 		_pathInfo = url;
+		_pathTranslated = "." + _docRoot + _pathInfo.substr(1);	
 	}
-	_queryString = (queryStart != (int)string::npos )? url.substr(queryStart + 1, string::npos) : "";
+	_queryString = request.getQuery().substr(1);
 	setEnv(request);
 }
 
@@ -57,11 +57,11 @@ void Cgi::setEnv(Request &request) // think about changing this to return a cons
 	_env["REQUEST_METHOD"] = _method;
 	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_env["PATH_INFO"] = _pathInfo;
-	_env["PATH_TRANSLATED"] = _pathInfo;
+	_env["PATH_TRANSLATED"] = _pathTranslated;
 	_env["SCRIPT_NAME"] = _scriptName;
 	_env["QUERY_STRING"] = _queryString;
-	_env["SERVER_NAME"] = "localhost"; //get from config
-	_env["SERVER_PORT"] = "8080"; //get from config
+	_env["SERVER_NAME"] = reqHeaders.find("host")->second.substr(0, reqHeaders.find("host")->second.find(":"));
+	_env["SERVER_PORT"] =  reqHeaders.find("host")->second.substr(reqHeaders.find("host")->second.find(":") + 1);
 	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	if (_method == "POST")
 	{
@@ -96,20 +96,6 @@ void Cgi::printEnv()
 	}
 }
 
-void Cgi::blaHandler(Request &req)
-{
-	_docRoot = "/Users/aenglert/testfolder/webserv/42tester";
-	string filePath = req.getUrl();
-	_pathInfo = _docRoot + filePath;
-	cout << "url :" << _pathInfo << endl;
-
-	_env = new char*[2];
-	_env[0] = strdup(_pathInfo.data());
-	_env[1] = NULL;
-
-	_isTester = true;
-}
-
 void Cgi::cgi_response(int fd)
 {
 	std::string file;
@@ -118,7 +104,7 @@ void Cgi::cgi_response(int fd)
 	int pipefd[2];
 
 	args = NULL;
-	executable = _scriptName.c_str();
+	executable = _scriptName;
 	std::cout << GREEN << "Executing CGI..." << std::endl;
 	file = _pathInfo;
 	int stdout_init = dup(STDOUT_FILENO);
@@ -128,16 +114,16 @@ void Cgi::cgi_response(int fd)
 	int pid = fork();
 	if (pid == 0)
 	{
-		chdir("server/cgi-bin");
+		cout << "executing " << executable << endl;
 		if (execve(executable.c_str(), args, mapToStringArray(_env)) == -1)
 		{
-			std::cout << "error executing cgi" << std::endl;
+			std::cerr << "error executing cgi" << std::endl;
 		}
 		exit(0);
 	}
 	wait(NULL);
 	dup2(stdout_init, STDOUT_FILENO);
-	std::string header = "HTTP/1.1 200 OK\r\n";
+	std::string header = "HTTP/1.1 200 OK\r\n"; //cgi status code
 	send(fd, header.c_str(), header.size(), 0);
 	char buf[1024];
 	buf[1023] = '\0';

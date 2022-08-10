@@ -437,6 +437,8 @@ void Server::checkLocationMethod(const Request& request) const
 bool Server::_isCgiRequest(std::string requestHead)
 {
 	requestHead = requestHead.substr(0, requestHead.find("HTTP/1.1"));
+	if (requestHead.find("/cgi/") != std::string::npos)
+		return (true);
 	if (this->_currentConfig.cgiBin.length() != 0 && requestHead.find(this->_currentConfig.cgiBin) != std::string::npos)
 		return (true);
 	else if (this->_currentConfig.cgi.size() != 0)
@@ -477,6 +479,7 @@ void Server::handleRequest(int fd)
 		checkLocationMethod(request);
 		if (isCgi == true)
 		{
+			std::cout << "CGI REQUEST: " << request.getRoutedTarget() << std::endl;
 			this->applyCurrentConfig(request);
 			cgi_handle(request, fd, this->_currentConfig);
 		}

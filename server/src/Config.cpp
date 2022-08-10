@@ -113,7 +113,6 @@ void Config::_parseServerBlock(std::string serverBlock)
 		std::getline(serverStream, buffer);
 		if (buffer.length() == 0)
 			continue ;
-		// std::cerr << YELLOW << "before: >" << buffer << "<" << RESET << std::endl;
 		size_t start = buffer.find_first_not_of(WHITESPACE); // clear out all the leading whitespaces
 		if (start == std::string::npos)
 			continue ;
@@ -122,7 +121,6 @@ void Config::_parseServerBlock(std::string serverBlock)
 		{
 			end = buffer.find_last_not_of(WHITESPACE);
 			buffer = buffer.substr(start, (end - start + 1));
-			// std::cerr << BLUE << "if: >" << buffer << "<" << RESET << std::endl;
 		}
 		else
 		{
@@ -130,19 +128,16 @@ void Config::_parseServerBlock(std::string serverBlock)
 			buffer = buffer.substr(start, (end - start + 1));
 			end = buffer.find_last_not_of(WHITESPACE);
 			buffer = buffer.substr(0, end + 1);
-			// std::cerr << BLUE << "else: >" << buffer << "<" << RESET << std::endl;
 		}
 		if (serverFound == false && buffer.find("server {") != std::string::npos)
 		{
 			serverFound = true;
-			// std::cout << YELLOW << "server { found: >" << buffer << "<" << RESET << std::endl;
 		}
 		else if (serverFound == true && buffer.find("server {") != std::string::npos) // with new_ implementation not needed, check though !!!!!!!
 		{
-			// std::cerr << "2>" << RED << buffer << RESET << "<" << std::endl;
 			throw Config::ServerInsideServerException();
 		}
-		if (serverFound == false && buffer.length() > 0) // might never be triggered, check this!!!!!!
+		if (serverFound == false && buffer.length() > 0)
 		{
 			throw Config::InvalidCharException();
 		}
@@ -183,7 +178,6 @@ void Config::_createConfigStruct(std::string server)
 		serverName = "default";
 		this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
 	}
-	// std::cout << GREEN << "size: " << this->_cluster.size() << RESET << std::endl;
 	#ifdef SHOW_LOG_2
 		std::cout << GREEN << "added server " << serverName << " to cluster" << RESET << std::endl;
 	#endif
@@ -207,15 +201,6 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 	// confStruct.showLog = false;
 
 	return (confStruct);
-}
-
-void Config::_freeConfigStruct()
-{
-	// check if freeing is needed!!!!!!!!!!!!!
-	// this->_conf.listen.clear();
-	// this->_conf.cgi.clear();
-	// this->_conf.location.clear();
-	// this->_conf.errorPage.clear();
 }
 
 void Config::_readConfigFile()
@@ -256,7 +241,7 @@ const std::string Config::_printLocationStruct(LocationStruct locationStruct) co
 // Constructor
 Config::Config()
 {
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Config Default Constructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -264,14 +249,7 @@ Config::Config()
 // Deconstructor
 Config::~Config()
 {
-	std::map<std::string, ConfigStruct>::iterator it;
-	// for (it = this->_cluster.begin(); it != this->_cluster.end(); ++it) // check if needed
-	// {
-	// 	this->applyConfig(it->first);
-	// 	this->_freeConfigStruct();
-	// }
-	// this->_cluster.clear();
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << RED << "Config Deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -319,9 +297,9 @@ const ConfigStruct& Config::getConfigStruct(std::string hostName) // use this fu
 		return (this->_conf);
 	else
 	{
-		// #ifdef SHOW_LOG
+		#ifdef SHOW_LOG
 			std::cout << std::endl << RED << BOLD << "!!!!! DEFAULT STRUCT IS NOW BEEING USED !!!!!" << RESET << std::endl << std::endl;
-		// #endif
+		#endif
 		this->applyConfig(defaultConfig);
 	}
 	return (this->_conf);
@@ -487,7 +465,7 @@ bool Config::applyConfig(std::string serverName)
 		return (true);
 	}
 	else
-		return (false); // the return of this function needs to be checked
+		return (false);
 }
 
 // Exceptions

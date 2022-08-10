@@ -1,15 +1,9 @@
 #include "SingleServerConfig.hpp"
 
 // Constructors
-SingleServerConfig::SingleServerConfig()
-{
-	#ifdef SHOW_LOG
-		std::cout << GREEN << "SingleServerConfig default constructor called for " << this << RESET << std::endl;
-	#endif
-}
 SingleServerConfig::SingleServerConfig(std::string config, ConfigStruct *conf): _conf(conf)
 {
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "SingleServerConfig constructor called for " << this << RESET << std::endl;
 	#endif
 	#ifdef SHOW_LOG_2
@@ -22,7 +16,7 @@ SingleServerConfig::SingleServerConfig(std::string config, ConfigStruct *conf): 
 // Deconstructors
 SingleServerConfig::~SingleServerConfig()
 {
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << RED << "SingleServerConfig deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -184,11 +178,6 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (autoindex):
 	{
-		// if (this->_conf->indexPage.length() > 0)
-		// {
-		// 	std::cout << RED << keyValue << RESET << std::endl;
-		// 	throw SingleServerConfig::InvalidIndexCombinationException();
-		// }
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -206,11 +195,6 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (index_page):
 	{
-		// if (this->_conf->autoIndex == true)
-		// {
-		// 	std::cout << RED << keyValue << RESET << std::endl;
-		// 	throw SingleServerConfig::InvalidIndexCombinationException();
-		// }
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -269,6 +253,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 			throw SingleServerConfig::InvalidWhitespaceException();
 		}
 		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+		if (value[0] != '/' || value[value.length() - 1] != '/' || value.find(".") != std::string::npos)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::InvalidPathException();
+		}
 		this->_conf->cgiBin = value;
 		break ;
 	}
@@ -298,7 +287,7 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 	#endif
 }
 
-void SingleServerConfig::_handleListen(std::string keyValue)
+void SingleServerConfig::_handleListen(std::string keyValue)// currently just a dummy function
 {
 	(void)keyValue;
 	// put code from switch case
@@ -343,10 +332,6 @@ LocationStruct SingleServerConfig::_initLocationStruct()
 	LocationStruct locationStruct;
 	locationStruct.isDir = true;
 	locationStruct.autoIndex = false;
-	// locationStruct.getAllowed = false;
-	// locationStruct.postAllowed = false;
-	// locationStruct.deleteAllowed = false;
-	// locationStruct.allowedMethods;
 	locationStruct.root = "";
 	locationStruct.indexPage = "";
 
@@ -377,12 +362,9 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 		if (keyValue.length() <= 0)
 			continue ;
 		key = keyValue.substr(0, keyValue.find_first_of(WHITESPACE));
-		if (key == "method" && keyValue.find_first_of(WHITESPACE) == std::string::npos)
+		if (key == "method" && keyValue.find_first_of(WHITESPACE) == std::string::npos && foundMethod == false)
 		{
 			foundMethod = true;
-			// locationStruct.getAllowed = false;
-			// locationStruct.postAllowed = false;
-			// locationStruct.deleteAllowed = false;
 			continue ;
 		}
 		else if (keyValue.find_first_of(WHITESPACE) == std::string::npos)
@@ -443,21 +425,6 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 				std::string tempValue = value.substr(0, value.find_first_of(WHITESPACE));
 				if((tempValue == "GET" || tempValue == "POST" || tempValue == "DELETE") && locationStruct.allowedMethods.count(tempValue) == 0) // AE this section could be like this if bools are not needed. maybe set of allowed methods (from request) can be used for check instead of hardcoded methods
 					locationStruct.allowedMethods.insert(tempValue);
-				// if (tempValue == "GET" && locationStruct.getAllowed == false)
-				// {
-				// 	locationStruct.getAllowed = true;
-				// 	locationStruct.allowedMethods.insert(tempValue);
-				// }
-				// else if (tempValue == "POST" && locationStruct.postAllowed == false)
-				// {
-				// 	locationStruct.postAllowed = true;
-				// 	locationStruct.allowedMethods.insert(tempValue);
-				// }
-				// else if (tempValue == "DELETE" && locationStruct.deleteAllowed == false)
-				// {
-				// 	locationStruct.deleteAllowed = true;
-				// 	locationStruct.allowedMethods.insert(tempValue);
-				// }
 				else
 				{
 					std::cout << RED << tempValue << RESET << std::endl;
@@ -482,6 +449,11 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 				throw SingleServerConfig::InvalidWhitespaceException();
 			}
 			value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
+			if (value[0] == '/' || value[0] == '.' || value.find("..") != std::string::npos)
+			{
+				std::cout << RED << keyValue << RESET << std::endl;
+				throw SingleServerConfig::InvalidIndexPageException();
+			}
 			locationStruct.indexPage = value;
 			foundIndex = true;
 			break ;
@@ -524,17 +496,6 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 
 		throw SingleServerConfig::InvalidLocationException();
 	}
-	// if (foundIndex == true && locationStruct.autoIndex == true)
-	// {
-	// 	std::cout << RED << "location " << key << RESET << std::endl;
-	// 	throw SingleServerConfig::InvalidIndexCombinationException();
-	// }
-	// else if ((!foundIndex && !foundAutoIndex) || (!foundIndex && locationStruct.autoIndex == false))
-	// {
-	// 	std::cout << RED << "location " << key << RESET << std::endl;
-	// 	throw SingleServerConfig::MissingIndexException();
-	// }
-
 
 	return (locationStruct);
 }
@@ -555,6 +516,7 @@ std::string SingleServerConfig::_printLocationStruct(LocationStruct locationStru
 		outStream << "\t\tautoindex true" << std::endl;
 	else
 	{
+		outStream << "\t\tautoindex false" << std::endl;
 		outStream << "\t\tindex " << locationStruct.indexPage << std::endl;
 	}
 	outStream << "\t}" << std::endl;
@@ -891,9 +853,9 @@ const char* SingleServerConfig::DuplicateLocationAutoIndexException::what(void) 
 	return ("double use of autoindex key is not allowed");
 }
 
-const char* SingleServerConfig::InvalidIndexCombinationException::what(void) const throw()
+const char* SingleServerConfig::InvalidIndexPageException::what(void) const throw()
 {
-	return ("↑↑↑ autoindex can not be true if a index_page is defined, vice versa");
+	return ("↑↑↑ index page value can not start with '/' or '.' or have any '..' inside");
 }
 
 const char* SingleServerConfig::MissingIndexException::what(void) const throw()

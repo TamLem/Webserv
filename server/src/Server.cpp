@@ -3,15 +3,9 @@
 #include "Cgi/Cgi.hpp"
 #include <sys/stat.h> // stat
 
-// Server::Server(void)
-// {
-// 	std::cout << "Server default constructor called for " << this << std::endl;
-// 	handle_signals();
-// }
-
 Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
 {
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Server constructor called for " << this << RESET << std::endl;
 	#endif
 	handle_signals();
@@ -20,7 +14,7 @@ Server::Server(Config* config): _config(config), _socketHandler(new SocketHandle
 Server::~Server(void)
 {
 	delete _socketHandler;
-	#ifdef SHOW_LOG
+	#ifdef SHOW_CONSTRUCTION
 		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -40,7 +34,6 @@ void Server::handle_signal(int sig)
 	}
 }
 
-// check if signal is forbidden!!!!!!!!!!!!!!!!!
 void	Server::handle_signals(void)
 {
 	signal(SIGQUIT, SIG_IGN);
@@ -59,18 +52,34 @@ void Server::runEventLoop()
 		if (numEvents == 0)
 		{
 			this->_socketHandler->removeInactiveClients();	// remove inactive clients
+			this->_response.clearResponseMap();
 		}
-		for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
+		for (int i = 0; i < numEvents; ++i)
 		{
-			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
+			std::cout << "no. events: " << numEvents << " ev:" << i << std::endl;
 			this->_socketHandler->acceptConnection(i);
-			if (this->_socketHandler->readFromClient(i) == true)
+			if (this->_socketHandler->removeClient(i) == true)
+				this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
+			else if (this->_socketHandler->readFromClient(i) == true)
 			{
-				// this->_readRequestHead(this->_socketHandler->getFD()); // read 1024 charackters or if less until /r/n/r/n is found
-				handleRequest(/*this->_requestHead, */this->_socketHandler->getFD());
-				// continue;
+				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+				handleRequest(this->_socketHandler->getFD(i));
+				this->_socketHandler->setWriteable(i);
 			}
-			this->_socketHandler->removeClient(i);
+			else if (this->_socketHandler->writeToClient(i) == true)
+			{
+				std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+				//this->responseMap.count(i).respond()
+				//if (this->responseMap.count(i).isDone())
+					//close(fd)
+					//delete the (fd, pair)reponse
+				// this->_handleResponse(i);
+				if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true)
+				{
+					if (this->_socketHandler->removeClient(i, true) == true)
+						this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
+				}
+			}
 		}
 	}
 }
@@ -90,20 +99,25 @@ void Server::handleGET(const Request& request)
 	if (request.isFile == false && staticFileExists(request.getTarget() + request.indexPage) == false)
 	{
 		if ((this->_currentLocationKey.empty() == false
-				&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
-				|| this->_currentConfig.autoIndex == true)
+		&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
+		|| this->_currentConfig.autoIndex == true)
+		{
 			_response.createIndex(request.getTarget());
+			// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
+		}
 		else
 		{
 			// std::cerr << BOLD << RED << "target1:" << request.getTarget() << RESET << std::endl;
 			// std::cerr << BOLD << RED << "indexPage:" << request.indexPage << RESET << std::endl;
 			_response.createBodyFromFile(request.getTarget() + request.indexPage);
+			// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 		}
 	}
 	else
 	{
 			// std::cerr << BOLD << RED << "target2:" << request.getTarget() << RESET << std::endl;
 		_response.createBodyFromFile(request.getTarget() + request.indexPage);
+		// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 	}
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
 	_response.addDefaultHeaderFields();
@@ -135,6 +149,7 @@ void Server::handleERROR(const std::string& status)
 	_response.setProtocol(PROTOCOL);
 	_response.createErrorBody();
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
+	// _response.addHeaderField("Content-Type", "text/html; charset=utf-8");
 	_response.addDefaultHeaderFields();
 }
 
@@ -205,7 +220,7 @@ int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::c
 	size_t ext_len;
 	size_t target_len;
 	std::string result;
-	
+
 	target_len = target.length();
 	ext_len = it->first.length() - 1;
 	extension = it->first.substr(1, ext_len);
@@ -230,10 +245,8 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 {
 	std::string path;
 	std::string result;
-	
+
 	path = it->first;
-	// if (path != "/")
-	// 	path = "/" + path;
 	#ifdef SHOW_LOG_2
 		std::cout  << BLUE << "path: " << path << std::endl;
 	#endif
@@ -252,7 +265,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 				segments++;
 			i++;
 		}
-		if (target[i - 1] != '\0' && target[i - 1] != '/') // carefull with len = 0!
+		if (target[i - 1] != '\0' && target[i - 1] != '/') // carefull with len = 0!!!!!!!!!!!
 			segments = 0;
 	}
 	if (segments > max_count)
@@ -371,7 +384,7 @@ void Server::checkLocationMethod(const Request& request) const
 		throw MethodNotAllowed();
 }
 
-void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe breaks here
+void Server::handleRequest(int fd)
 {
 	this->_response.clear();
 	try
@@ -383,12 +396,12 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		//compression (merge slashes)
 		//resolve relative paths
 		//determine location
-		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
 		request.setTarget(this->percentDecoding(request.getTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
 		#ifdef SHOW_LOG
 			std::cout  << YELLOW << "URI after percent-decoding: " << request.getTarget() << std::endl;
 		#endif
+		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
 		request.setTarget("." + request.getTarget());
 		//check method
 		checkLocationMethod(request);
@@ -399,7 +412,6 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 		else
 		{
 			handleGET(request);
-			// lseek(fd, 0, SEEK_END); // sets the filedescriptor to EOF so that, check this again!!!!!!!!!
 		}
 	}
 	catch (std::exception& exception)
@@ -409,8 +421,10 @@ void Server::handleRequest(/*const std::string& buffer, */int fd) // maybe break
 			code = "500";
 		handleERROR(code);
 	}
+	// lseek(fd,0,SEEK_END);
+	//create a response object and add it to responseMap
 	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
-	this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
+	// this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
 }
 
 bool Server::_crlftwoFound()
@@ -442,9 +456,9 @@ void Server::_readRequestHead(int fd)
 		n = read(fd, buffer, 1);
 		if (n < 0) // read had an error reading from fd
 		{
-			std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
-			perror(NULL); // check if forbidden!!!!!!!!
-			std::cerr << RESET << std::endl;
+			#ifdef SHOW_LOG
+				std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
+			#endif
 			throw Server::InternatServerErrorException();
 		}
 		else if (n == 0) // read reached eof
@@ -454,7 +468,9 @@ void Server::_readRequestHead(int fd)
 			buffer[1] = '\0';
 			if (!this->_isPrintableAscii(buffer[0]))
 			{
-				std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;
+				#ifdef SHOW_LOG
+					std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;
+				#endif
 				throw Server::BadRequestException();
 			}
 			this->_requestHead.append(buffer);
@@ -468,7 +484,9 @@ void Server::_readRequestHead(int fd)
 		}
 		if (firstLineBreak == false && charsRead >= MAX_REQUEST_LINE_SIZE)
 		{
-			std::cout << RED << "FIRST LINE TOO LONG" << RESET << std::endl;
+			#ifdef SHOW_LOG
+				std::cout << RED << "FIRST LINE TOO LONG" << RESET << std::endl;
+			#endif
 			throw Server::FirstLineTooLongException();
 		}
 	}
@@ -478,9 +496,11 @@ void Server::_readRequestHead(int fd)
 			std::cout << YELLOW << "Received->" << RESET << this->_requestHead << YELLOW << "<-Received on fd: " << fd << RESET << std::endl;
 		#endif
 	}
-	else /*if (charsRead >= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == false)*/
+	else
 	{
-		std::cout << RED << "HEAD BIGGER THAN " << MAX_REQUEST_HEADER_SIZE << " OR NO CRLFTWO FOUND (incomplete request)" << RESET << std::endl;
+		#ifdef SHOW_LOG
+			std::cout << RED << "HEAD BIGGER THAN " << MAX_REQUEST_HEADER_SIZE << " OR NO CRLFTWO FOUND (incomplete request)" << RESET << std::endl;
+		#endif
 		throw Server::BadRequestException();
 	}
 }

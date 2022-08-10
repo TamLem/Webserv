@@ -79,7 +79,7 @@ class Server
 		SocketHandler *_socketHandler;
 
 		std::vector <client> _clients;
-		Response _response;
+		Response _response;// needs to go away
 		std::string _requestHead;
 		ConfigStruct _currentConfig;
 		std::string _currentLocationKey;
@@ -101,6 +101,8 @@ class Server
 		void handleGET(const Request&);
 		void handlePOST(const Request&);
 		void handleERROR(const std::string&);
+
+		void _handleResponse(int i);
 
 	// Exceptions
 		class InternatServerErrorException : public std::exception

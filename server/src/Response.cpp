@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <sys/stat.h> // stat
 
+#include <iomanip> // setfill
+
 #define RESET "\033[0m"
 #define GREEN "\033[32m"
 #define YELLOW "\033[33m"
@@ -26,6 +28,9 @@ bool Response::isValidStatus(const std::string& status)
 
 Response::Response(void)
 {
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << GREEN << "Response Default Constructor called for " << this << RESET << std::endl;
+	#endif
 	this->createMessageMap();
 }
 
@@ -40,9 +45,22 @@ void Response::clear(void)
 	target = "";
 }
 
+void Response::clearResponseMap()
+{
+	this->_responseMap.clear();
+}
+
+void Response::removeFromResponseMap(int fd)
+{
+	if (this->_responseMap.count(fd) == 1)
+		this->_responseMap.erase(fd);
+}
+
 Response::~Response(void)
 {
-
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << RED << "Response Deconstructor called for " << this << RESET << std::endl;
+	#endif
 }
 
 void Response::setStatus(const std::string& status)
@@ -99,12 +117,22 @@ std::string Response::constructHeader(void)
 	return (stream.str());
 }
 
+std::string Response::constructChunkedHeader(void)
+{
+	std::stringstream stream;
+
+	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
+	// stream << "Content-Type: " << "image/jpg" << CRLF;
+	stream << "Transfer-Encoding: chunked" << CRLFTWO;
+
+	return (stream.str());
+}
+
 int Response::sendall(const int sock_fd, char *buffer, const int len) const
 {
 	int total;
 	int bytesleft;
 	int n;
-	// int i = 0;
 
 	total = len;
 	bytesleft = len;
@@ -148,6 +176,16 @@ void Response::createErrorBody(void)
 	this->body = body.str();
 }
 
+// static std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace)
+// {
+// 		size_t position = 0;
+// 		for ( position = str.find(tofind); position != std::string::npos; position = str.find(tofind,position) )
+// 		{
+// 				str.replace(position , tofind.length(), toreplace);
+// 		}
+// 		return(str);
+// }
+
 void Response::createIndex(const std::string& path)
 {
 	std::stringstream body;
@@ -155,6 +193,7 @@ void Response::createIndex(const std::string& path)
 	"<html>\n\
 	<head>\n\
 	<title>Index</title>\n\
+	<meta charset=\"UTF-8\">\n\
 	<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"images/favicon.ico\">\n\
 	</head>\n\
 	<body bgcolor=\"FFFFFF\">\n\
@@ -166,27 +205,35 @@ void Response::createIndex(const std::string& path)
 	<ul>";
 	DIR *d;
 	struct dirent *dir;
+	std::string name;
 	// d = opendir(target.substr(0, target.find_last_of('/')).c_str()); // AE better keep path and file seperate
 	d = opendir(path.c_str()); // AE better keep path and file seperate
 	if (d)
 	{
 		while ((dir = readdir(d)) != NULL)
 		{
+			name = dir->d_name;
+			// name = staticReplaceInString(name, "u%CC%88", "ü");
+			// name = staticReplaceInString(name, "a%CC%88", "ä");
+			// name = staticReplaceInString(name, "o%CC%88", "ö");
 			// if (dir->d_type == DT_REG) //only files
 			// {
-				if (strcmp(dir->d_name, "..") == 0)
+				// std::cerr << BOLD << RED << "dir: " << name << RESET << std::endl;
+				// if (strcmp(name, "..") == 0)
+				if (name.compare("..") == 0)
 				{
-					body << "<li><a href=\"" << dir->d_name << "\">" << "Parent Directory" << "</a></li>\n";
+					body << "<li><a href=\"" << name << "\">" << "Parent Directory" << "</a></li>\n";
 				}
-				else if (strlen(dir->d_name) != 0 && strcmp(dir->d_name, ".") != 0)
+				// else if (strlen(name) != 0 && strcmp(name, ".") != 0)
+				else if (name.length() != 0 && name.compare(".") != 0)
 				{
 					if (dir->d_type == DT_DIR)
-						body << "<li><a href=\"" << dir->d_name << "/\">" << dir->d_name << "</a></li>\n";
+						body << "<li><a href=\"" << name << "/\">" << name << "</a></li>\n";
 					else
-						body << "<li><a href=\"" << dir->d_name << "\">" << dir->d_name << "</a></li>\n";
+						body << "<li><a href=\"" << name << "\">" << name << "</a></li>\n";
 				}
 
-				// body << "<li style=\"color:blue\">" << dir->d_name << "<li/>";
+				// body << "<li style=\"color:blue\">" << name << "<li/>";
 			// }
 		}
 		body <<
@@ -219,7 +266,7 @@ static bool staticTargetIsDir(const std::string& target)
 
 void Response::createBodyFromFile(const std::string& target)
 {
-	std::stringstream body;
+	std::stringstream tempBody;
 	std::ifstream file(target.c_str(), std::ios::binary);
 	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
 	if (staticTargetIsDir(target))
@@ -227,9 +274,9 @@ void Response::createBodyFromFile(const std::string& target)
 	if (file.is_open())
 	{
 		// std::cerr << BOLD << RED << "open" << RESET << std::endl;
-		body << file.rdbuf();
+		tempBody << file.rdbuf();
 		file.close();
-		this->body = body.str();
+		this->body = tempBody.str();
 	}
 	else
 	{
@@ -248,12 +295,6 @@ void Response::addDefaultHeaderFields(void)
 		contentLength << this->body.length();
 		addHeaderField("Content-Length", contentLength.str());
 	}
-}
-
-void Response::sendResponse(int fd)
-{
-	std::string response = this->constructHeader() + this->body;
-	sendall(fd, (char *)response.c_str(), response.length());
 }
 
 void Response::createMessageMap(void)
@@ -355,4 +396,14 @@ const char* Response::ERROR_404::what() const throw()
 const char* Response::InvalidProtocol::what() const throw() //AE is it good to have different codes for request/response?
 {
 	return ("500");
+}
+
+const char* Response::InternalServerErrorException::what() const throw()
+{
+	return ("500");
+}
+
+const char* Response::ClientDisconnectException::what() const throw()
+{
+	return ("client disconnected");
 }

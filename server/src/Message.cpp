@@ -4,12 +4,16 @@
 
 Message::Message(void)
 {
-
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << GREEN << "Message Default Constructor called for " << this << RESET << std::endl;
+	#endif
 }
 
 Message::~Message(void)
 {
-
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << RED << "Message Deconstructor called for " << this << RESET << std::endl;
+	#endif
 }
 
 

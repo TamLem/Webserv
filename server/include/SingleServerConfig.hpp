@@ -190,7 +190,7 @@ class SingleServerConfig
 				virtual const char* what() const throw();
 		};
 
-		class InvalidIndexCombinationException : public std::exception
+		class InvalidIndexPageException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

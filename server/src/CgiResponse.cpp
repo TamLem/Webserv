@@ -1,11 +1,17 @@
 #include "Cgi/CgiResponse.hpp"
 
-CgiResponse::CgiResponse(int cgiFD, int clientFD): _cgiFD(fd), _clientFD(clientFD)
+CgiResponse::CgiResponse(int cgiFD, int clientFD): _cgiFD(fd), _clientFD(clientFD) // undefined fd???? Tam please check this
 {
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << GREEN << "CgiResponse Constructor called for " << this << RESET << std::endl;
+	#endif
 }
 
 CgiResponse::~CgiResponse()
 {
+	#ifdef SHOW_CONSTRUCTION
+		std::cout << RED << "CgiResponse Deconstructor called for " << this << RESET << std::endl;
+	#endif
 }
 
 string& CgiResponse::readline(int fd)
@@ -51,13 +57,13 @@ void CgiResponse::parseCgiHeaders(std::string buf)
 	string line = readline(_cgiFD);
 	if (!checkForMandatoryHeaders(line))
 		throw ERROR_404();
-	
+
 	while (line != CRLF && line.empty())
 	{
 		parseSingleHeaderField(line);
 		line =  readline(_cgiFD);
 	}
-	
+
 }
 
 bool CgiResponse::checkForMandatoryHeaders(string& headerLine)

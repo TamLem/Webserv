@@ -19,12 +19,14 @@ class Response : public Message
 		std::string status;
 		std::string statusMessage;
 		std::map<std::string, std::string> messageMap;
+		std::map<size_t, ResponseStruct> _responseMap; // this will store all the data for sending
 		// std::string target;
 	// private Methods
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
 	protected:
 		int sendall(const int sock_fd, char *buffer, const int len) const;
+		void sendChunk(int i);// i is the fd
 	public:
 		Response(void);
 		~Response(void);
@@ -33,7 +35,7 @@ class Response : public Message
 		void setStatus(const std::string&);
 		void setBody(const std::string&);
 		// void setTarget(const std::string&);
-		void setFd(int);
+		void setFd(int); // is this used???
 		void setProtocol(const std::string&);
 
 		// const std::string& getProtocol(void) const;
@@ -42,15 +44,22 @@ class Response : public Message
 		const std::map<std::string, std::string>& getMessageMap(void) const;
 
 		std::string constructHeader(void);
+		std::string constructChunkedHeader(void);
+		void endChunkedMessage(int i, int n);
 
 		void clear(void);
+		void clearResponseMap();
+		void removeFromResponseMap(int fd);
 		// void init(const Request&);
 		// void init(const std::string&, int, const std::string&);
 		void addDefaultHeaderFields(void);
 		void createBodyFromFile(const std::string&);
 		void createIndex(const std::string&);
 		void createErrorBody(void);
-		void sendResponse(int);
+		bool sendResponse(int);
+		bool sendRes(int);
+
+	bool handleClientDisconnect(int fd);
 
 	class InvalidStatus : public std::exception
 	{
@@ -63,6 +72,15 @@ class Response : public Message
 	};
 
 	class InvalidProtocol : public std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class InternalServerErrorException : public std::exception
+	{
+		const char* what() const throw();
+	};
+	class ClientDisconnectException : public std::exception
 	{
 		const char* what() const throw();
 	};

@@ -4,11 +4,6 @@
 #include <dirent.h> // dirent, opendir
 #include <cstdio> // remove
 
-// Server::Server(void)
-// {
-// 	std::cout << "Server default constructor called for " << this << std::endl;
-// 	handle_signals();
-// }
 
 static std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace)
 {
@@ -73,18 +68,36 @@ void Server::runEventLoop()
 		if (numEvents == 0)
 		{
 			this->_socketHandler->removeInactiveClients();	// remove inactive clients
+			this->_response.clearResponseMap();
 		}
-		for (int i = 0; i < this->_socketHandler->getNumEvents() ; ++i)
+		for (int i = 0; i < numEvents; ++i)
 		{
 			#ifdef SHOW_LOG_2
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
 			#endif
 			this->_socketHandler->acceptConnection(i);
-			if (this->_socketHandler->readFromClient(i) == true)
+			if (this->_socketHandler->removeClient(i) == true)
+				this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
+			else if (this->_socketHandler->readFromClient(i) == true)
 			{
-				handleRequest(this->_socketHandler->getFD());
+				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+				handleRequest(this->_socketHandler->getFD(i));
+				this->_socketHandler->setWriteable(i);
 			}
-			this->_socketHandler->removeClient(i);
+			else if (this->_socketHandler->writeToClient(i) == true)
+			{
+				std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+				//this->responseMap.count(i).respond()
+				//if (this->responseMap.count(i).isDone())
+					//close(fd)
+					//delete the (fd, pair)reponse
+				// this->_handleResponse(i);
+				if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true)
+				{
+					if (this->_socketHandler->removeClient(i, true) == true)
+						this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
+				}
+			}
 		}
 	}
 }
@@ -465,8 +478,10 @@ void Server::handleRequest(int fd)
 			handleERROR(code);
 		}
 	}
+	// lseek(fd,0,SEEK_END);
+	//create a response object and add it to responseMap
 	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
-	this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
+	// this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
 }
 
 bool Server::_crlftwoFound()

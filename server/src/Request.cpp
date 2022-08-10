@@ -21,7 +21,6 @@ Request::Request(const std::string& message)
 Request::~Request(void)
 {
 	#ifdef SHOW_CONSTRUCTION
-		// std::cout << "validMethods: " << this->validMethods.size() << std::endl;
 		std::cout << RED << "Request Deconstructor called for " << this << RESET << std::endl;
 	#endif
 }

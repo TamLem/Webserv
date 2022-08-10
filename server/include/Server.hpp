@@ -18,7 +18,7 @@
 #include <fstream>
 #include <map>
 #include <set>
-#include <csignal> // check if forbidden !!!!!!!!!!
+#include <csignal>
 
 /* our includes */
 #include "Config.hpp"

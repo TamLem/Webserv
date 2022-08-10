@@ -58,12 +58,20 @@ void Server::runEventLoop()
 		{
 			std::cout << "no. events: " << numEvents << " ev:" << i << std::endl;
 			this->_socketHandler->acceptConnection(i);
-			if (this->_socketHandler->removeClient(i) == true)
-				this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
-			else if (this->_socketHandler->readFromClient(i) == true)
+			// if (this->_socketHandler->removeClient(i) == true)
+			// 	this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
+			if (this->_socketHandler->readFromClient(i) == true)
 			{
 				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
-				handleRequest(this->_socketHandler->getFD(i));
+				try
+				{
+					handleRequest(this->_socketHandler->getFD(i));
+				}
+				catch(const std::exception& e)
+				{
+					std::cerr << e.what() << '\n';
+					this->_socketHandler->removeClient(i);
+				}
 				this->_socketHandler->setWriteable(i);
 			}
 			else if (this->_socketHandler->writeToClient(i) == true)
@@ -74,12 +82,13 @@ void Server::runEventLoop()
 					//close(fd)
 					//delete the (fd, pair)reponse
 				// this->_handleResponse(i);
-				if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true)
+				if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true)
 				{
 					if (this->_socketHandler->removeClient(i, true) == true)
 						this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
 				}
 			}
+			this->_socketHandler->removeClient(i);	// remove inactive clients
 		}
 	}
 }
@@ -528,6 +537,7 @@ void cgi_handle(Request& request, int fd)
 	newCgi.printEnv();
 	int cgiPipe[2];
 	pipe(cgiPipe);
+
 	//initiate cgi response
 	//listen to event on cgiPipe[0]
 	//if event is read, read from cgiPipe[0] and write to fd

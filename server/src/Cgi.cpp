@@ -2,50 +2,49 @@
 
 #include <string.h>
 
-Cgi::Cgi(Request &request): _isPhp(false)
+Cgi::Cgi(Request &request): _scriptExists(true)
 {
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Cgi Constructor called for " << this << RESET << std::endl;
 	#endif
-	_env = NULL;
+
+	//temp
+	_handlers["php"] = "php-cgi";
+	_handlers["bla"] = "cgi-tester";
+
 	_method = request.getMethod();
 	string url = request.getTarget();
-	if (url.find(".php") != string::npos)
-	{
-		phpHandler(request);
-	}
-	else
+	string extension = url.substr(url.find_last_of(".") + 1);
+	cout << "extension: " << extension << endl;
+
+	if (url.find("/cgi/") == string::npos)
+		_scriptExists = false;
+	
+	int queryStart = url.find("?");
+	if (_scriptExists)
 	{
 		int scriptNameStart = url.find("/cgi/") + 5;
 		int scriptNameEnd = url.find("/", scriptNameStart);
 		if (scriptNameEnd == (int)string::npos)
 			scriptNameEnd = url.find("?", scriptNameStart);
-		int queryStart = url.find("?");
 		_scriptName = url.substr(scriptNameStart, scriptNameEnd - scriptNameStart);
-		_pathInfo = (scriptNameEnd != (int)string::npos ) ? url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";
-		_queryString = (queryStart != (int)string::npos )? url.substr(queryStart + 1, string::npos) : "";
-		setEnv(request);
+		_pathInfo = (scriptNameEnd != (int)string::npos ) ? 
+			url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";	
 	}
-	// "Accept");
-	// "Host");
-	// "Referer");
-	// "Content-Length");
-	// "Origin"); // client address, POST only
-	// "Referer"); //client page where request was made from
-	// "Content-Length");
-	// "REMOTE_ADDR"); //refere
-	// "REMOTE_HOST"); //if not provided same as REMOTE_ADDR
-	// "REQUEST_METHOD"); //case-sensitive GET, POST, UPDATE
-	// "SCRIPT_NAME");
-	// "SERVER_NAME");
+	else
+	{
+		if (_handlers.count(extension) != 0)
+		{
+			_scriptName = _handlers[extension];
+		}
+		_pathInfo = url;
+	}
+	_queryString = (queryStart != (int)string::npos )? url.substr(queryStart + 1, string::npos) : "";
+	setEnv(request);
 }
 
 Cgi::~Cgi()
 {
-	int i = 0;
-	while(_env[i])
-		delete _env[i++];
-	delete _env;
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << RED << "Cgi Deconstructor called for " << this << RESET << std::endl;
 	#endif
@@ -53,47 +52,48 @@ Cgi::~Cgi()
 
 void Cgi::setEnv(Request &request) // think about changing this to return a const char **
 {
-	const std::map<std::string, std::string>& reqHeaders = request.getHeaderFields();
-	string envVars[] = { "REQUEST_METHOD", "GATEWAY_INTERFACE", "PATH_INFO", "PATH_TRANSLATED", "SCRIPT_NAME",
-		"QUERY_STRING", "SERVER_NAME", "SERVER_PORT", "SERVER_PROTOCOL", "CONTENT_TYPE", "CONTENT_LENGTH", "REMOTE_HOST", "REMOTE_ADDR", };
+	std::map<std::string, std::string> reqHeaders = request.getHeaderFields();
 
-	_env = new char*[ENV_LEN];
-	_env[ENV_LEN - 1] = NULL;
-
-	int i = 0;
-	_env[i] = strdup((envVars[i] + "=" + _method).c_str()); i++;
-	_env[i] = strdup((envVars[i] + "=" + "CGI/1.1").c_str()); i++;
-	_env[i] = strdup((envVars[i] + "=" + _pathInfo).c_str()); i++;
-	_env[i] = _pathInfo.empty() ? strdup((envVars[i] + "=" + "").c_str()) : strdup((envVars[i] + "=" + "./" + _pathInfo).c_str()); i++;
-	_env[i] = strdup((envVars[i] + "=" + "./" + _scriptName).c_str()); i++;
-	_env[i] = strdup((envVars[i] + "=" + _queryString).c_str()); i++;
-	_env[i] = strdup((envVars[i] + "=" + "localhost").c_str()); i++;
-	_env[i] = strdup((envVars[i] + "=" + "8080").c_str()); i++;
-	_env[i] = strdup((envVars[i] + "=" + "HTTP/1.1").c_str()); i++;
+	_env["REQUEST_METHOD"] = _method;
+	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
+	_env["PATH_INFO"] = _pathInfo;
+	_env["PATH_TRANSLATED"] = _pathInfo;
+	_env["SCRIPT_NAME"] = _scriptName;
+	_env["QUERY_STRING"] = _queryString;
+	_env["SERVER_NAME"] = "localhost"; //get from config
+	_env["SERVER_PORT"] = "8080"; //get from config
+	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	if (_method == "POST")
 	{
-		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Content-Type")->second).c_str()); i++;
-		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Content-Length")->second).c_str()); i++;
-		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Origin")->second).c_str()); i++;
-		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Origin")->second).c_str()); i++;
+		_env["CONTENT_TYPE"] = reqHeaders["Content-Type"];
+		_env["CONTENT_LENGTH"] = reqHeaders["Content-Length"];
+		_env["REMOTE_HOST"] = reqHeaders["Host"];
+		_env["REMOTE_ADDR"] = reqHeaders["X-Forwarded-For"];
 	}
+	_env["REDIRECT_STATUS"] = "200";
 
-	while(_env[i])
-		_env[i++] = NULL;
 }
 
-void Cgi::phpHandler(Request &req)
+static char **mapToStringArray(const std::map<std::string, std::string> &map)
 {
-	string docRoot = "/Users/tlemma/Documents/Webserv/main/init/server/pages";
-	string filePath = req.getUrl();
-	_pathInfo = docRoot + filePath;
-	cout << "url :" << _pathInfo << endl;
+	char **env = new char*[map.size() + 1];
+	int i = 0;
+	for (std::map<string, string>::const_iterator it = map.begin(); it != map.end(); ++it)
+	{
+		env[i] = strdup((it->first + "=" + it->second).c_str());
+		i++;
+	}
+	env[i] = NULL;
+	return env;
+}
 
-	_env = new char*[2];
-	_env[0] = strdup(_pathInfo.data());
-	_env[1] = NULL;
-
-	_isPhp = true;
+void Cgi::printEnv()
+{
+	cout << "Environment variables:" << endl;
+	for (std::map<string, string>::const_iterator it = _env.begin(); it != _env.end(); ++it)
+	{
+		cout << it->first << ": " << it->second << endl;
+	}
 }
 
 void Cgi::cgi_response(int fd)
@@ -104,18 +104,9 @@ void Cgi::cgi_response(int fd)
 	int pipefd[2];
 
 	args = NULL;
-	if (_isPhp)
-	{
-		executable = "php-cgi";
-		args = new char *[3];
-		args[0] = strdup(executable.c_str());
-		args[1] = strdup(_pathInfo.c_str());
-		args[2] = NULL;
-	}
-	else
-		executable = _scriptName.c_str();
+	executable = _scriptName.c_str();
 	std::cout << GREEN << "Executing CGI..." << std::endl;
-	file = "index.php";
+	file = _pathInfo;
 	int stdout_init = dup(STDOUT_FILENO);
 	pipe(pipefd);
 	dup2(pipefd[1], STDOUT_FILENO);
@@ -124,7 +115,7 @@ void Cgi::cgi_response(int fd)
 	if (pid == 0)
 	{
 		chdir("server/cgi-bin");
-		if (execve(executable.c_str(), args, _env) == -1)
+		if (execve(executable.c_str(), args, mapToStringArray(_env)) == -1)
 		{
 			std::cout << "error executing cgi" << std::endl;
 		}

@@ -24,28 +24,25 @@ using std::endl;
 class Cgi
 {
 	private:
-		char** _env;
+		std::map<string, string> _env;
 		string _method;
 		string _scriptName;
 		string _pathInfo;
 		string _queryString;
 		bool	_isPhp;
+		bool	_scriptExists;
+		std::map<string, string> _handlers;
 	public:
 		Cgi(Request &request);
 
 		~Cgi();
 
-		void printEnv()
-		{
-			for (int i=0; _env[i]; i++)
-				std::cout << _env[i] << std::endl;
-		}
-
-
-	void setEnv(Request &request);
-	void cgi_response(int fd);
-	void phpHandler(Request &req);
+		void printEnv();
+		void setEnv(Request &request);
+		void cgi_response(int fd);
+		void phpHandler(Request &req);
 };
+
 
 
 

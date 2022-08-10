@@ -425,6 +425,23 @@ void Server::checkLocationMethod(const Request& request) const
 		throw MethodNotAllowed();
 }
 
+bool Server::_isCgiRequest(std::string requestHead)
+{
+	requestHead = requestHead.substr(0, requestHead.find("HTTP/1.1"));
+	if (requestHead.find(this->_currentConfig.cgiBin) != std::string::npos)
+		return (true);
+	else
+	{
+		std::map<std::string, std::string>::const_iterator it = this->_currentConfig.cgi.begin();
+		for (; it != this->_currentConfig.cgi.end(); ++it)
+		{
+			if (requestHead.find(it->first) != std::string::npos)
+				return (true);
+		}
+	}
+	return (false);
+}
+
 void Server::handleRequest(int fd)
 {
 	bool isCgi = false;
@@ -441,8 +458,7 @@ void Server::handleRequest(int fd)
 		//determine location
 		request.setDecodedTarget(this->percentDecoding(request.getRawTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
-		if (this->_requestHead.find("/cgi/") != std::string::npos || this->_requestHead.find(".bla") != std::string::npos) // needs to be changed so it accepts the cgi-bin instead andd also the file extensions
-			isCgi = true; // pass the relevant ConfigStruct to CGI
+		isCgi = this->_isCgiRequest(this->_requestHead);
 		#ifdef SHOW_LOG
 			std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
 		#endif

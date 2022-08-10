@@ -104,6 +104,8 @@ class Server
 		void handleERROR(const std::string&);
 		void _handleResponse(int i);
 
+		bool _isCgiRequest(std::string requestHead);
+
 	public:
 
 	// Exceptions

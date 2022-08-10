@@ -63,7 +63,7 @@ class Config
 		const std::string getIndexPage() const;
 		size_t getClientBodyBufferSize() const;
 		size_t getClientMaxBodySize() const;
-		const std::string getCgi() const;
+		const std::map<std::string, std::string> getCgi() const;
 		const std::string getCgiBin() const;
 		const std::map<std::string, LocationStruct> getLocation() const;
 		const std::map<std::string, std::string> getErrorPage() const;

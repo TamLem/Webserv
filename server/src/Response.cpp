@@ -38,10 +38,20 @@ void Response::clear(void)
 	target = "";
 }
 
+void Response::clearResponseMap()
+{
+	this->_responseMap.clear();
+}
+
+void Response::removeFromResponseMap(int fd)
+{
+	if (this->_responseMap.count(fd) == 1)
+		this->_responseMap.erase(fd);
+}
+
 Response::~Response(void)
 {
 	#ifdef SHOW_CONSTRUCTION
-		// std::cout << "messageMap: " << this->messageMap.size() << std::endl;
 		std::cout << RED << "Response Deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
@@ -100,12 +110,22 @@ std::string Response::constructHeader(void)
 	return (stream.str());
 }
 
+std::string Response::constructChunkedHeader(void)
+{
+	std::stringstream stream;
+
+	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
+	// stream << "Content-Type: " << "image/jpg" << CRLF;
+	stream << "Transfer-Encoding: chunked" << CRLFTWO;
+
+	return (stream.str());
+}
+
 int Response::sendall(const int sock_fd, char *buffer, const int len) const
 {
 	int total;
 	int bytesleft;
 	int n;
-	// int i = 0;
 
 	total = len;
 	bytesleft = len;
@@ -239,7 +259,7 @@ static bool staticTargetIsDir(const std::string& target)
 
 void Response::createBodyFromFile(const std::string& target)
 {
-	std::stringstream body;
+	std::stringstream tempBody;
 	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
 	if (access(target.c_str(), F_OK) != 0 && errno == EACCES)
 		throw ERROR_403();
@@ -249,9 +269,9 @@ void Response::createBodyFromFile(const std::string& target)
 	if (file.is_open())
 	{
 		// std::cerr << BOLD << RED << "open" << RESET << std::endl;
-		body << file.rdbuf();
+		tempBody << file.rdbuf();
 		file.close();
-		this->body = body.str();
+		this->body = tempBody.str();
 	}
 	else
 	{
@@ -268,12 +288,6 @@ void Response::addDefaultHeaderFields(void)
 		contentLength << this->body.length();
 		addHeaderField("Content-Length", contentLength.str());
 	}
-}
-
-void Response::sendResponse(int fd)
-{
-	std::string response = this->constructHeader() + this->body;
-	sendall(fd, (char *)response.c_str(), response.length());
 }
 
 void Response::createMessageMap(void)
@@ -382,9 +396,18 @@ const char* Response::InvalidProtocol::what() const throw() //AE is it good to h
 	return ("500");
 }
 
+const char* Response::InternalServerErrorException::what() const throw()
+{
+	return ("500");
+}
 const char* Response::ERROR_500::what() const throw()
 {
 	return ("500");
+}
+
+const char* Response::ClientDisconnectException::what() const throw()
+{
+	return ("client disconnected");
 }
 
 bool targetExists(const std::string& target)

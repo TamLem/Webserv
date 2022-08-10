@@ -30,6 +30,8 @@ class Cgi
 		string _pathInfo;
 		string _queryString;
 		bool	_isPhp;
+		bool	_isTester;
+		string  _docRoot;
 	public:
 		Cgi(Request &request);
 
@@ -45,6 +47,8 @@ class Cgi
 	void setEnv(Request &request);
 	void cgi_response(int fd);
 	void phpHandler(Request &req);
+	void blaHandler(Request &req);
+
 };
 
 

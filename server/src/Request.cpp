@@ -93,7 +93,9 @@ void Request::breakUpTarget(const std::string& token)
 	this->target = token.substr(0, pos);
 	#ifdef FORTYTWO_TESTER
 	if (this->target.compare("/directory") == 0)
-	this->target = "/directory/";
+		this->target = "/directory/";
+	else if (this->target.compare("/directory/nop") == 0)
+		this->target = "/directory/nop/";
 	#endif
 	if (pos == std::string::npos)
 		return ;

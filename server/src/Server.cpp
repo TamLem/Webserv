@@ -428,7 +428,7 @@ void Server::handleRequest(int fd)
 		//determine location
 		request.setDecodedTarget(this->percentDecoding(request.getRawTarget()));
 		request.setQuery(this->percentDecoding(request.getQuery()));
-		if (this->_requestHead.find("/cgi/") != std::string::npos)
+		if (this->_requestHead.find("/cgi/") != std::string::npos || this->_requestHead.find(".bla") != std::string::npos)
 			isCgi = true;
 		#ifdef SHOW_LOG
 			std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;

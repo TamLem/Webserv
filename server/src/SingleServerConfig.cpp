@@ -487,13 +487,9 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 		}
 		}
 	}
-	if (!foundRoot || !foundMethod)
+	if (!foundRoot && !foundMethod && !foundAutoIndex && !foundIndex)
 	{
-		if (!foundRoot)
-			std::cout << RED << "No root found in location " << key << RESET << std::endl;
-		else
-			std::cout << RED << "No method found in location " << key << RESET << std::endl;
-
+			std::cout << RED << "No parameter found inside location block, please provide at least one of the following: root, method, autoindex, index_page" << RESET << std::endl;
 		throw SingleServerConfig::InvalidLocationException();
 	}
 	// if (foundIndex == true && locationStruct.autoIndex == true)

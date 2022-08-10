@@ -81,6 +81,7 @@ void Config::_checkBrackets(std::string all)
 				this->_parseServerBlock(serverStream.str());
 				serverStream.clear();
 				serverStream.str(std::string());
+				buffer.clear();
 			}
 		}
 	}

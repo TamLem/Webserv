@@ -75,7 +75,8 @@ void Response::receiveChunk(int i)
 std::string Response::constructPostResponse()
 {
 	std::stringstream buffer;
-	buffer << "201 Created";
+	buffer << "HTTP/1.1 201 Created";
+	buffer << CRLFTWO;
 
 	return (buffer.str());
 }

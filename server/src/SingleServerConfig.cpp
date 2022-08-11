@@ -346,11 +346,11 @@ void SingleServerConfig::_handleCgi(std::string line)
 			std::cout << RED << key << RESET << std::endl;
 			throw SingleServerConfig::DuplicateCgiExtensionException();
 		}
-		else if (value[0] == '.')
-		{
-			std::cout << RED << value << RESET << std::endl;
-			throw SingleServerConfig::InvalidCgiHandlerException();
-		}
+		// else if (value[0] == '.') // why?????????
+		// {
+		// 	std::cout << RED << value << RESET << std::endl;
+		// 	throw SingleServerConfig::InvalidCgiHandlerException();
+		// }
 		else if (value.find(".") != std::string::npos && value.substr(value.find_first_of(".") + 1).find_first_of(".") != std::string::npos)
 		{
 			std::cout << RED << value << RESET << std::endl;

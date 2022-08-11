@@ -89,7 +89,8 @@ void SocketHandler::_initEventLoop()
 	{
 		struct kevent ev;
 		EV_SET(&ev, *it, EVFILT_READ, EV_ADD, 0, 0, NULL);
-		if (kevent(this->_kq, &ev, 1, NULL, 0, NULL) == -1)
+		// if (kevent(this->_kq, &ev, 1, NULL, 0, NULL) == -1)
+		if (kevent(this->_kq, &ev, 1, this->_evList, MAX_EVENTS, NULL) == -1)
 		{
 			std::cerr << RED << "Error adding server socket to kqueue" << std::endl;
 			perror(NULL);
@@ -99,7 +100,7 @@ void SocketHandler::_initEventLoop()
 	}
 }
 
-void SocketHandler::acceptConnection(int i)
+bool SocketHandler::acceptConnection(int i)
 {
 	if (this->_serverMap.count(this->_evList[i].ident) == 1)
 	{
@@ -112,7 +113,7 @@ void SocketHandler::acceptConnection(int i)
 			perror(NULL);
 			std::cerr << RESET;
 			exit(1);
-			return; // throw exception here
+			return true; // throw exception here
 		}
 		else if (this->addSocket(fd))
 		{
@@ -128,7 +129,9 @@ void SocketHandler::acceptConnection(int i)
 			#endif
 			close(fd);
 		}
+		return true;
 	}
+	return false;
 }
 
 bool SocketHandler::addSocket(int fd)
@@ -140,7 +143,8 @@ bool SocketHandler::addSocket(int fd)
 	timeout.tv_nsec = 0;
 	EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
 	// EV_SET(&ev[1], fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
-	if (kevent(this->_kq, &ev, 1, this->_evList, 0, NULL) == -1)
+	// if (kevent(this->_kq, &ev, 1, this->_evList, 0, NULL) == -1)
+	if (kevent(this->_kq, &ev, 1, this->_evList, MAX_EVENTS, NULL) == -1)
 	{
 		std::cerr << RED << "Error adding socket to kqueue" << std::endl;
 		perror(NULL);
@@ -165,12 +169,13 @@ int SocketHandler::getEvents()
 {
 	struct timespec timeout;
 
-	timeout.tv_sec = 20;
-	timeout.tv_nsec = 0;
+	timeout.tv_sec = 0;
+	timeout.tv_nsec = 100;
 	#ifdef SHOW_LOG_2
 		std::cout << "num clients: " << _clients.size() << std::endl;
 	#endif
 	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, NULL);
+	std::cout << "getEvents num events: " << this->_numEvents << std::endl;
 	return this->_numEvents;
 }
 
@@ -185,7 +190,7 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 
 bool SocketHandler::removeClient(int i, bool force)
 {
-	if ((this->_evList[i].flags & EV_EOF ) /* || (this->_evList[i].flags & EV_CLEAR) */ || force)
+	if ((this->_evList[i].flags & EV_EOF )  || (this->_evList[i].flags & EV_ERROR )/* || (this->_evList[i].flags & EV_CLEAR) */ || force)
 	{
 		#ifdef SHOW_LOG_2
 			std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
@@ -217,8 +222,9 @@ bool SocketHandler::readFromClient(int i)
 		if (status == -1)
 		{
 			std::cerr << RED << "read Error getting client for fd: " << this->_evList[i].ident << std::endl;
-			perror(NULL); // check if illegal
+			perror(NULL); // check if illegal!!!!!!!!
 			std::cerr << RESET;
+			close(_fd);
 			return (false); // throw exception
 		}
 		return (true);
@@ -229,12 +235,13 @@ bool SocketHandler::readFromClient(int i)
 
 bool SocketHandler::writeToClient(int i)
 {
-	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].filter == EVFILT_WRITE)
+	if (this->_serverMap.count(this->_evList[i].ident) == 0 || this->_evList[i].filter == EVFILT_WRITE)
 	{
 		this->_fd = this->_evList[i].ident;
 		int status = this->_getClient(this->_evList[i].ident);
 		if (status == -1)
 		{
+			close(this->_fd);
 			std::cerr << RED << "write Error getting client for fd: " << this->_evList[i].ident << std::endl;
 			perror(NULL); // check if illegal
 			std::cerr << RESET;
@@ -322,15 +329,19 @@ int SocketHandler::getFD(int i) const
 void SocketHandler::setWriteable(int i)
 {
 	int fd = this->_evList[i].ident;
-	EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-	kevent(this->_kq, &this->_evList[i], 1, this->_evList, 0, NULL);
+	std::cout << fd << " was set to writeable" << std::endl;
+	// EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+	// kevent(this->_kq, &this->_evList[i], 1, this->_evList, 0, NULL);
+	EV_SET(&this->_evList[i], this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+
 	struct kevent ev;
 	struct timespec timeout;
 
 	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
 	EV_SET(&ev, fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
-	if (kevent(this->_kq, &ev, 1, this->_evList, 0, NULL) == -1)
+	// if (kevent(this->_kq, &ev, 1, this->_evList, 0, NULL) == -1)
+	if (kevent(this->_kq, &ev, 1, this->_evList, MAX_EVENTS, NULL) == -1)
 	{
 		std::cerr << RED << "Write Error adding socket to kqueue" << std::endl;
 		perror(NULL);
@@ -354,15 +365,19 @@ void SocketHandler::setWriteable(int i)
 void SocketHandler::setReadable(int i)
 {
 	int fd = this->_evList[i].ident;
-	EV_SET(&this->_evList[i], 0, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-	kevent(this->_kq, &this->_evList[i], 1, this->_evList, 0, NULL);
+	std::cout << fd << " was set to readable" << std::endl;
+	// EV_SET(&this->_evList[i], 0, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+	// kevent(this->_kq, &this->_evList[i], 1, this->_evList, 0, NULL);
+	EV_SET(&this->_evList[i], this->_evList[i].ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+
 	struct kevent ev;
 	struct timespec timeout;
 
 	timeout.tv_sec = 20;
 	timeout.tv_nsec = 0;
 	EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
-	if (kevent(this->_kq, &ev, 1, this->_evList, 0, NULL) == -1)
+	// if (kevent(this->_kq, &ev, 1, this->_evList, 0, NULL) == -1)
+	if (kevent(this->_kq, &ev, 1, this->_evList, MAX_EVENTS, NULL) == -1)
 	{
 		std::cerr << RED << "Write Error adding socket to kqueue" << std::endl;
 		perror(NULL);

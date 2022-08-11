@@ -115,7 +115,7 @@ re: fclean all
 
 #run rule
 run: all
-	./$(NAME) server/config/ae.conf
+	./$(NAME) server/config/test.conf
 
 #phony
 .PHONY: all clean fclean re run

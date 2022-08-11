@@ -65,29 +65,40 @@ void Server::runEventLoop()
 		std::cout << "server running " << std::endl;
 		#endif
 		int numEvents = this->_socketHandler->getEvents();
-		if (numEvents == 0)
-		{
-			this->_socketHandler->removeInactiveClients();	// remove inactive clients
-			this->_response.clearResponseMap();
-		}
+		// if (numEvents == 0)
+		// {
+		// 	this->_socketHandler->removeInactiveClients();	// remove inactive clients
+		// 	this->_response.clearResponseMap();
+		// }
 		for (int i = 0; i < numEvents; ++i)
 		{
 			#ifdef SHOW_LOG
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
 			#endif
+			// if (this->_socketHandler->acceptConnection(i) == true)
+				// continue ;
 			this->_socketHandler->acceptConnection(i);
-			if (this->_socketHandler->removeClient(i) == true)
-				this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
-			else if (this->_socketHandler->readFromClient(i) == true)
+			// if (this->_socketHandler->removeClient(i) == true)
+			// 	this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
+			/*else */if (this->_socketHandler->readFromClient(i) == true)
 			{
 				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
-				handleRequest(this->_socketHandler->getFD(i));
-				if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == true)
-					this->_socketHandler->setReadable(i);
-				else
-					this->_socketHandler->setWriteable(i);
+				try
+				{
+					handleRequest(this->_socketHandler->getFD(i));
+					if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == true)
+						this->_socketHandler->setReadable(i);
+					else
+						this->_socketHandler->setWriteable(i);
+				}
+				catch(const std::exception& e)
+				{
+					std::cerr << e.what() << '\n';
+					this->_socketHandler->removeClient(i);
+				}
 			}
-			else if (this->_socketHandler->writeToClient(i) == true)
+			// else if (this->_socketHandler->writeToClient(i) == true)
+			if (this->_socketHandler->writeToClient(i) == true && this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == false)
 			{
 				std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
 				//this->responseMap.count(i).respond()
@@ -95,12 +106,16 @@ void Server::runEventLoop()
 					//close(fd)
 					//delete the (fd, pair)reponse
 				// this->_handleResponse(i);
+
+
+				// if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true)
 				if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true)
 				{
 					if (this->_socketHandler->removeClient(i, true) == true)
 						this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
 				}
 			}
+			this->_socketHandler->removeClient(i);	// remove inactive clients
 		}
 	}
 }
@@ -458,6 +473,8 @@ void Server::checkLocationMethod(const Request& request) const
 bool Server::_isCgiRequest(std::string requestHead)
 {
 	requestHead = requestHead.substr(0, requestHead.find("HTTP/1.1"));
+	if (requestHead.find("/cgi/") != std::string::npos) // get rid of this hardcoded thing please
+		return (true);
 	if (this->_currentConfig.cgiBin.length() != 0 && requestHead.find(this->_currentConfig.cgiBin) != std::string::npos)
 		return (true);
 	else if (this->_currentConfig.cgi.size() != 0)
@@ -487,6 +504,7 @@ void Server::handleRequest(int fd)
 			this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
 			Request request(this->_requestHead);
 			this->applyCurrentConfig(request);
+			//normalize target (in Request)
 			//normalize target (in Request)
 			//compression (merge slashes)
 			//resolve relative paths
@@ -638,6 +656,20 @@ void cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 	Cgi newCgi(request, configStruct);
 
 	newCgi.printEnv();
+	int cgiPipe[2];
+	pipe(cgiPipe);
+
+	//initiate cgi response
+	//listen to event on cgiPipe[0]
+	//if event is read, read from cgiPipe[0] and write to fd
+	//if event is write, write to cgiPipe[1]
+	//if event is error, close cgiPipe[0] and cgiPipe[1]
+	//if event is hangup, close cgiPipe[0] and cgiPipe[1]
+	//if event is timeout, close cgiPipe[0] and cgiPipe[1]
+	//if event is terminate, close cgiPipe[0] and cgiPipe[1]
+	//if event is close, close cgiPipe[0] and cgiPipe[1]
+
+
 	newCgi.cgi_response(fd);
 }
 

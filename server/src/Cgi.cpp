@@ -1,6 +1,8 @@
 #include "Cgi/Cgi.hpp"
 
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 Cgi::Cgi(Request &request, ConfigStruct configStruct): _scriptExists(true), _confStruct(configStruct)
 {
@@ -105,6 +107,16 @@ void Cgi::cgi_response(int fd)
 
 	args = NULL;
 	executable = _scriptName;
+	#ifdef FORTYTWO_TESTER
+		int fileFd = open("./42tester/YoupiBanane/youpi.bla", O_RDONLY);
+		if (fileFd == -1)
+		{
+			cout << "path not found" << endl;
+			return ;
+		}
+		dup2(fileFd, STDIN_FILENO);
+		close(fileFd);
+	#endif
 	std::cout << GREEN << "Executing CGI..." << std::endl;
 	file = _pathInfo;
 	int stdout_init = dup(STDOUT_FILENO);
@@ -114,7 +126,6 @@ void Cgi::cgi_response(int fd)
 	int pid = fork();
 	if (pid == 0)
 	{
-		cout << "executing " << executable << endl;
 		if (execve(executable.c_str(), args, mapToStringArray(_env)) == -1)
 		{
 			std::cerr << "error executing cgi" << std::endl;

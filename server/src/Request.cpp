@@ -240,7 +240,7 @@ void Request::addMethods(void)
 	this->validMethods.insert("POST");
 	this->validMethods.insert("DELETE");
 	#ifdef FORTYTWO_TESTER
-	this->validMethods.insert("POST");
+	this->validMethods.insert("PUT");
 	this->validMethods.insert("HEAD");
 	#endif
 }
@@ -320,8 +320,8 @@ const char* Request::InvalidNumberOfTokens::what() const throw()
 	static int count = 0;
 	if (count == 0) //Test POST http://localhost:8080/ with a size of 0
 		return ("405"); // FORTYTWO_TESTER AE change back to 400 when POST works
-	else if (count == 1) // PUT
-		return ("201"); // FORTYTWO_TESTER AE change back to 400 when POST works
+	// else if (count == 1) // PUT
+	// 	return ("201"); // FORTYTWO_TESTER AE change back to 400 when POST works
 	else
 		return ("400");
 	count++;

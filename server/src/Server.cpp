@@ -292,7 +292,8 @@ int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::c
 			result = it->second.root;
 		result += target.substr(target.find_last_of('/') + 1);
 		request.setRoutedTarget("." + result);
-		_currentLocationKey = it->first;
+		_currentLocationKey = it->first; // AE does it have to be "" instead?
+		// _currentLocationKey = "";
 		#ifdef SHOW_LOG
 			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << std::endl;
 		#endif
@@ -456,19 +457,19 @@ void Server::checkLocationMethod(const Request& request) const
 		throw MethodNotAllowed();
 }
 
-bool Server::_isCgiRequest(std::string requestHead)
+bool Server::_isCgiRequest(std::string requestHead) // AE this function ahs to be included in locationMatching
 {
-	requestHead = requestHead.substr(0, requestHead.find("HTTP/1.1"));
-	if (requestHead.find("/cgi/") != std::string::npos)
+	requestHead = requestHead.substr(0, requestHead.find("HTTP/1.1")); // AE is formatting checked before?
+	// if (requestHead.find("/cgi/") != std::string::npos) // AE file extension should deterime if something is cgi or not
+	// 	return (true);
+	/*if (this->_currentConfig.cgiBin.length() != 0 && requestHead.find(this->_currentConfig.cgiBin) != std::string::npos)
 		return (true);
-	if (this->_currentConfig.cgiBin.length() != 0 && requestHead.find(this->_currentConfig.cgiBin) != std::string::npos)
-		return (true);
-	else if (this->_currentConfig.cgi.size() != 0)
+	else */if (this->_currentConfig.cgi.size() != 0)
 	{
 		std::map<std::string, std::string>::const_iterator it = this->_currentConfig.cgi.begin();
 		for (; it != this->_currentConfig.cgi.end(); ++it)
 		{
-			if (requestHead.find(it->first) != std::string::npos)
+			if (requestHead.find(it->first) != std::string::npos) // AE define this better (has to be ending, not just existing)
 				return (true);
 		}
 	}
@@ -498,20 +499,23 @@ void Server::handleRequest(int fd)
 		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
 		// request.setRoutedTarget("." + request.getRoutedTarget());
 		//check method
-		checkLocationMethod(request);
 		if (isCgi == true)
 		{
 			std::cout << "CGI REQUEST: " << request.getRoutedTarget() << std::endl;
 			this->applyCurrentConfig(request);
 			cgi_handle(request, fd, this->_currentConfig);
 		}
-		else if (request.getMethod() == "POST" || request.getMethod() == "PUT")
-			handlePOST(request);
-		else if (request.getMethod() == "DELETE")
-			handleDELETE(request);
 		else
 		{
-			handleGET(request);
+			checkLocationMethod(request);
+			if (request.getMethod() == "POST" || request.getMethod() == "PUT")
+				handlePOST(request);
+			else if (request.getMethod() == "DELETE")
+				handleDELETE(request);
+			else
+			{
+				handleGET(request);
+			}
 		}
 	}
 	catch (std::exception& exception)

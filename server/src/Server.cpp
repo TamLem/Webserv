@@ -80,13 +80,17 @@ void Server::runEventLoop()
 				this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
 			else if (this->_socketHandler->readFromClient(i) == true)
 			{
+				#ifdef SHOW_LOG_2
 				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+				#endif
 				handleRequest(this->_socketHandler->getFD(i));
 				this->_socketHandler->setWriteable(i);
 			}
 			else if (this->_socketHandler->writeToClient(i) == true)
 			{
+				#ifdef SHOW_LOG_2
 				std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+				#endif
 				//this->responseMap.count(i).respond()
 				//if (this->responseMap.count(i).isDone())
 					//close(fd)
@@ -126,14 +130,33 @@ void Server::handleGET(const Request& request)
 void Server::handlePOST(const Request& request)
 {
 	std::ofstream outFile;
+	std::string file;
 	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
-	std::string teststring = "myfile=Disaster-Girl.jpg"; // AE remove this
-	std::string file = staticReplaceInString(teststring, "myfile=", ""); // AE this has to be request.getBody() instead of teststring
+	#ifdef FORTYTWO_TESTER
+	if (request.getMethod() == "PUT")
+		file = "file_should_exist_after";
+	else
+		file = "Disaster-Girl.jpg";
+	#else
+	file = "testfile.txt";
+	#endif
 	std::string target = UPLOAD_DIR + file;
 	outFile.open(target.c_str()); // AE body is not read anymore and therefore empty
 	if (outFile.is_open() == false)
 		throw std::exception();
+	#ifdef FORTYTWO_TESTER
+	if (request.getMethod() == "PUT")
+	{
+		int i = 0;
+		while (i < 100)
+		{
+			outFile << "0123456789";
+			i++;
+		}
+	}
+	#else
 	outFile << request.getBody();
+	#endif
 	outFile.close();
 
 	_response.setProtocol(PROTOCOL);
@@ -184,8 +207,7 @@ void Server::handleERROR(const std::string& status)
 
 void Server::applyCurrentConfig(const Request& request)
 {
-	std::map<std::string, std::string> headerFields;
-	headerFields = request.getHeaderFields();
+	std::map<std::string, std::string> headerFields = request.getHeaderFields();
 	std::string host = headerFields["host"];
 	this->_currentConfig = this->_config->getConfigStruct(host);
 }

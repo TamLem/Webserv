@@ -153,7 +153,9 @@ void Response::sendChunk(int i)
 		tempBuffer = intToHexString(MAX_SEND_CHUNK_SIZE) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft, MAX_SEND_CHUNK_SIZE) + CRLF;
 		this->_responseMap[i].bytesLeft -= MAX_SEND_CHUNK_SIZE;
 		bufferLength = tempBuffer.length();
+		#ifdef SHOW_LOG_2
 		std::cout << YELLOW << "bufferLength: " << bufferLength << RESET << std::endl;
+		#endif
 
 		n = send(clientFd, (char *)tempBuffer.c_str(), bufferLength, 0);
 		if (n == -1)
@@ -174,7 +176,9 @@ void Response::sendChunk(int i)
 		tempBuffer = intToHexString(bytesLeft) + CRLF + this->_responseMap[i].response.substr(total - bytesLeft) + CRLF;
 		this->_responseMap[i].bytesLeft -= bytesLeft;
 		bufferLength = tempBuffer.length();
+		#ifdef SHOW_LOG_2
 		std::cout << YELLOW << "last bufferLength: " << bufferLength << RESET << std::endl;
+		#endif
 
 		n = send(clientFd, (char *)tempBuffer.c_str(), bufferLength, 0);
 		if (n == -1)
@@ -212,7 +216,9 @@ void Response::sendChunk(int i)
 		// 			<< this->_responseMap[i].response
 		// 			<< YELLOW << "<" << RESET << std::endl;
 	}
+	#ifdef SHOW_LOG_2
 	std::cout << BOLD << GREEN << "Bytes send to " << clientFd << ": " << n << " (" << this->_responseMap[i].bytesLeft << " bytes remaining)" << RESET << std::endl;
+	#endif
 	endChunkedMessage(i, n);
 }
 

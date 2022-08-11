@@ -10,9 +10,9 @@ else
 CXXFLAGS	=	-std=c++98 -Wall -Wextra #-Werror // please fix this Tam
 endif
 
-CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
+# CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
 
-CXXFLAGS	+=	-D FORTYTWO_TESTER
+# CXXFLAGS	+=	-D FORTYTWO_TESTER
 
 # CXXFLAGS	+=	-D SHOW_CONSTRUCTION # enables the printing of constructor/destructor messages
 
@@ -115,6 +115,12 @@ re: fclean all
 #run rule
 run: all
 	./$(NAME) server/config/ae.conf
+
+ae: all
+	./$(NAME) server/config/ae.conf
+
+42: all
+	./$(NAME) server/config/42tester.conf
 
 #phony
 .PHONY: all clean fclean re run

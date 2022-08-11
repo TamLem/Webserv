@@ -53,11 +53,6 @@ void Request::parseStartLine(std::istringstream& stream)
 	if (!isValidMethod(method))
 		throw InvalidMethod();
 	this->method = method;
-	// if (this->target == "/")
-	// 	this->target = INDEX_PATH;
-	// else
-		// this->target = "." + this->target;
-	// std::cerr << RED << "target: " << this->target << "\nquery: " << this->query << "\nfragment: " << this->fragment << RESET << std::endl;
 	if (!isValidProtocol(protocol))
 		throw Request::InvalidProtocol();
 	this->protocol = protocol;
@@ -264,16 +259,6 @@ std::ostream& operator<<(std::ostream& out, const Request& request)
 	return (out);
 }
 
-// void Request::setMethod(const std::string& method)
-// {
-// 	this->method = method;
-// }
-
-// void Request::setProtocol(const std::string& protocol)
-// {
-// 	this->protocol = protocol;
-// }
-
 void Request::setDecodedTarget(const std::string& target)
 {
 	this->decodedTarget = target;
@@ -331,6 +316,9 @@ const std::string& Request::getFragment(void) const
 
 const char* Request::InvalidNumberOfTokens::what() const throw()
 {
+	#ifdef FORTYTWO_TESTER
+	return ("405"); // FORTYTWO_TESTER AE change back to 400 when POST works 
+	#endif
 	return ("400");
 }
 

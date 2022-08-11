@@ -65,11 +65,11 @@ void Server::runEventLoop()
 		std::cout << "server running " << std::endl;
 		#endif
 		int numEvents = this->_socketHandler->getEvents();
-		if (numEvents == 0)
-		{
-			this->_socketHandler->removeInactiveClients();	// remove inactive clients
-			this->_response.clearResponseMap();
-		}
+		// if (numEvents == 0)
+		// {
+		// 	this->_socketHandler->removeInactiveClients();	// remove inactive clients
+		// 	this->_response.clearResponseMap();
+		// }
 		for (int i = 0; i < numEvents; ++i)
 		{
 			#ifdef SHOW_LOG_2
@@ -94,7 +94,7 @@ void Server::runEventLoop()
 				}
 				this->_socketHandler->setWriteable(i);
 			}
-			else if (this->_socketHandler->writeToClient(i) == true)
+			if (this->_socketHandler->writeToClient(i) == true)
 			{
 				#ifdef SHOW_LOG_2
 				std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;

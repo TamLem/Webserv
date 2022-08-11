@@ -32,6 +32,7 @@ bool Response::sendRes(int fd)
 	}
 	else
 		std::cout << YELLOW << "sent " << n << " bytes to fd: " << fd  << RESET << std::endl;
+	this->_responseMap[fd].response = this->_responseMap[fd].response.substr(n);
 	if (this->_responseMap[fd].response.empty())
 	{
 		std::cout << RED << " FULL Response sent for fd: " << fd << RESET << std::endl;
@@ -39,7 +40,6 @@ bool Response::sendRes(int fd)
 		this->_responseMap.erase(fd);
 		return (true);
 	}
-	this->_responseMap[fd].response = this->_responseMap[fd].response.substr(n);
 	return (false);
 }
 

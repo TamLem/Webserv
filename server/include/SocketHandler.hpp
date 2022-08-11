@@ -85,7 +85,7 @@ class SocketHandler
 
 	// Public Methods
 		int getEvents();
-		void acceptConnection(int i);
+		bool acceptConnection(int i);
 		bool addSocket(int fd);
 		bool readFromClient(int i);
 		bool writeToClient(int i);

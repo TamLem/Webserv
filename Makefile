@@ -16,7 +16,7 @@ endif
 
 # CXXFLAGS	+=	-D SHOW_CONSTRUCTION # enables the printing of constructor/destructor messages
 
-CXXFLAGS	+=	-D SHOW_LOG #enables the printing of surface-level logs, server-side only
+# CXXFLAGS	+=	-D SHOW_LOG #enables the printing of surface-level logs, server-side only
 
 # CXXFLAGS	+=	-D SHOW_LOG_2 #enables the printing of deep-level logs, server-side only
 

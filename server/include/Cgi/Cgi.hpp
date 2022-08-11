@@ -30,35 +30,24 @@ class Cgi
 		Cgi& operator=(const Cgi&);
 
 	// private variables
-		char** _env;
+		string _docRoot;
+		std::map<string, string> _env;
 		string _method;
 		string _scriptName;
 		string _pathInfo;
+		string _pathTranslated;
 		string _queryString;
 		bool	_isPhp;
+		bool	_scriptExists;
 		ConfigStruct _confStruct;
-		bool	_isTester;
-		string  _docRoot;
 	public:
 		Cgi(Request &request, ConfigStruct confStruct);
 
 		~Cgi();
 
-		void printEnv()
-		{
-			for (int i=0; _env[i]; i++)
-				std::cout << _env[i] << std::endl;
-		}
-
-
-	void setEnv(Request &request);
-	void cgi_response(int fd);
-	void phpHandler(Request &req);
-	void blaHandler(Request &req);
-
+		void setEnv(Request &request);
+		void cgi_response(int fd);
+		void phpHandler(Request &req);
+		void printEnv();
 };
-
-
-
-
 #endif

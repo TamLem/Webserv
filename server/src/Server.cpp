@@ -76,14 +76,22 @@ void Server::runEventLoop()
 			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
 			#endif
 			this->_socketHandler->acceptConnection(i);
-			if (this->_socketHandler->removeClient(i) == true)
-				this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
-			else if (this->_socketHandler->readFromClient(i) == true)
+			// if (this->_socketHandler->removeClient(i) == true)
+			// 	this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
+			if (this->_socketHandler->readFromClient(i) == true)
 			{
 				#ifdef SHOW_LOG_2
 				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
 				#endif
-				handleRequest(this->_socketHandler->getFD(i));
+				try
+				{
+					handleRequest(this->_socketHandler->getFD(i));
+				}
+				catch(const std::exception& e)
+				{
+					std::cerr << e.what() << '\n';
+					this->_socketHandler->removeClient(i);
+				}
 				this->_socketHandler->setWriteable(i);
 			}
 			else if (this->_socketHandler->writeToClient(i) == true)
@@ -96,12 +104,13 @@ void Server::runEventLoop()
 					//close(fd)
 					//delete the (fd, pair)reponse
 				// this->_handleResponse(i);
-				if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true)
+				if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true)
 				{
 					if (this->_socketHandler->removeClient(i, true) == true)
 						this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
 				}
 			}
+			this->_socketHandler->removeClient(i);	// remove inactive clients
 		}
 	}
 }
@@ -450,6 +459,8 @@ void Server::checkLocationMethod(const Request& request) const
 bool Server::_isCgiRequest(std::string requestHead)
 {
 	requestHead = requestHead.substr(0, requestHead.find("HTTP/1.1"));
+	if (requestHead.find("/cgi/") != std::string::npos)
+		return (true);
 	if (this->_currentConfig.cgiBin.length() != 0 && requestHead.find(this->_currentConfig.cgiBin) != std::string::npos)
 		return (true);
 	else if (this->_currentConfig.cgi.size() != 0)
@@ -490,6 +501,7 @@ void Server::handleRequest(int fd)
 		checkLocationMethod(request);
 		if (isCgi == true)
 		{
+			std::cout << "CGI REQUEST: " << request.getRoutedTarget() << std::endl;
 			this->applyCurrentConfig(request);
 			cgi_handle(request, fd, this->_currentConfig);
 		}
@@ -624,6 +636,20 @@ void cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 	Cgi newCgi(request, configStruct);
 
 	newCgi.printEnv();
+	int cgiPipe[2];
+	pipe(cgiPipe);
+
+	//initiate cgi response
+	//listen to event on cgiPipe[0]
+	//if event is read, read from cgiPipe[0] and write to fd
+	//if event is write, write to cgiPipe[1]
+	//if event is error, close cgiPipe[0] and cgiPipe[1]
+	//if event is hangup, close cgiPipe[0] and cgiPipe[1]
+	//if event is timeout, close cgiPipe[0] and cgiPipe[1]
+	//if event is terminate, close cgiPipe[0] and cgiPipe[1]
+	//if event is close, close cgiPipe[0] and cgiPipe[1]
+	
+	
 	newCgi.cgi_response(fd);
 }
 

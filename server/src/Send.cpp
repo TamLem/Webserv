@@ -19,7 +19,10 @@ bool Response::sendRes(int fd)
 	{
 		this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
 	}
-	int n = send(fd, this->_responseMap[fd].response.c_str(), this->_responseMap[fd].response.size(), 0);
+	int sendSize = MAX_SEND_CHUNK_SIZE;
+	if (this->_responseMap[fd].response.size() < MAX_SEND_CHUNK_SIZE)
+		sendSize = this->_responseMap[fd].response.size();
+	int n = send(fd, this->_responseMap[fd].response.c_str(), sendSize, 0);
 	if (n == -1)
 	{
 		std::cerr << RED << "send Error sending response for fd: " << fd << std::endl;
@@ -27,8 +30,12 @@ bool Response::sendRes(int fd)
 		std::cerr << RESET;
 		return (true); // throw exception
 	}
-	if (n == (int)this->_responseMap[fd].response.size())
+	else
+		std::cout << YELLOW << "sent " << n << " bytes to fd: " << fd  << RESET << std::endl;
+	if (this->_responseMap[fd].response.empty())
 	{
+		std::cout << RED << " FULL Response sent for fd: " << fd << RESET << std::endl;
+		// close(fd);
 		this->_responseMap.erase(fd);
 		return (true);
 	}

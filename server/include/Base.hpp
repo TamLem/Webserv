@@ -30,7 +30,7 @@
 #define MAX_REQUEST_HEADER_SIZE 1024
 #define MAX_EVENTS 128
 #define MAX_REQUEST_LINE_SIZE 512
-#define MAX_SEND_CHUNK_SIZE (4 * 1024)
+#define MAX_SEND_CHUNK_SIZE (10024 * 1024)
 
 // ResponseStruct
 struct ResponseStruct

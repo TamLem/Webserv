@@ -39,7 +39,7 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct): _scriptExists(true), _con
 		_pathInfo = url;
 		_pathTranslated = "." + _docRoot + _pathInfo.substr(1);	
 	}
-	_queryString = request.getQuery().substr(1);
+	_queryString = request.getQuery().length() > 1 ? request.getQuery().substr(1) : "";
 	setEnv(request);
 }
 
@@ -58,7 +58,7 @@ void Cgi::setEnv(Request &request) // think about changing this to return a cons
 	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_env["PATH_INFO"] = _pathInfo;
 	_env["PATH_TRANSLATED"] = _pathTranslated;
-	_env["SCRIPT_NAME"] = _scriptName;
+	_env["SCRIPT_NAME"] = "";
 	_env["QUERY_STRING"] = _queryString;
 	_env["SERVER_NAME"] = reqHeaders.find("host")->second.substr(0, reqHeaders.find("host")->second.find(":"));
 	_env["SERVER_PORT"] =  reqHeaders.find("host")->second.substr(reqHeaders.find("host")->second.find(":") + 1);

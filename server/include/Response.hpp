@@ -36,7 +36,6 @@ class Response : public Message
 		bool isValidStatus(const std::string&);
 	protected:
 		int sendall(const int sock_fd, char *buffer, const int len) const;
-		void _addToReceiveMap(int i);
 		void sendChunk(int i);// i is the fd
 	public:
 		Response(void);
@@ -61,14 +60,18 @@ class Response : public Message
 		const std::string& getStatus(void) const;
 		const std::string& getStatusMessage(void) const;
 		const std::map<std::string, std::string>& getMessageMap(void) const;
+		std::string getResponse();
 
 		std::string constructHeader(void);
 		std::string constructChunkedHeader(void);
 		void endChunkedMessage(int i, int n);
 
+		void putToResponseMap(int fd);
+
 		void clear(void);
 		void clearResponseMap();
 		void removeFromResponseMap(int fd);
+		void removeFromReceiveMap(int fd);
 		// void init(const Request&);
 		// void init(const std::string&, int, const std::string&);
 		void addDefaultHeaderFields(void);
@@ -96,6 +99,11 @@ class Response : public Message
 	};
 
 	class ERROR_403 : public Message::BadRequest
+	{
+		const char* what() const throw();
+	};
+
+	class ERROR_423 : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};

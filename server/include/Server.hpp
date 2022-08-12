@@ -67,7 +67,7 @@ class Server
 
 		// void run(void);
 
-		void handleRequest(int);
+		void handleRequest(int i);
 	private:
 	// defines only to not have undefined behaviour
 		Server(const Server&);
@@ -92,6 +92,7 @@ class Server
 		void _readRequestHead(int fd);
 
 		void applyCurrentConfig(const Request&);
+		void removeClientTraces(int clientFd);
 		void matchLocation(Request&);
 		int routeFile(Request&, std::map<std::string, LocationStruct>::const_iterator, const std::string&);
 		void routeDir(Request&, std::map<std::string, LocationStruct>::const_iterator, const std::string&, int&);

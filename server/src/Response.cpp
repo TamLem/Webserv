@@ -33,7 +33,7 @@ void Response::clearResponseMap()
 
 void Response::removeFromResponseMap(int fd)
 {
-	if (this->_responseMap.count(fd) == 1)
+	if (this->_responseMap.count(fd) == true)
 		this->_responseMap.erase(fd);
 }
 
@@ -144,6 +144,26 @@ const std::string& Response::getStatusMessage(void) const
 const std::map<std::string, std::string>& Response::getMessageMap(void) const
 {
 	return (this->messageMap);
+}
+
+std::string Response::getResponse()
+{
+	std::stringstream buffer;
+	buffer << this->constructHeader();
+	buffer << this->getBody();
+	buffer << CRLFTWO;
+
+	return (buffer.str());
+}
+
+void Response::putToResponseMap(int fd)
+{
+	// i purposly do not check for existance before writing to it so that everything would be overridden if it existed
+	this->_responseMap[fd].buffer = "";
+	this->_responseMap[fd].header = "";
+	this->_responseMap[fd].response = this->getResponse();
+	this->_responseMap[fd].total = this->_responseMap[fd].response.length();
+	this->_responseMap[fd].bytesLeft = this->_responseMap[fd].total;
 }
 
 std::string Response::constructHeader(void)
@@ -419,6 +439,11 @@ const char* Response::ERROR_404::what() const throw()
 const char* Response::ERROR_403::what() const throw()
 {
 	return ("403");
+}
+
+const char* Response::ERROR_423::what() const throw()
+{
+	return ("423");
 }
 
 const char* Response::InvalidProtocol::what() const throw() //AE is it good to have different codes for request/response?

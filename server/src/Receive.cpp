@@ -10,50 +10,52 @@ void Response::receiveChunk(int i)
 	int n = 0;
 	std::ofstream buffer;
 	char chunk[bufferSize];
-	// memset(chunk, 0, bufferSize);
 
-	buffer.open(this->_receiveMap[i].target.c_str(), std::ios_base::app);
-	// int bufferLength;
-	if (total > bufferSize && bytesLeft > bufferSize)
+	buffer.open(this->_receiveMap[i].target.c_str(), std ::ios::out | std::ios_base::app | std::ios::binary);
+
+	if (buffer.is_open() == false)
+		throw Response::ERROR_423();
+	else if (total > bufferSize && bytesLeft > bufferSize)
 	{
-		std::cout << YELLOW << "bytesLeft: " << bytesLeft << RESET << std::endl;
-
+		#ifdef SHOW_LOG_2
+			std::cout << YELLOW << "bytesLeft: " << bytesLeft << RESET << std::endl;
+		#endif
 		n = read(clientFd, chunk, bufferSize);
-
-		// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
-		// 			<< intToHexString(this->_receiveMap[i].bufferSize) << CRLF << this->_receiveMap[i].response.substr(total - bytesLeft, this->_receiveMap[i].bufferSize) << CRLF
-		// 			<< YELLOW << "<" << RESET << std::endl;
 	}
-	else /*if (total > this->_receiveMap[i].bufferSize && bytesLeft < this->_receiveMap[i].bufferSize)*/ // check if it works like that
+	else
 	{
-		std::cout << YELLOW << "last bytesLeft: " << bytesLeft << RESET << std::endl;
+		#ifdef SHOW_LOG_2
+			std::cout << YELLOW << "last bytesLeft: " << bytesLeft << RESET << std::endl;
+		#endif
 		n = read(clientFd, chunk, bytesLeft);
-
-		// std::cout	<< YELLOW << "Message send >" << RESET << std::endl
-		// 			<< (intToHexString(this->_receiveMap[i].bufferSize) + CRLF + this->_receiveMap[i].response.substr(total - bytesLeft, (bytesLeft + intToHexString(bytesLeft).length())) + CRLF)
-		// 			<< YELLOW << "<" << RESET << std::endl;
 	}
-	std::cout << BOLD << GREEN << "Bytes received from " << clientFd << ": " << n << RESET << std::endl;
+
+	#ifdef SHOW_LOG_2
+		std::cout << BOLD << GREEN << "Bytes received from " << clientFd << ": " << n << RESET << std::endl;
+	#endif
+
 	if (n > 0)
 	{
-		// if (n > bytesLeft)
-		// {
-		// 	std::cout << "CHECK n FOR RECEIVED BYTES!!!!!!!" << std::endl;
-		// 	bytesLeft = 0;
-		// }
-		// else
-			bytesLeft -= n;
-		std::cout << BOLD << YELLOW << "Bytes left to read from " << clientFd << ": " << bytesLeft << RESET << std::endl;
+		bytesLeft -= n;
+		#ifdef SHOW_LOG_2
+			std::cout << BOLD << YELLOW << "Bytes left to read from " << clientFd << ": " << bytesLeft << RESET << std::endl;
+		#endif
 	}
 	else if (n == -1)
 	{
-		perror("send");
+		perror("send"); // maybe forbidden!!!!!!!!!
 		this->_receiveMap.erase(i);
 		bytesLeft = 0;
 		buffer.close();
 		throw Response::InternalServerErrorException();
 	}
-	buffer << chunk;
+
+
+	// buffer[n] = '\0' // this would be needed for the next line
+	// buffer << chunk; // this will stop writing if encounters a '\0', wich can happen in binary data!
+	buffer.write(chunk, n); // with this there can even be a '\0' in there, it wont stop writing
+
+
 	if (bytesLeft)
 	{
 		this->_receiveMap[i].bytesLeft = bytesLeft;
@@ -62,17 +64,14 @@ void Response::receiveChunk(int i)
 	else
 	{
 		buffer.close();
-		// send response here!!!!!!!!!!!!!
-		// close(clientFd);
-		#ifdef SHOW_LOG
-			std::cout << RED << "fd: " << clientFd << " was closed after sending response" << RESET << std::endl;
-		#endif
 		this->_receiveMap.erase(i);
 		this->_responseMap[clientFd].response = this->constructPostResponse();
+		this->_responseMap[clientFd].total = this->_responseMap[clientFd].response.length();
+		this->_responseMap[clientFd].bytesLeft = this->_responseMap[clientFd].response.length();
 	}
 }
 
-std::string Response::constructPostResponse()
+std::string Response::constructPostResponse() // this needs to be worked on !!!!!!
 {
 	std::stringstream buffer;
 	buffer << "HTTP/1.1 201 Created";
@@ -81,15 +80,13 @@ std::string Response::constructPostResponse()
 	return (buffer.str());
 }
 
-// std::string Response::constructFailedPostResponse()
-// {
-// 	std::stringstream buffer;
-// 	buffer << "500";
-
-// 	return (buffer.str());
-// }
-
 bool Response::isInReceiveMap(int clientFd)
 {
 	return (this->_receiveMap.count(clientFd));
+}
+
+void Response::removeFromReceiveMap(int fd)
+{
+	if (this->_receiveMap.count(fd) == true)
+		this->_receiveMap.erase(fd);
 }

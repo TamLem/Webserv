@@ -27,10 +27,10 @@
 #define TCHAR "!#$%&'*+-.^_`|~"
 
 // defines for reading from client
-#define MAX_REQUEST_HEADER_SIZE 1024
+#define MAX_REQUEST_LINE_SIZE 512 // change this to increase the max length of accepted URI
+#define MAX_REQUEST_HEADER_SIZE 1024 // change this to increase the size of accepted request-headers
 #define MAX_EVENTS 128
-#define MAX_REQUEST_LINE_SIZE 512
-#define MAX_SEND_CHUNK_SIZE (4 * 1024)
+#define MAX_SEND_CHUNK_SIZE (4 * 1024) // this controlls the size of the chunks we are sending back to the client
 
 // ResponseStruct
 struct ResponseStruct

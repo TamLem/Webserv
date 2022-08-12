@@ -52,7 +52,7 @@ Server::~Server(void)
 {
 	delete _socketHandler;
 	#ifdef SHOW_CONSTRUCTION
-		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
+		std::cout << RED << "Server deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
 
@@ -62,7 +62,7 @@ void Server::runEventLoop()
 	{
 
 		#ifdef SHOW_LOG
-		std::cout << "server running " << std::endl;
+			std::cout << "server running " << std::endl;
 		#endif
 		int numEvents = this->_socketHandler->getEvents();
 		// if (numEvents == 0)
@@ -73,19 +73,18 @@ void Server::runEventLoop()
 		for (int i = 0; i < numEvents; ++i)
 		{
 			#ifdef SHOW_LOG
-			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
+				std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
 			#endif
-			// if (this->_socketHandler->acceptConnection(i) == true)
-				// continue ;
+
 			this->_socketHandler->acceptConnection(i);
-			// if (this->_socketHandler->removeClient(i) == true)
-			// 	this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
-			/*else */if (this->_socketHandler->readFromClient(i) == true)
+			if (this->_socketHandler->readFromClient(i) == true)
 			{
-				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+				#ifdef SHOW_LOG_2
+					std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+				#endif
 				try
 				{
-					handleRequest(this->_socketHandler->getFD(i));
+					handleRequest(i);
 					if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == true)
 						this->_socketHandler->setReadable(i);
 					else
@@ -94,28 +93,25 @@ void Server::runEventLoop()
 				catch(const std::exception& e)
 				{
 					std::cerr << e.what() << '\n';
-					this->_socketHandler->removeClient(i);
+					if (this->_socketHandler->removeClient(i) == true)
+						removeClientTraces(this->_socketHandler->getFD(i)); // removes client from receive and response Map
 				}
 			}
 			// else if (this->_socketHandler->writeToClient(i) == true)
 			if (this->_socketHandler->writeToClient(i) == true && this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == false)
 			{
-				std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
-				//this->responseMap.count(i).respond()
-				//if (this->responseMap.count(i).isDone())
-					//close(fd)
-					//delete the (fd, pair)reponse
-				// this->_handleResponse(i);
-
-
-				// if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true)
-				if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true)
+				#ifdef SHOW_LOG_2
+					std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+				#endif
+				if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true) // function that force sends as much data as accepted again and again until all data was send
+				// if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true) // function to send the response in predefined chunks, with chunking headers
 				{
 					if (this->_socketHandler->removeClient(i, true) == true)
-						this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
+						removeClientTraces(this->_socketHandler->getFD(i)); // removes client from receive and response Map
 				}
 			}
-			this->_socketHandler->removeClient(i);	// remove inactive clients
+			if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 && this->_socketHandler->removeClient(i) == true)
+				removeClientTraces(this->_socketHandler->getFD(i)); // removes client from receive and response Map
 		}
 	}
 }
@@ -143,7 +139,9 @@ void Server::handleGET(const Request& request)
 
 void Server::handlePOST(int clientFd, const Request& request)
 {
-	std::cout << "handlePost entered for" << clientFd << std::endl;
+	#ifdef SHOW_LOG_2
+		std::cout << "handlePost entered for" << clientFd << std::endl;
+	#endif
 	std::map<std::string, std::string> tempHeaderFields = request.getHeaderFields();
 	std::stringstream clientMaxBodySize;
 	clientMaxBodySize << this->_currentConfig.clientMaxBodySize;
@@ -151,41 +149,19 @@ void Server::handlePOST(int clientFd, const Request& request)
 		throw Server::LengthRequiredException();
 	else if (tempHeaderFields["Content-Length"] > clientMaxBodySize.str())
 		throw Server::ContentTooLargeException();
-	std::cout << "got past the first exceptions" << std::endl;
-	// create and fill some temp response data structures, maybe even the
-	// std::ofstream outFile;
-	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
-	// std::string tmp = UPLOAD_DIR;
-	// tmp.append("testFile.txt");
-	// outFile.open(tmp); // AE body is not read anymore and therefore empty
-	// if (outFile.is_open() == false)
-	// 	throw std::exception();
-
-	// outFile << request.getBody() << "'s content. Server: " << this->_currentConfig.serverName;
-	// outFile.close(); // only close once all data is read from client body
 
 	this->_response.setProtocol(PROTOCOL);
-	// _response.createBodyFromFile("./server/data/pages/post_test.html");
 	this->_response.addHeaderField("Server", this->_currentConfig.serverName);
-	// _response.addDefaultHeaderFields();
 	this->_response.setStatus("201");
+	this->_response.createBodyFromFile("./server/data/pages/post_test.html");
+
+
+	// put this info into the receiveStruct!!!
+
+
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // put target into the response class
 	this->_response.setPostLength(clientFd, (request.getHeaderFields()));
 	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
-	// std::string teststring = "myfile=Disaster-Girl.jpg"; // AE remove this
-	// std::string file = staticReplaceInString(teststring, "myfile=", ""); // AE this has to be request.getBody() instead of teststring
-	// std::string target = UPLOAD_DIR + file;
-	// outFile.open(target.c_str()); // AE body is not read anymore and therefore empty
-	// if (outFile.is_open() == false)
-	// 	throw std::exception();
-	// outFile << request.getBody();
-	// outFile.close();
-
-	// _response.setProtocol(PROTOCOL);
-	// _response.createBodyFromFile("./server/data/pages/post_test.html");
-	// _response.addHeaderField("Server", this->_currentConfig.serverName);
-	// _response.addDefaultHeaderFields();
-	// _response.setStatus("201");
 }
 
 static void staticRemoveTarget(const std::string& path)
@@ -233,6 +209,12 @@ void Server::applyCurrentConfig(const Request& request)
 	headerFields = request.getHeaderFields();
 	std::string host = headerFields["host"];
 	this->_currentConfig = this->_config->getConfigStruct(host);
+}
+
+void Server::removeClientTraces(int clientFd)
+{
+	this->_response.removeFromReceiveMap(clientFd);
+	this->_response.removeFromResponseMap(clientFd);
 }
 
 // static std::string staticRemoveTrailingSlash(std::string string)
@@ -308,7 +290,7 @@ int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::c
 		request.setRoutedTarget("." + result);
 		_currentLocationKey = it->first;
 		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << std::endl;
+			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << RESET << std::endl;
 		#endif
 		return (0);
 	}
@@ -489,11 +471,12 @@ bool Server::_isCgiRequest(std::string requestHead)
 	return (false);
 }
 
-void Server::handleRequest(int fd)
+void Server::handleRequest(int i) // i is the index from the evList of the socketHandler
 {
 	bool isCgi = false;
 	this->_response.clear();
 	this->loopDetected = false;
+	int fd = this->_socketHandler->getFD(i);
 	try
 	{
 		// if (this->_response._receiveMap.count(fd) == 1)
@@ -550,11 +533,11 @@ void Server::handleRequest(int fd)
 				code = "500";
 			handleERROR(code);
 		}
+		if (this->_response.isInReceiveMap(fd) == true)
+			this->_response.removeFromReceiveMap(fd);
+		this->_response.putToResponseMap(fd);
 	}
-	// lseek(fd,0,SEEK_END);
-	//create a response object and add it to responseMap
 	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
-	// this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
 }
 
 bool Server::_crlftwoFound()
@@ -612,7 +595,7 @@ void Server::_readRequestHead(int fd)
 		{
 			firstLineBreak = true;
 		}
-		if (firstLineBreak == false && charsRead >= MAX_REQUEST_LINE_SIZE)
+		if (firstLineBreak == false && charsRead > MAX_REQUEST_LINE_SIZE)
 		{
 			#ifdef SHOW_LOG
 				std::cout << RED << "FIRST LINE TOO LONG" << RESET << std::endl;

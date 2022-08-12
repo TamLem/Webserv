@@ -398,6 +398,7 @@ void Server::matchLocation(Request& request)
 	#endif
 }
 
+#ifdef __APPLE__
 static std::string staticPercentDecodingFix(std::string target)
 {
 	std::string accent;
@@ -421,6 +422,7 @@ static std::string staticPercentDecodingFix(std::string target)
 	target = staticReplaceInString(target, "o" + accent, ö);
 	return (target);
 }
+#endif
 
 std::string Server::percentDecoding(const std::string& str)
 {
@@ -445,7 +447,11 @@ std::string Server::percentDecoding(const std::string& str)
 			i++;
 		}
 	}
-	return (staticPercentDecodingFix(tmp.str()));
+	#ifdef __APPLE__
+		return (staticPercentDecodingFix(tmp.str()));
+	#else
+		return (tmp.str());
+	#endif
 }
 
 void Server::checkLocationMethod(const Request& request) const

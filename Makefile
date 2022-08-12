@@ -55,6 +55,7 @@ SRC_FILES	=	main.cpp \
 				Server.cpp \
 				Message.cpp \
 				Response.cpp \
+				Send.cpp 	\
 				Cgi.cpp		\
 				Request.cpp \
 				Config.cpp \

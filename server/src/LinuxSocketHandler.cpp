@@ -133,9 +133,10 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	return (this->_clients.size() - 1);
 }
 
-void SocketHandler::removeClient(int i)
+bool SocketHandler::removeClient(int i, bool force)
 {
 	(void)i;
+	(void)force;
 }
 
 bool SocketHandler::readFromClient(int i)
@@ -192,6 +193,10 @@ SocketHandler::~SocketHandler()
 // Overloaded Operators
 
 // Public Methods
+bool SocketHandler::writeToClient(int i)
+{
+
+}
 
 // Getter
 int SocketHandler::getNumEvents() const
@@ -204,9 +209,14 @@ std::string SocketHandler::getBuffer() const
 	return (this->_buffer);
 }
 
-int SocketHandler::getFD() const
+int SocketHandler::getFD(int i) const
 {
+	(void) i;
 	return (this->_fd);
 }
 
 // Setter
+void SocketHandler::setWriteable(int i)
+{
+
+}

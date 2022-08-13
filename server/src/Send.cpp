@@ -15,6 +15,7 @@
 //optional one for the server to send the response to the client
 bool Response::sendRes(int fd)
 {
+	std::cout << GREEN << "Sending response to client" << RESET << std::endl;
 	if (this->_responseMap.count(fd) == 0)
 	{
 		this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
@@ -37,7 +38,8 @@ bool Response::sendRes(int fd)
 	{
 		std::cout << RED << " FULL Response sent for fd: " << fd << RESET << std::endl;
 		// close(fd);
-		this->_responseMap.erase(fd);
+		if (this->_responseMap.count(fd) == 1)
+			this->_responseMap.erase(fd);
 		return (true);
 	}
 	return (false);

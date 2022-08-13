@@ -87,15 +87,7 @@ void SocketHandler::_initEventLoop()
 	}
 	for (std::vector<int>::const_iterator it = this->_serverFds.begin(); it != this->_serverFds.end(); ++it)
 	{
-		struct kevent ev;
-		EV_SET(&ev, *it, EVFILT_READ, EV_ADD, 0, 0, NULL);
-		if (kevent(this->_kq, &ev, 1, this->_evList, MAX_EVENTS, NULL) == -1)
-		{
-			std::cerr << RED << "Error adding server socket to kqueue" << std::endl;
-			perror(NULL);
-			std::cerr << RESET;
-			return; // throw error
-		}
+		this->setEvent(*it, EV_ADD, EVFILT_READ);
 	}
 }
 
@@ -133,27 +125,25 @@ bool SocketHandler::acceptConnection(int i)
 	return false;
 }
 
-bool SocketHandler::addSocket(int fd)
+void SocketHandler::setNonBlocking(int fd)
 {
-	struct kevent ev;
-	struct timespec timeout;
+	int flags = fcntl(fd, F_GETFL, 0);
+	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+}
 
-	timeout.tv_sec = 20;
-	timeout.tv_nsec = 0;
-	EV_SET(&ev, fd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
-	// EV_SET(&ev[1], fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
-	if (kevent(this->_kq, &ev, 1, this->_evList, MAX_EVENTS, NULL) == -1)
-	{
-		std::cerr << RED << "Error adding socket to kqueue" << std::endl;
-		perror(NULL);
-		std::cerr << RESET;
-		return false;
-	}
-	// where socketfd is the socket you want to make non-blocking
-
+void SocketHandler::setNoSigpipe(int fd)
+{
 	int val = 1;
 	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
+}
+
+bool SocketHandler::addSocket(int fd)
+{
 	this->_fd = fd;
+	this->setNonBlocking(fd);
+	this->setNoSigpipe(fd);
+
+	this->setEvent(fd, EV_ADD, EVFILT_READ);
 	return true;
 }
 
@@ -166,8 +156,15 @@ int SocketHandler::getEvents()
 	#ifdef SHOW_LOG_2
 		std::cout << "num clients: " << _clients.size() << std::endl;
 	#endif
-	this->_numEvents = kevent(this->_kq, NULL, 0, this->_evList, MAX_EVENTS, NULL);
-	std::cout << "getEvents num events: " << this->_numEvents << std::endl;
+	this->_numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL);
+	this->_eventsChanges.clear();
+	if (this->_numEvents == -1)
+	{
+		std::cerr << RED << "Error getting events" << std::endl;
+		perror(NULL);
+		std::cerr << RESET;
+		return -1;
+	}
 	return this->_numEvents;
 }
 
@@ -191,9 +188,8 @@ bool SocketHandler::removeClient(int i, bool force)
 		int index = this->_getClient(this->_evList[i].ident);
 		if (index != -1)
 		{
+			// this->setEvent(this->_evList[i].ident, EV_DELETE, EVFILT_WRITE); //event will be removed automatically when the fd is closed
 			this->_clients.erase(this->_clients.begin() + index);
-			EV_SET(this->_evList, this->_evList[i].ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-			kevent(this->_kq, &this->_evList[i], 1, this->_evList, 0, NULL);
 			#ifdef SHOW_LOG
 				std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
 			#endif
@@ -227,6 +223,8 @@ bool SocketHandler::readFromClient(int i)
 
 bool SocketHandler::writeToClient(int i)
 {
+	if (this->_evList[i].flags & EV_ERROR)
+		return (false);
 	if (this->_serverMap.count(this->_evList[i].ident) == 0 || this->_evList[i].filter == EVFILT_WRITE)
 	{
 		this->_fd = this->_evList[i].ident;
@@ -278,12 +276,6 @@ void SocketHandler::removeInactiveClients()
 		close(this->_clients[i].fd);
 	}
 	this->_clients.clear();
-	//zero out evlist
-	for (size_t i = 0; i < MAX_EVENTS; i++)
-	{
-		EV_SET(&this->_evList[i], 0, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-		kevent(this->_kq, &this->_evList[i], 1, NULL, 0, NULL);
-	}
 }
 
 // Deconstructors
@@ -321,32 +313,19 @@ int SocketHandler::getFD(int i) const
 void SocketHandler::setWriteable(int i)
 {
 	int fd = this->_evList[i].ident;
-	EV_SET(&this->_evList[i], this->_evList[i].ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-	// kevent(this->_kq, &this->_evList[i], 1, NULL, 0, NULL);
+	// this->setEvent(fd, EV_DELETE, EVFILT_READ);
+	this->setEvent(fd, EV_ADD, EVFILT_WRITE);
 
+	this->setNonBlocking(fd);
+	this->setNonBlocking(fd);
+}
+
+void SocketHandler::setEvent(int ident, int flags, int filter)
+{
 	struct kevent ev;
-	struct timespec timeout;
 
-	timeout.tv_sec = 20;
-	timeout.tv_nsec = 0;
-	EV_SET(&ev, fd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
-	if (kevent(this->_kq, &ev, 1, this->_evList, MAX_EVENTS, NULL) == -1)
-	{
-		std::cerr << RED << "Write Error adding socket to kqueue" << std::endl;
-		perror(NULL);
-		std::cerr << RESET;
-		return ;
-	}
+	EV_SET(&ev, ident, filter, flags, 0, 0, NULL);
+	this->_eventsChanges.push_back(ev);
+	this->_numEvents++;
 
-	int status = fcntl(fd, F_SETFL, O_NONBLOCK);
-
-	if (status == -1)
-	{
-		perror("calling fcntl");
-		exit(0);
-	}
-	int val = 1;
-	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
-	this->_fd = fd;
-	return ;
 }

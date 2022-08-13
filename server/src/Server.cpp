@@ -58,7 +58,7 @@ Server::~Server(void)
 
 void Server::runEventLoop()
 {
-	while(keep_running)
+		while(keep_running)
 	{
 
 		#ifdef SHOW_LOG_2
@@ -99,14 +99,9 @@ void Server::runEventLoop()
 				#ifdef SHOW_LOG_2
 				std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
 				#endif
-				//this->responseMap.count(i).respond()
-				//if (this->responseMap.count(i).isDone())
-					//close(fd)
-					//delete the (fd, pair)reponse
-				// this->_handleResponse(i);
 				if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true)
 				{
-					if (this->_socketHandler->removeClient(i, true) == true)
+					if (this->_socketHandler->removeClient(i, true) == true){}
 						this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
 				}
 			}
@@ -520,12 +515,13 @@ void Server::handleRequest(int fd)
 	}
 	catch (std::exception& exception)
 	{
+		std::cout << RED << "Exception: " << exception.what() << std::endl;
 		std::string code = exception.what();
 		if (_response.getMessageMap().count(code) != 1)
 			code = "500";
 		try
 		{
-		handleERROR(code);
+			handleERROR(code);
 		}
 		catch(const std::exception& exception)
 		{
@@ -534,6 +530,7 @@ void Server::handleRequest(int fd)
 				code = "500";
 			handleERROR(code);
 		}
+		return ;
 	}
 	// lseek(fd,0,SEEK_END);
 	//create a response object and add it to responseMap
@@ -565,6 +562,7 @@ void Server::_readRequestHead(int fd)
 	bool firstLineBreak = false;
 	int n = 0;
 	char buffer[2];
+	buffer[1] = '\0';
 	while (charsRead < MAX_REQUEST_HEADER_SIZE)
 	{
 		n = read(fd, buffer, 1);
@@ -635,13 +633,25 @@ const char* Server::FirstLineTooLongException::what(void) const throw()
 	return ("414");
 }
 
-void cgi_handle(Request& request, int fd, ConfigStruct configStruct)
+void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 {
-	Cgi newCgi(request, configStruct);
 
-	newCgi.printEnv();
 	int cgiPipe[2];
-	pipe(cgiPipe);
+	if (pipe(cgiPipe) == -1)
+	{
+		#ifdef SHOW_LOG
+			std::cerr << RED << "PIPE FAILED" << RESET << std::endl;
+		#endif
+		throw Server::InternatServerErrorException();
+	}
+	this->_socketHandler->setEvent(cgiPipe[1], EV_ADD | EV_CLEAR, EVFILT_READ);
+	// this->_socketHandler->setEvent(cgiPipe[0], EVFILT_READ);
+	this->_cgiSockets.push_back(cgiPipe[1]);
+	
+	Cgi newCgi(request, configStruct);
+	#ifdef SHOW_LOG
+		newCgi.printEnv();
+	#endif
 
 	//initiate cgi response
 	//listen to event on cgiPipe[0]

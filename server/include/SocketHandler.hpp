@@ -55,6 +55,7 @@ class SocketHandler
 		std::vector<int> _serverFds; // maybe not needed
 
 		struct kevent _evList[MAX_EVENTS];
+		std::vector<struct kevent> _eventsChanges;
 
 		std::map<int, int> _serverMap;
 		int _kq;
@@ -100,6 +101,15 @@ class SocketHandler
 
 	// Setter
 		void setWriteable(int i);
+		void setEvent(int ident, int flags, int filter);
+
+	// Other
+	void setNonBlocking(int fd);
+	void setNoSigpipe(int fd);
+
+
 
 };
+
+
 #endif // SOCKETHANDLER_HPP

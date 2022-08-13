@@ -37,8 +37,7 @@ class Cgi
 		string _pathInfo;
 		string _pathTranslated;
 		string _queryString;
-		bool	_isPhp;
-		bool	_scriptExists;
+		bool	_selfExecuting;
 		ConfigStruct _confStruct;
 	public:
 		Cgi(Request &request, ConfigStruct confStruct);
@@ -48,6 +47,7 @@ class Cgi
 		void setEnv(Request &request);
 		void cgi_response(int fd);
 		void phpHandler(Request &req);
+		void passAsInput();
 		void printEnv();
 };
 #endif

@@ -83,6 +83,7 @@ class Server
 		ConfigStruct _currentConfig;
 		std::string _currentLocationKey;
 		bool loopDetected;
+		std::vector<int> _cgiSockets;
 
 	// private Methods
 		static void handle_signal(int sig);
@@ -105,6 +106,7 @@ class Server
 		void _handleResponse(int i);
 
 		bool _isCgiRequest(std::string requestHead);
+		void cgi_handle(Request& request, int fd, ConfigStruct configStruct);
 
 	public:
 
@@ -138,6 +140,5 @@ class Server
 		};
 };
 
-void cgi_handle(Request& request, int fd, ConfigStruct configStruct);
 
 #endif

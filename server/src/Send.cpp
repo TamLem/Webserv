@@ -37,7 +37,7 @@ bool Response::sendRes(int fd)
 	if (this->_responseMap[fd].response.empty())
 	{
 		std::cout << RED << " FULL Response sent for fd: " << fd << RESET << std::endl;
-		// close(fd);
+		close(fd);
 		if (this->_responseMap.count(fd) == 1)
 			this->_responseMap.erase(fd);
 		return (true);

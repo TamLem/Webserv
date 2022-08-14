@@ -179,7 +179,7 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 
 bool SocketHandler::removeClient(int i, bool force)
 {
-	if ((this->_evList[i].flags & EV_EOF )  || (this->_evList[i].flags & EV_ERROR )/* || (this->_evList[i].flags & EV_CLEAR) */ || force)
+	if ((this->_evList[i].flags == EV_EOF )  || (this->_evList[i].flags == EV_ERROR )/* || (this->_evList[i].flags & EV_CLEAR) */ || force)
 	{
 		#ifdef SHOW_LOG_2
 			std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
@@ -223,9 +223,9 @@ bool SocketHandler::readFromClient(int i)
 
 bool SocketHandler::writeToClient(int i)
 {
-	if (this->_evList[i].flags & EV_ERROR)
+	if (this->_evList[i].flags == EV_ERROR)
 		return (false);
-	if (this->_serverMap.count(this->_evList[i].ident) == 0 || this->_evList[i].filter == EVFILT_WRITE)
+	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].filter == EVFILT_WRITE)
 	{
 		this->_fd = this->_evList[i].ident;
 		int status = this->_getClient(this->_evList[i].ident);
@@ -326,6 +326,4 @@ void SocketHandler::setEvent(int ident, int flags, int filter)
 
 	EV_SET(&ev, ident, filter, flags, 0, 0, NULL);
 	this->_eventsChanges.push_back(ev);
-	this->_numEvents++;
-
 }

@@ -86,23 +86,23 @@ void Server::runEventLoop()
 				try
 				{
 					handleRequest(this->_socketHandler->getFD(i));
+					this->_socketHandler->setWriteable(i);
 				}
 				catch(const std::exception& e)
 				{
-					std::cerr << e.what() << '\n';
-					this->_socketHandler->removeClient(i);
+					std::cerr << YELLOW << e.what() << RESET << '\n';
+					this->_socketHandler->removeClient(i, true);
 				}
-				this->_socketHandler->setWriteable(i);
 			}
-			if (this->_socketHandler->writeToClient(i) == true)
+			else if (this->_socketHandler->writeToClient(i) == true)
 			{
 				#ifdef SHOW_LOG_2
 				std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
 				#endif
 				if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true)
 				{
-					if (this->_socketHandler->removeClient(i, true) == true){}
-						this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
+					this->_socketHandler->removeClient(i, true);
+					this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
 				}
 			}
 			this->_socketHandler->removeClient(i);	// remove inactive clients
@@ -530,7 +530,7 @@ void Server::handleRequest(int fd)
 				code = "500";
 			handleERROR(code);
 		}
-		return ;
+		throw exception;
 	}
 	// lseek(fd,0,SEEK_END);
 	//create a response object and add it to responseMap
@@ -562,7 +562,6 @@ void Server::_readRequestHead(int fd)
 	bool firstLineBreak = false;
 	int n = 0;
 	char buffer[2];
-	buffer[1] = '\0';
 	while (charsRead < MAX_REQUEST_HEADER_SIZE)
 	{
 		n = read(fd, buffer, 1);

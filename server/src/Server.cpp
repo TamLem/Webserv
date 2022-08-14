@@ -216,59 +216,6 @@ void Server::applyCurrentConfig(const Request& request)
 	this->_currentConfig = this->_config->getConfigStruct(host);
 }
 
-// static std::string staticRemoveTrailingSlash(std::string string)
-// {
-// 	if (*string.rbegin() == '/')
-// 		string = string.substr(0, string.length() - 1);
-// 	return (string);
-// }
-
-// static bool staticTargetIsFile(const std::string& target)
-// {
-// 	struct stat statStruct;
-
-// 	// if (stat(target.c_str(), &statStruct) != 0)
-// 	// 	throw InternalServerError();
-// 	// if (statStruct.st_mode & S_IFREG == 0 && statStruct.st_mode & S_IFDIR == 0)
-// 	// 	throw InternalServerError();
-// 	// else if (statStruct.st_mode & S_IFREG)
-// 	// 	return (true);
-// 	// else
-// 	// 	return (false);
-
-// 	// error will return false
-// 	if (stat(target.c_str(), &statStruct) == 0)
-// 	{
-// 		if (statStruct.st_mode & S_IFREG)
-// 			return (true);
-// 	}
-// 	return (false);
-// }
-
-// static bool staticTargetIsDir(const std::string& target)
-// {
-// 	struct stat statStruct;
-
-// 	// error will return false
-// 	if (stat(target.c_str(), &statStruct) == 0)
-// 	{
-// 		if (statStruct.st_mode & S_IFDIR)
-// 			return (true);
-// 	}
-// 	return (false);
-// }
-
-//https://stackoverflow.com/questions/29310166/check-if-a-fstream-is-either-a-file-or-directory
-// static bool staticIsFile(const std::string& fileName)
-// {
-// 	std::ifstream fileOrDir(fileName);
-// 	//This will set the fail bit if fileName is a directory (or do nothing if it is already set
-// 	fileOrDir.seekg(0, std::ios::end);
-// 	if( !fileOrDir.good())
-// 		return (false);
-// 	return (true);
-// }
-
 int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& target)
 {
 	std::string extension;

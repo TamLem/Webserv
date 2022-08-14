@@ -31,8 +31,10 @@ bool Response::sendRes(int fd)
 		std::cerr << RESET;
 		return (true); // throw exception
 	}
-	else
-		std::cout << YELLOW << "sent " << n << " bytes to fd: " << fd  << RESET << std::endl;
+	#ifdef SHOW_LOG_2
+		else
+			std::cout << YELLOW << "sent " << n << " bytes to fd: " << fd  << RESET << std::endl;
+	#endif
 	this->_responseMap[fd].response = this->_responseMap[fd].response.substr(n);
 	if (this->_responseMap[fd].response.empty())
 	{

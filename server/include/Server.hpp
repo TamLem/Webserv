@@ -67,7 +67,7 @@ class Server
 
 		// void run(void);
 
-		void handleRequest(int);
+		void handleRequest(int i);
 	private:
 	// defines only to not have undefined behaviour
 		Server(const Server&);
@@ -93,6 +93,7 @@ class Server
 		void _readRequestHead(int fd);
 
 		void applyCurrentConfig(const Request&);
+		void removeClientTraces(int clientFd);
 		void matchLocation(Request&);
 		int routeFile(Request&, std::map<std::string, LocationStruct>::const_iterator, const std::string&);
 		void routeDir(Request&, std::map<std::string, LocationStruct>::const_iterator, const std::string&, int&);
@@ -100,9 +101,9 @@ class Server
 		std::string percentDecoding(const std::string&);
 		void checkLocationMethod(const Request& request) const;
 		void handleGET(const Request&);
-		void handlePOST(const Request&);
-		void handleDELETE(const Request&);
+		void handlePOST(int clientFd, const Request&); // maybe passs fd to this function
 		void handleERROR(const std::string&);
+		void handleDELETE(const Request& request);
 		void _handleResponse(int i);
 
 		bool _isCgiRequest(std::string requestHead);
@@ -111,7 +112,7 @@ class Server
 	public:
 
 	// Exceptions
-		class InternatServerErrorException : public std::exception
+		class InternalServerErrorException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();
@@ -135,6 +136,16 @@ class Server
 		};
 
 		class MethodNotAllowed : public std::exception
+		{
+			const char* what() const throw();
+		};
+
+		class LengthRequiredException : public std::exception
+		{
+			const char* what() const throw();
+		};
+
+		class ContentTooLargeException : public std::exception
 		{
 			const char* what() const throw();
 		};

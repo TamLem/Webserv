@@ -52,7 +52,7 @@ Server::~Server(void)
 {
 	delete _socketHandler;
 	#ifdef SHOW_CONSTRUCTION
-		std::cout << RED << "server deconstructor called for " << this << RESET << std::endl;
+		std::cout << RED << "Server deconstructor called for " << this << RESET << std::endl;
 	#endif
 }
 
@@ -61,8 +61,8 @@ void Server::runEventLoop()
 		while(keep_running)
 	{
 
-		#ifdef SHOW_LOG_2
-		std::cout << "server running " << std::endl;
+		#ifdef SHOW_LOG
+			std::cout << "server running " << std::endl;
 		#endif
 		int numEvents = this->_socketHandler->getEvents();
 		// if (numEvents == 0)
@@ -73,7 +73,7 @@ void Server::runEventLoop()
 		for (int i = 0; i < numEvents; ++i)
 		{
 			#ifdef SHOW_LOG_2
-			std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
+				std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
 			#endif
 			this->_socketHandler->acceptConnection(i);
 			// if (this->_socketHandler->removeClient(i) == true)
@@ -131,43 +131,31 @@ void Server::handleGET(const Request& request)
 	_response.setStatus("200");
 }
 
-void Server::handlePOST(const Request& request)
+void Server::handlePOST(int clientFd, const Request& request)
 {
-	std::ofstream outFile;
-	std::string file;
-	// outFile.open(UPLOAD_DIR + request.getBody()); // AE body is not read anymore and therefore empty
-	#ifdef FORTYTWO_TESTER
-	if (request.getMethod() == "PUT")
-		file = "file_should_exist_after";
-	else
-		file = "Disaster-Girl.jpg";
-	#else
-	file = "testfile.txt";
+	#ifdef SHOW_LOG_2
+		std::cout << "handlePost entered for" << clientFd << std::endl;
 	#endif
-	std::string target = UPLOAD_DIR + file;
-	outFile.open(target.c_str()); // AE body is not read anymore and therefore empty
-	if (outFile.is_open() == false)
-		throw std::exception();
-	#ifdef FORTYTWO_TESTER
-	if (request.getMethod() == "PUT")
-	{
-		int i = 0;
-		while (i < 100)
-		{
-			outFile << "0123456789";
-			i++;
-		}
-	}
-	#else
-	outFile << request.getBody();
-	#endif
-	outFile.close();
+	std::map<std::string, std::string> tempHeaderFields = request.getHeaderFields();
+	std::stringstream clientMaxBodySize;
+	clientMaxBodySize << this->_currentConfig.clientMaxBodySize;
+	if (tempHeaderFields.count("Content-Length") == 0 && tempHeaderFields.count("content-length") == 0)
+		throw Server::LengthRequiredException();
+	else if (tempHeaderFields["Content-Length"] > clientMaxBodySize.str())
+		throw Server::ContentTooLargeException();
 
-	_response.setProtocol(PROTOCOL);
-	_response.createBodyFromFile("./server/data/pages/post_test.html");
-	_response.addHeaderField("Server", this->_currentConfig.serverName);
-	_response.addDefaultHeaderFields();
-	_response.setStatus("201");
+	this->_response.setProtocol(PROTOCOL);
+	this->_response.addHeaderField("Server", this->_currentConfig.serverName);
+	this->_response.setStatus("201");
+	this->_response.createBodyFromFile("./server/data/pages/post_test.html");
+
+
+	// put this info into the receiveStruct!!!
+
+
+	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // put target into the response class
+	this->_response.setPostLength(clientFd, (request.getHeaderFields()));
+	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
 }
 
 static void staticRemoveTarget(const std::string& path)
@@ -216,6 +204,12 @@ void Server::applyCurrentConfig(const Request& request)
 	this->_currentConfig = this->_config->getConfigStruct(host);
 }
 
+void Server::removeClientTraces(int clientFd)
+{
+	this->_response.removeFromReceiveMap(clientFd);
+	this->_response.removeFromResponseMap(clientFd);
+}
+
 int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& target)
 {
 	std::string extension;
@@ -237,7 +231,7 @@ int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::c
 		_currentLocationKey = it->first; // AE does it have to be "" instead?
 		// _currentLocationKey = "";
 		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << std::endl;
+			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << RESET << std::endl;
 		#endif
 		return (0);
 	}
@@ -418,40 +412,44 @@ bool Server::_isCgiRequest(std::string requestHead) // AE this function ahs to b
 	return (false);
 }
 
-void Server::handleRequest(int fd)
+void Server::handleRequest(int i) // i is the index from the evList of the socketHandler
 {
 	bool isCgi = false;
 	this->_response.clear();
 	this->loopDetected = false;
+	int fd = this->_socketHandler->getFD(i);
 	try
 	{
-		this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
-		Request request(this->_requestHead);
-		this->applyCurrentConfig(request);
-		//normalize target (in Request)
-		//compression (merge slashes)
-		//resolve relative paths
-		//determine location
-		request.setDecodedTarget(this->percentDecoding(request.getRawTarget()));
-		request.setQuery(this->percentDecoding(request.getQuery()));
-		isCgi = this->_isCgiRequest(this->_requestHead);
-		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
-		#endif
-		this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
-		// request.setRoutedTarget("." + request.getRoutedTarget());
-		//check method
-		if (isCgi == true)
-		{
-			std::cout << "CGI REQUEST: " << request.getRoutedTarget() << std::endl;
-			this->applyCurrentConfig(request);
-			cgi_handle(request, fd, this->_currentConfig);
-		}
+		// if (this->_response._receiveMap.count(fd) == 1)
+		if (this->_response.checkReceiveExistance(fd) == 1)
+			this->_response.receiveChunk(fd);
 		else
 		{
+			this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
+			Request request(this->_requestHead);
+			this->applyCurrentConfig(request);
+			//normalize target (in Request)
+			//normalize target (in Request)
+			//compression (merge slashes)
+			//resolve relative paths
+			//determine location
+			request.setDecodedTarget(this->percentDecoding(request.getRawTarget()));
+			request.setQuery(this->percentDecoding(request.getQuery()));
+			isCgi = this->_isCgiRequest(this->_requestHead);
+			#ifdef SHOW_LOG
+				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
+			#endif
+			this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
+			// request.setRoutedTarget("." + request.getRoutedTarget());
+			//check method
 			checkLocationMethod(request);
-			if (request.getMethod() == "POST" || request.getMethod() == "PUT")
-				handlePOST(request);
+			if (isCgi == true)
+			{
+				this->applyCurrentConfig(request);
+				cgi_handle(request, fd, this->_currentConfig);
+			}
+			else if (request.getMethod() == "POST" || request.getMethod() == "PUT")
+				handlePOST(fd, request);
 			else if (request.getMethod() == "DELETE")
 				handleDELETE(request);
 			else
@@ -477,12 +475,11 @@ void Server::handleRequest(int fd)
 				code = "500";
 			handleERROR(code);
 		}
-		throw exception;
+		if (this->_response.isInReceiveMap(fd) == true)
+			this->_response.removeFromReceiveMap(fd);
+		this->_response.putToResponseMap(fd);
 	}
-	// lseek(fd,0,SEEK_END);
-	//create a response object and add it to responseMap
 	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
-	// this->_response.sendResponse(fd); // AE Tam may not send response inside of cgi
 }
 
 bool Server::_crlftwoFound()
@@ -517,7 +514,7 @@ void Server::_readRequestHead(int fd)
 			#ifdef SHOW_LOG
 				std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
 			#endif
-			throw Server::InternatServerErrorException();
+			throw Server::InternalServerErrorException();
 		}
 		else if (n == 0) // read reached eof
 			break ;
@@ -540,7 +537,7 @@ void Server::_readRequestHead(int fd)
 		{
 			firstLineBreak = true;
 		}
-		if (firstLineBreak == false && charsRead >= MAX_REQUEST_LINE_SIZE)
+		if (firstLineBreak == false && charsRead > MAX_REQUEST_LINE_SIZE)
 		{
 			#ifdef SHOW_LOG
 				std::cout << RED << "FIRST LINE TOO LONG" << RESET << std::endl;
@@ -564,7 +561,7 @@ void Server::_readRequestHead(int fd)
 }
 
 // Exceptions
-const char* Server::InternatServerErrorException::what(void) const throw()
+const char* Server::InternalServerErrorException::what(void) const throw()
 {
 	return ("500");
 }
@@ -588,7 +585,7 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 		#ifdef SHOW_LOG
 			std::cerr << RED << "PIPE FAILED" << RESET << std::endl;
 		#endif
-		throw Server::InternatServerErrorException();
+		throw Server::InternalServerErrorException();
 	}
 	this->_socketHandler->setEvent(cgiPipe[1], EV_ADD | EV_CLEAR, EVFILT_READ);
 	// this->_socketHandler->setEvent(cgiPipe[0], EVFILT_READ);
@@ -608,8 +605,8 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 	//if event is timeout, close cgiPipe[0] and cgiPipe[1]
 	//if event is terminate, close cgiPipe[0] and cgiPipe[1]
 	//if event is close, close cgiPipe[0] and cgiPipe[1]
-	
-	
+
+
 	newCgi.cgi_response(fd);
 }
 
@@ -621,4 +618,14 @@ const char* Server::InvalidHex::what() const throw()
 const char* Server::MethodNotAllowed::what() const throw()
 {
 	return ("405");
+}
+
+const char* Server::LengthRequiredException::what() const throw()
+{
+	return ("411");
+}
+
+const char* Server::ContentTooLargeException::what() const throw()
+{
+	return ("413");
 }

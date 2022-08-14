@@ -2,11 +2,20 @@
 #define RESPONSE_HPP
 #pragma once
 
-#include <string>
-#include <map>
-#include <iostream> //std::ostream
-#include "Message.hpp"
+#include "Base.hpp"
 #include "Request.hpp"
+#include "Message.hpp"
+
+#include <iostream> //std::ostream
+#include <string> //std::string
+#include <map> //std::map
+#include <sstream> //std::stringstream
+#include <fstream> //std::ifstream std::ofstream
+#include <sys/socket.h> // send
+#include <dirent.h> // dirent, opendir
+// #include <sys/types.h>  // opendir
+#include <unistd.h> // access
+#include <sys/stat.h> // stat
 
 class Response : public Message
 {
@@ -19,7 +28,8 @@ class Response : public Message
 		std::string status;
 		std::string statusMessage;
 		std::map<std::string, std::string> messageMap;
-		std::map<size_t, ResponseStruct> _responseMap; // this will store all the data for sending
+		std::map<size_t, ReceiveStruct> _receiveMap; // this will store temp data for the POST events
+		std::map<size_t, ResponseStruct> _responseMap; // this will store temp data for sending
 		// std::string target;
 	// private Methods
 		void createMessageMap(void);
@@ -31,25 +41,37 @@ class Response : public Message
 		Response(void);
 		~Response(void);
 
+		void receiveChunk(int i);
+		bool isInReceiveMap(int clientFd);
+		std::string constructPostResponse();
+
 		// void setProtocol(const std::string&);
 		void setStatus(const std::string&);
 		void setBody(const std::string&);
 		// void setTarget(const std::string&);
 		void setFd(int); // is this used???
 		void setProtocol(const std::string&);
+		void setPostTarget(int clientFd, std::string target);
+		void setPostLength(int clientFd, std::map<std::string, std::string> headerFields);
+		void setPostBufferSize(int clientFd, size_t bufferSize);
+		bool checkReceiveExistance(int clientFd);
 
 		// const std::string& getProtocol(void) const;
 		const std::string& getStatus(void) const;
 		const std::string& getStatusMessage(void) const;
 		const std::map<std::string, std::string>& getMessageMap(void) const;
+		std::string getResponse();
 
 		std::string constructHeader(void);
 		std::string constructChunkedHeader(void);
 		void endChunkedMessage(int i, int n);
 
+		void putToResponseMap(int fd);
+
 		void clear(void);
 		void clearResponseMap();
 		void removeFromResponseMap(int fd);
+		void removeFromReceiveMap(int fd);
 		// void init(const Request&);
 		// void init(const std::string&, int, const std::string&);
 		void addDefaultHeaderFields(void);
@@ -81,6 +103,11 @@ class Response : public Message
 		const char* what() const throw();
 	};
 
+	class ERROR_423 : public Message::BadRequest
+	{
+		const char* what() const throw();
+	};
+
 	class InvalidProtocol : public std::exception
 	{
 		const char* what() const throw();
@@ -90,9 +117,22 @@ class Response : public Message
 	{
 		const char* what() const throw();
 	};
+
 	class ClientDisconnectException : public std::exception
 	{
 		const char* what() const throw();
+	};
+
+	class SizeTOverflowException : public std::exception
+	{
+		public:
+			virtual const char* what() const throw();
+	};
+
+	class NegativeDecimalsNotAllowedException : public std::exception
+	{
+		public:
+			virtual const char* what() const throw();
 	};
 };
 

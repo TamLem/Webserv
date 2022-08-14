@@ -27,7 +27,8 @@
 #define TCHAR "!#$%&'*+-.^_`|~"
 
 // defines for reading from client
-#define MAX_REQUEST_HEADER_SIZE 1024
+#define MAX_REQUEST_LINE_SIZE 512 // change this to increase the max length of accepted URI
+#define MAX_REQUEST_HEADER_SIZE 1024 // change this to increase the size of accepted request-headers
 #define MAX_EVENTS 128
 #define MAX_REQUEST_LINE_SIZE 512
 #define MAX_SEND_CHUNK_SIZE (1024 * 1024) //sendresponse
@@ -53,6 +54,17 @@ struct LocationStruct
 	std::set<std::string> allowedMethods;
 	std::string root;
 	std::string indexPage;
+};
+
+// ReceiveStruct
+struct ReceiveStruct
+{
+	std::string target;
+	// std::string status;
+	// std::string statusMessage;
+	size_t total;
+	size_t bytesLeft;
+	int bufferSize;
 };
 
 // ConfigStruct

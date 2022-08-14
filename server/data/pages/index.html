@@ -7,11 +7,8 @@
 	</head>
 	<body bgcolor="FFFF00">
 	<!-- <center><img src="images/test_image.png" align="BOTTOM"> </center> -->
-	<div>
-		<h3><a href="/bigfile.random"> Large file</a></h3>
-	</div>
 	<center><img src="images/large.jpg" style="width:400px; height:auto;" align="BOTTOM"> </center>
-	<video controls="controls" width="800" height="600" name="endless.mp4" preload="none">
+	<video controls="controls" width="800" height="600" name="onehour.mp4">
 		<source src="images/endless.mp4">
 	</video>
 	<hr>
@@ -41,7 +38,8 @@
 	<br> <b><i>This is a new sentence without a paragraph break, in bold italics.</i></b>
 	<hr>
 	<h3>Upload file here:</h3>
-	<form onsubmit="upload()" method="post">
+	<!-- this form needs some work -->
+	<form action="http://localhost:8080" method="post">
 		<label for="myfile">Select a file:</label>
 		<input type="file" id="myfile" name="myfile" />
 		<br /><br />

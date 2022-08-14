@@ -1,17 +1,5 @@
 #include "Response.hpp"
 
-#include "Base.hpp"
-#include <string> //std::string
-#include <map> //std::map
-#include <sstream> //std::stringstream
-#include <iostream> //std::ios
-#include <fstream> //std::ifstream
-#include <sys/socket.h> // send
-#include <dirent.h> // dirent, opendir
-// #include <sys/types.h>  // opendir
-#include <unistd.h> // access
-#include <sys/stat.h> // stat
-
 bool Response::isValidStatus(const std::string& status)
 {
 	if (this->messageMap.count(status))
@@ -45,7 +33,7 @@ void Response::clearResponseMap()
 
 void Response::removeFromResponseMap(int fd)
 {
-	if (this->_responseMap.count(fd) == 1)
+	if (this->_responseMap.count(fd) == true)
 		this->_responseMap.erase(fd);
 }
 
@@ -69,10 +57,72 @@ void Response::setBody(const std::string& body)
 	this->body = body;
 }
 
-// void Response::setTarget(const std::string& target)
-// {
-// 	this->target = target;
-// }
+void Response::setPostTarget(int clientFd, std::string target)
+{
+	this->_receiveMap[clientFd].target = target;
+}
+
+static size_t _strToSizeT(std::string str)
+{
+	size_t out = 0;
+	std::stringstream buffer;
+	#ifdef __APPLE__
+		buffer << SIZE_T_MAX;
+	#else
+		buffer << "18446744073709551615";
+	#endif
+	std::string sizeTMax = buffer.str();
+	if (str.find("-") != std::string::npos && str.find_first_of(DECIMAL) != std::string::npos && str.find("-") == str.find_first_of(DECIMAL) - 1)
+	{
+		std::cout << str << std::endl;
+		throw Response::NegativeDecimalsNotAllowedException();
+	}
+	else if (str.find_first_of(DECIMAL) != std::string::npos)
+	{
+		std::string number = str.substr(str.find_first_of(DECIMAL));
+		if (number.find_first_not_of(WHITESPACE) != std::string::npos)
+			number = number.substr(0, number.find_first_not_of(DECIMAL));
+		if (str.length() >= sizeTMax.length() && sizeTMax.compare(number) > 0)
+		{
+			std::cout << RED << ">" << number << RESET << std::endl;
+			throw Response::SizeTOverflowException();
+		}
+		else
+			std::istringstream(str) >> out;
+	}
+	return (out);
+}
+
+void Response::setPostLength(int clientFd, std::map<std::string, std::string> headerFields)
+{
+	size_t length = 0;
+	if (headerFields.count("Conten-Length"))
+	{
+		std::cout << headerFields["Content-Length"] << std::endl;
+		length = _strToSizeT(headerFields["Content-Length"]);
+	}
+	else
+	{
+		std::cout << headerFields["content-length"] << std::endl;
+		length = _strToSizeT(headerFields["content-length"]);
+	}
+
+	this->_receiveMap[clientFd].total = length;
+	this->_receiveMap[clientFd].bytesLeft = length;
+}
+
+void Response::setPostBufferSize(int clientFd, size_t bufferSize)
+{
+	this->_receiveMap[clientFd].bufferSize = bufferSize;
+}
+
+bool Response::checkReceiveExistance(int clientFd)
+{
+	if (this->_receiveMap.count(clientFd) == 1)
+		return (true);
+	else
+		return (false);
+}
 
 void Response::setProtocol(const std::string& protocol)
 {
@@ -94,6 +144,26 @@ const std::string& Response::getStatusMessage(void) const
 const std::map<std::string, std::string>& Response::getMessageMap(void) const
 {
 	return (this->messageMap);
+}
+
+std::string Response::getResponse()
+{
+	std::stringstream buffer;
+	buffer << this->constructHeader();
+	buffer << this->getBody();
+	buffer << CRLFTWO;
+
+	return (buffer.str());
+}
+
+void Response::putToResponseMap(int fd)
+{
+	// i purposly do not check for existance before writing to it so that everything would be overridden if it existed
+	this->_responseMap[fd].buffer = "";
+	this->_responseMap[fd].header = "";
+	this->_responseMap[fd].response = this->getResponse();
+	this->_responseMap[fd].total = this->_responseMap[fd].response.length();
+	this->_responseMap[fd].bytesLeft = this->_responseMap[fd].total;
 }
 
 std::string Response::constructHeader(void)
@@ -371,6 +441,11 @@ const char* Response::ERROR_403::what() const throw()
 	return ("403");
 }
 
+const char* Response::ERROR_423::what() const throw()
+{
+	return ("423");
+}
+
 const char* Response::InvalidProtocol::what() const throw() //AE is it good to have different codes for request/response?
 {
 	return ("500");
@@ -397,4 +472,14 @@ bool targetExists(const std::string& target)
 	if (stat(target.c_str(), &statStruct) == 0)
 			return (true);
 	return (false);
+}
+
+const char* Response::SizeTOverflowException::what(void) const throw()
+{
+	return ("413");
+}
+
+const char* Response::NegativeDecimalsNotAllowedException::what(void) const throw()
+{
+	return ("400");
 }

@@ -105,19 +105,21 @@ bool SocketHandler::acceptConnection(int i)
 			std::cerr << RESET;
 			return true; // throw exception here
 		}
-		else if (this->addSocket(fd))
+		#ifdef SHOW_LOG
+			std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
+		#endif
+		this->addSocket(fd);
+		if (this->_getClient(fd) == -1)
 		{
-			#ifdef SHOW_LOG
-				std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
-			#endif
 			this->_addClient(fd, *(struct sockaddr_in *)&addr);
 		}
 		else
 		{
-			#ifdef SHOW_LOG
-				std::cout << RED << "Error adding socket " << fd << RESET << std::endl;
-			#endif
 			close(fd);
+			std::cerr << RED << "Error adding client, another client already existing on socket" << std::endl;
+			perror(NULL);
+			std::cerr << RESET;
+			return true; // throw exception here
 		}
 		return true;
 	}
@@ -136,13 +138,12 @@ void SocketHandler::setNoSigpipe(int fd)
 	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
 }
 
-bool SocketHandler::addSocket(int fd)
+void SocketHandler::addSocket(int fd)
 {
 	this->setNonBlocking(fd);
 	this->setNoSigpipe(fd);
 
 	this->setEvent(fd, EV_ADD, EVFILT_READ);
-	return true;
 }
 
 int SocketHandler::getEvents()

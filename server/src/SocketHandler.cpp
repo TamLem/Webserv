@@ -316,7 +316,7 @@ void SocketHandler::setWriteable(int i)
 	// this->setEvent(fd, EV_DELETE, EVFILT_READ);
 	this->setEvent(fd, EV_ADD, EVFILT_WRITE);
 
-	this->setNonBlocking(fd);
+	this->setNoSigpipe(fd);
 	this->setNonBlocking(fd);
 }
 

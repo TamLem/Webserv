@@ -5,15 +5,7 @@
 #include <cstdio> // remove
 
 
-static std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace)
-{
-		size_t position = 0;
-		for ( position = str.find(tofind); position != std::string::npos; position = str.find(tofind,position) )
-		{
-				str.replace(position , tofind.length(), toreplace);
-		}
-		return(str);
-}
+
 
 void Server::handle_signal(int sig)
 {
@@ -92,6 +84,7 @@ void Server::runEventLoop()
 				{
 					std::cerr << YELLOW << e.what() << RESET << '\n';
 					this->_socketHandler->removeClient(i, true);
+					removeClientTraces(this->_socketHandler->getFD(i));
 				}
 			}
 			else if (this->_socketHandler->writeToClient(i) == true)
@@ -102,13 +95,17 @@ void Server::runEventLoop()
 				if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true)
 				{
 					this->_socketHandler->removeClient(i, true);
-					this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
+					removeClientTraces(this->_socketHandler->getFD(i));
 				}
 			}
-			this->_socketHandler->removeClient(i);	// remove inactive clients
+			if (this->_socketHandler->removeClient(i))
+			{
+				removeClientTraces(this->_socketHandler->getFD(i));
+			} 	// remove inactive clients
 		}
 	}
 }
+
 
 void Server::handleGET(const Request& request)
 {
@@ -210,214 +207,11 @@ void Server::removeClientTraces(int clientFd)
 	this->_response.removeFromResponseMap(clientFd);
 }
 
-int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& target)
-{
-	std::string extension;
-	size_t ext_len;
-	size_t target_len;
-	std::string result;
-
-	target_len = target.length();
-	ext_len = it->first.length() - 1;
-	extension = it->first.substr(1, ext_len);
-	if (target_len > ext_len && target.compare(target_len - ext_len, ext_len, extension) == 0)
-	{
-		if (it->second.root.empty())
-			result = this->_currentConfig.root;
-		else
-			result = it->second.root;
-		result += target.substr(target.find_last_of('/') + 1);
-		request.setRoutedTarget("." + result);
-		_currentLocationKey = it->first; // AE does it have to be "" instead?
-		// _currentLocationKey = "";
-		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << RESET << std::endl;
-		#endif
-		return (0);
-	}
-	return (1);
-}
-
-void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& target, int& max_count)
-{
-	std::string path;
-	std::string result;
-
-	path = it->first;
-	#ifdef SHOW_LOG_2
-		std::cout  << BLUE << "path: " << path << std::endl;
-	#endif
-	int i = 0;
-	int segments = 0;
-	if (target.length() >= path.length())
-	{
-		while (path[i] != '\0')
-		{
-			if (path[i] != target[i])
-			{
-				segments = 0;
-				break ;
-			}
-			if (path[i] == '/')
-				segments++;
-			i++;
-		}
-		if (target[i - 1] != '\0' && target[i - 1] != '/')
-			segments = 0;
-	}
-	if (segments > max_count)
-	{
-		max_count = segments;
-		if (it->second.root.empty())
-			result = this->_currentConfig.root;
-		else
-			result = it->second.root;
-		result += target.substr(i);
-		if (*result.rbegin() == '/')
-		{
-			request.isFile = false;
-			if (it->second.indexPage.empty() == false)
-				request.indexPage = it->second.indexPage;
-			else
-				request.indexPage = this->_currentConfig.indexPage;
-		}
-		request.setRoutedTarget("." + result);
-		_currentLocationKey = it->first;
-		#ifdef SHOW_LOG_2
-			std::cout  << YELLOW << "DIR MATCH!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << std::endl;
-		#endif
-	}
-}
-
-void Server::routeDefault(Request& request)
-{
-	std::string result;
-
-	result = this->_currentConfig.root + request.getDecodedTarget().substr(1);
-	if (*result.rbegin() == '/')
-	{
-		request.isFile = false;
-		request.indexPage = this->_currentConfig.indexPage;
-	}
-	request.setRoutedTarget("." + result);
-	_currentLocationKey = "";
-	#ifdef SHOW_LOG
-		std::cout  << YELLOW << "DEFAULT ";
-	#endif
-}
-
-void Server::matchLocation(Request& request)
-{
-	int max_count = 0;
-	std::string target = request.getDecodedTarget();
-	#ifdef SHOW_LOG_2
-	std::cout  << RED << "target: " << target << std::endl;
-	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
-	{
-		std::cout << RED << it->first << ": "
-		<< it->second.root << " is dir: " << it->second.isDir << RESET << "\n";
-	}
-	#endif
-	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
-	{
-		if (it->second.isDir == false)
-		{
-			if (routeFile(request, it, target) == 0)
-				return ;
-		}
-		if (it->second.isDir == true)
-			routeDir(request, it, target, max_count);
-	}
-	if (max_count == 0)
-		routeDefault(request);
-	#ifdef SHOW_LOG
-		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << std::endl;
-	#endif
-}
-
-static std::string staticPercentDecodingFix(std::string target)
-{
-	std::string accent;
-	accent += (const char)204;
-	accent += (const char)136;
-
-	std::string ü;
-	ü += (const char)195;
-	ü += (const char)188;
-
-	std::string ä;
-	ä += (const char)195;
-	ä += (const char)164;
-
-	std::string ö;
-	ö += (const char)195;
-	ö += (const char)182;
-
-	target = staticReplaceInString(target, "u" + accent, ü);
-	target = staticReplaceInString(target, "a" + accent, ä);
-	target = staticReplaceInString(target, "o" + accent, ö);
-	return (target);
-}
-
-std::string Server::percentDecoding(const std::string& str)
-{
-	std::stringstream tmp;
-	char c;
-	int i = 0;
-	while (str[i] != '\0')
-	{
-		if (str[i] == '%')
-		{
-			if (str[i + 1] == '\0' || str[i + 2] == '\0')
-				throw InvalidHex();
-			c = char(strtol(str.substr(i + 1, 2).c_str(), NULL, 16));
-			if (c == 0)
-				throw InvalidHex();
-			tmp << c;
-			i += 3;
-		}
-		else
-		{
-			tmp << str[i];
-			i++;
-		}
-	}
-	return (staticPercentDecodingFix(tmp.str()));
-}
-
-void Server::checkLocationMethod(const Request& request) const
-{
-	if (this->_currentLocationKey.empty() == true)
-		return ;
-	if (this->_currentConfig.location.find(_currentLocationKey)->second.allowedMethods.count(request.getMethod()) != 1)
-		throw MethodNotAllowed();
-}
-
-bool Server::_isCgiRequest(std::string requestHead) // AE this function ahs to be included in locationMatching
-{
-	requestHead = requestHead.substr(0, requestHead.find("HTTP/1.1")); // AE is formatting checked before?
-	// if (requestHead.find("/cgi/") != std::string::npos) // AE file extension should deterime if something is cgi or not
-	// 	return (true);
-	/*if (this->_currentConfig.cgiBin.length() != 0 && requestHead.find(this->_currentConfig.cgiBin) != std::string::npos)
-		return (true);
-	else */if (this->_currentConfig.cgi.size() != 0)
-	{
-		std::map<std::string, std::string>::const_iterator it = this->_currentConfig.cgi.begin();
-		for (; it != this->_currentConfig.cgi.end(); ++it)
-		{
-			if (requestHead.find(it->first) != std::string::npos) // AE define this better (has to be ending, not just existing)
-				return (true);
-		}
-	}
-	return (false);
-}
-
-void Server::handleRequest(int i) // i is the index from the evList of the socketHandler
+void Server::handleRequest(int fd) // i is the index from the evList of the socketHandler
 {
 	bool isCgi = false;
 	this->_response.clear();
 	this->loopDetected = false;
-	int fd = this->_socketHandler->getFD(i);
 	try
 	{
 		// if (this->_response._receiveMap.count(fd) == 1)
@@ -462,6 +256,10 @@ void Server::handleRequest(int i) // i is the index from the evList of the socke
 	{
 		std::cout << RED << "Exception: " << exception.what() << std::endl;
 		std::string code = exception.what();
+		if (std::string(exception.what()) == "client disconnect")
+		{
+			throw exception;
+		}
 		if (_response.getMessageMap().count(code) != 1)
 			code = "500";
 		try
@@ -482,21 +280,7 @@ void Server::handleRequest(int i) // i is the index from the evList of the socke
 	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 }
 
-bool Server::_crlftwoFound()
-{
-	if (this->_requestHead.find(CRLFTWO) != std::string::npos)
-		return (true);
-	else
-		return (false);
-}
 
-bool Server::_isPrintableAscii(char c)
-{
-	if (c > 126 || c < 0)
-		return (false);
-	else
-		return (true);
-}
 
 // read 1024 charackters or if less until /r/n/r/n is found
 void Server::_readRequestHead(int fd)
@@ -514,7 +298,7 @@ void Server::_readRequestHead(int fd)
 			#ifdef SHOW_LOG
 				std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
 			#endif
-			throw Server::InternalServerErrorException();
+			throw Server::ClientDisconnect();
 		}
 		else if (n == 0) // read reached eof
 			break ;
@@ -560,21 +344,7 @@ void Server::_readRequestHead(int fd)
 	}
 }
 
-// Exceptions
-const char* Server::InternalServerErrorException::what(void) const throw()
-{
-	return ("500");
-}
 
-const char* Server::BadRequestException::what(void) const throw()
-{
-	return ("400");
-}
-
-const char* Server::FirstLineTooLongException::what(void) const throw()
-{
-	return ("414");
-}
 
 void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 {
@@ -608,24 +378,4 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 
 
 	newCgi.cgi_response(fd);
-}
-
-const char* Server::InvalidHex::what() const throw()
-{
-	return ("400");
-}
-
-const char* Server::MethodNotAllowed::what() const throw()
-{
-	return ("405");
-}
-
-const char* Server::LengthRequiredException::what() const throw()
-{
-	return ("411");
-}
-
-const char* Server::ContentTooLargeException::what() const throw()
-{
-	return ("413");
 }

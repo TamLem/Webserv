@@ -112,6 +112,10 @@ class Server
 	public:
 
 	// Exceptions
+		class ClientDisconnect: public  std::exception {
+			public:
+				virtual const char* what() const throw();
+		};
 		class InternalServerErrorException : public std::exception
 		{
 			public:
@@ -151,5 +155,7 @@ class Server
 		};
 };
 
+std::string staticPercentDecodingFix(std::string target);
+std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace);
 
 #endif

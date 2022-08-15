@@ -41,6 +41,9 @@ ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be differe
 SRC_FILES	=	main.cpp \
 				SocketHandler.cpp \
 				Server.cpp \
+				ServerExceptions.cpp \
+				Routing.cpp	\
+				ServerUtils.cpp \
 				Message.cpp \
 				Response.cpp \
 				Send.cpp \

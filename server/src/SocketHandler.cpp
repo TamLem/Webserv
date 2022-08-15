@@ -139,7 +139,6 @@ void SocketHandler::setNoSigpipe(int fd)
 
 bool SocketHandler::addSocket(int fd)
 {
-	this->_fd = fd;
 	this->setNonBlocking(fd);
 	this->setNoSigpipe(fd);
 
@@ -156,16 +155,16 @@ int SocketHandler::getEvents()
 	#ifdef SHOW_LOG_2
 		std::cout << "num clients: " << _clients.size() << std::endl;
 	#endif
-	this->_numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL);
+	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL);
 	this->_eventsChanges.clear();
-	if (this->_numEvents == -1)
+	if (numEvents == -1)
 	{
 		std::cerr << RED << "Error getting events" << std::endl;
 		perror(NULL);
 		std::cerr << RESET;
 		return -1;
 	}
-	return this->_numEvents;
+	return numEvents;
 }
 
 int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
@@ -188,6 +187,7 @@ bool SocketHandler::removeClient(int i, bool force)
 		int index = this->_getClient(this->_evList[i].ident);
 		if (index != -1)
 		{
+
 			// this->setEvent(this->_evList[i].ident, EV_DELETE, EVFILT_WRITE); //event will be removed automatically when the fd is closed
 			this->_clients.erase(this->_clients.begin() + index);
 			#ifdef SHOW_LOG
@@ -196,7 +196,10 @@ bool SocketHandler::removeClient(int i, bool force)
 			return (true);
 		}
 		else
+		{
 			std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl;
+			exit(112);
+		}
 	}
 	return (false);
 }
@@ -205,14 +208,14 @@ bool SocketHandler::readFromClient(int i)
 {
 	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].filter == EVFILT_READ)
 	{
-		this->_fd = this->_evList[i].ident;
-		int status = this->_getClient(this->_evList[i].ident);
+		int fd = this->_evList[i].ident;
+		int status = this->_getClient(fd);
 		if (status == -1)
 		{
-			std::cerr << RED << "read Error getting client for fd: " << this->_evList[i].ident << std::endl;
+			close(fd);
+			std::cerr << RED << "read Error getting client for fd: " << fd << std::endl;
 			perror(NULL); // check if illegal
 			std::cerr << RESET;
-			close(_fd);
 			return (false); // throw exception
 		}
 		return (true);
@@ -227,12 +230,12 @@ bool SocketHandler::writeToClient(int i)
 		return (false);
 	if (this->_serverMap.count(this->_evList[i].ident) == 0 && this->_evList[i].filter == EVFILT_WRITE)
 	{
-		this->_fd = this->_evList[i].ident;
-		int status = this->_getClient(this->_evList[i].ident);
+		int fd = this->_evList[i].ident;
+		int status = this->_getClient(fd);
 		if (status == -1)
 		{
-			close(this->_fd);
-			std::cerr << RED << "write Error getting client for fd: " << this->_evList[i].ident << std::endl;
+			close(fd); 
+			std::cerr << RED << "write Error getting client for fd: " << fd << std::endl;
 			perror(NULL); // check if illegal
 			std::cerr << RESET;
 			return (false); // throw exception
@@ -294,16 +297,6 @@ SocketHandler::~SocketHandler()
 // Public Methods
 
 // Getter
-int SocketHandler::getNumEvents() const
-{
-	return (this->_numEvents);
-}
-
-std::string SocketHandler::getBuffer() const
-{
-	return (this->_buffer);
-}
-
 int SocketHandler::getFD(int i) const
 {
 	return (this->_evList[i].ident);

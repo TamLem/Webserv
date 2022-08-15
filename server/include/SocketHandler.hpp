@@ -59,11 +59,8 @@ class SocketHandler
 
 		std::map<int, int> _serverMap;
 		int _kq;
-		int _numEvents;
 		// char _buffer[1024]; //temp
 		struct kevent _ev; // temp
-		std::string _buffer; //temp
-		int _fd; //temp
 
 
 	// Private Members
@@ -94,9 +91,6 @@ class SocketHandler
 		void removeInactiveClients();
 
 	// Getter
-		int getNumEvents() const;
-		// const char *getBuffer() const;
-		std::string getBuffer() const;
 		int getFD(int i) const;
 
 	// Setter

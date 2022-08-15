@@ -65,7 +65,7 @@ void Server::runEventLoop()
 		for (int i = 0; i < numEvents; ++i)
 		{
 			#ifdef SHOW_LOG_2
-				std::cout << "no. events: " << this->_socketHandler->getNumEvents() << " ev:" << i << std::endl;
+				std::cout << "no. events: " << numEvents << " ev:" << i << std::endl;
 			#endif
 			this->_socketHandler->acceptConnection(i);
 			// if (this->_socketHandler->removeClient(i) == true)
@@ -78,7 +78,10 @@ void Server::runEventLoop()
 				try
 				{
 					handleRequest(this->_socketHandler->getFD(i));
-					this->_socketHandler->setWriteable(i);
+					if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == false)
+					{
+						this->_socketHandler->setWriteable(i);
+					}
 				}
 				catch(const std::exception& e)
 				{
@@ -144,9 +147,6 @@ void Server::handlePOST(int clientFd, const Request& request)
 	this->_response.setProtocol(PROTOCOL);
 	this->_response.addHeaderField("Server", this->_currentConfig.serverName);
 	this->_response.setStatus("201");
-	this->_response.createBodyFromFile("./server/data/pages/post_test.html");
-
-
 	// put this info into the receiveStruct!!!
 
 

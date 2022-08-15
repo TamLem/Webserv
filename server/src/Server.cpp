@@ -67,10 +67,9 @@ void Server::runEventLoop()
 			#ifdef SHOW_LOG_2
 				std::cout << "no. events: " << numEvents << " ev:" << i << std::endl;
 			#endif
-			this->_socketHandler->acceptConnection(i);
-			// if (this->_socketHandler->removeClient(i) == true)
-			// 	this->_response.removeFromResponseMap(this->_socketHandler->getFD(i));
-			if (this->_socketHandler->readFromClient(i) == true)
+			if (this->_socketHandler->acceptConnection(i))
+				continue ;
+			else if (this->_socketHandler->readFromClient(i) == true)
 			{
 				#ifdef SHOW_LOG_2
 				std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;

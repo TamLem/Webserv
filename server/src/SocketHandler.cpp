@@ -103,7 +103,6 @@ bool SocketHandler::acceptConnection(int i)
 			std::cerr << RED << "Error accepting connection" << std::endl;
 			perror(NULL);
 			std::cerr << RESET;
-			exit(1);
 			return true; // throw exception here
 		}
 		else if (this->addSocket(fd))

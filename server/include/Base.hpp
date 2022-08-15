@@ -57,6 +57,10 @@ struct LocationStruct
 // ReceiveStruct
 struct ReceiveStruct
 {
+	bool isChunked;
+	std::string chunkedTarget;
+	size_t chunkedLeft;
+
 	std::string target;
 	// std::string status;
 	// std::string statusMessage;

@@ -154,10 +154,10 @@ void Server::handlePOST(int clientFd, const Request& request)
 	this->_response.addHeaderField("Server", this->_currentConfig.serverName);
 	this->_response.setStatus("201");
 	this->_response.createBodyFromFile("./server/data/pages/post_test.html");
-
-
 	// put this info into the receiveStruct!!!
 
+	if (tempHeaderFields.count("Content-Type") && tempHeaderFields["Content-Type"] == "chunked")
+		this->_response.setPostChunked(clientFd); // this should set bool to true and create the tempTarget
 
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // put target into the response class
 	this->_response.setPostLength(clientFd, (request.getHeaderFields()));

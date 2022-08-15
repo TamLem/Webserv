@@ -448,10 +448,10 @@ const char* Response::ERROR_423::what() const throw()
 
 const char* Response::InvalidProtocol::what() const throw() //AE is it good to have different codes for request/response?
 {
-	return ("500");
+	return ("500"); // is Invalid Protocoll really a 500????
 }
 
-const char* Response::InternalServerErrorException::what() const throw()
+const char* Response::InternalServerErrorException::what() const throw() // think to unify the Exceptions for errors to be ERROR_XXX
 {
 	return ("500");
 }
@@ -482,4 +482,9 @@ const char* Response::SizeTOverflowException::what(void) const throw()
 const char* Response::NegativeDecimalsNotAllowedException::what(void) const throw()
 {
 	return ("400");
+}
+
+const char* Response::ClientDisconnect::what(void) const throw()
+{
+	return ("client disconnected");
 }

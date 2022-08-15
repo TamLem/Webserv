@@ -34,7 +34,7 @@ class Response : public Message
 	// private Methods
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
-	protected:
+	protected: // why protected??? is there any class inheriting from response???
 		int sendall(const int sock_fd, char *buffer, const int len) const;
 		void sendChunk(int i);// i is the fd
 	public:
@@ -44,6 +44,7 @@ class Response : public Message
 		void receiveChunk(int i);
 		bool isInReceiveMap(int clientFd);
 		std::string constructPostResponse();
+		void _fillTempFile(int i);
 
 		// void setProtocol(const std::string&);
 		void setStatus(const std::string&);
@@ -130,6 +131,12 @@ class Response : public Message
 	};
 
 	class NegativeDecimalsNotAllowedException : public std::exception
+	{
+		public:
+			virtual const char* what() const throw();
+	};
+
+	class ClientDisconnect : public std::exception
 	{
 		public:
 			virtual const char* what() const throw();

@@ -63,7 +63,7 @@ void SocketHandler::_listenMainSockets()
 {
 	for (std::map<int, int>::const_iterator it = this->_serverMap.begin(); it != this->_serverMap.end(); ++it)
 	{
-		if (listen(it->first, 5))
+		if (listen(it->first, -1))
 		{
 			std::cerr << RED << "Error listening" << std::endl;
 			perror(NULL);
@@ -128,8 +128,7 @@ bool SocketHandler::acceptConnection(int i)
 
 void SocketHandler::setNonBlocking(int fd)
 {
-	int flags = fcntl(fd, F_GETFL, 0);
-	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+	fcntl(fd, F_SETFL, O_NONBLOCK);
 }
 
 void SocketHandler::setNoSigpipe(int fd)
@@ -150,8 +149,8 @@ int SocketHandler::getEvents()
 {
 	struct timespec timeout;
 
-	timeout.tv_sec = 0;
-	timeout.tv_nsec = 100;
+	timeout.tv_sec = 1;
+	timeout.tv_nsec = 0;
 	#ifdef SHOW_LOG_2
 		std::cout << "num clients: " << _clients.size() << std::endl;
 	#endif

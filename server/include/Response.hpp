@@ -52,10 +52,13 @@ class Response : public Message
 		// void setTarget(const std::string&);
 		void setFd(int); // is this used???
 		void setProtocol(const std::string&);
+
+	// for POST requests
 		void setPostTarget(int clientFd, std::string target);
-		void setPostLength(int clientFd, std::map<std::string, std::string> headerFields);
+		void setPostLength(int clientFd, std::map<std::string, std::string> &headerFields);
 		void setPostBufferSize(int clientFd, size_t bufferSize);
 		bool checkReceiveExistance(int clientFd);
+		void setPostChunked(int clientFd, std::map<std::string, std::string> &headerFields);
 
 		// const std::string& getProtocol(void) const;
 		const std::string& getStatus(void) const;

@@ -102,12 +102,13 @@ void Response::removeFromReceiveMap(int fd)
 		this->_receiveMap.erase(fd);
 }
 
+void Response::setPostChunked(int clientFd, )
 
 
 /********** handle chunked POST **********/
 void Response::_fillTempFile(int i)
 {
-	this->_receiveMap[i].chunkedTarget = "post_buffer_fd_" + i;
+	this->_receiveMap[i].chunkedTarget = "post_buffer_fd_"/* + i*/;
 
 	std::ofstream buffer;
 	buffer.open(this->_receiveMap[i].chunkedTarget);

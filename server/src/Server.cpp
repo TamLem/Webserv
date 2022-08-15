@@ -156,12 +156,10 @@ void Server::handlePOST(int clientFd, const Request& request)
 	this->_response.createBodyFromFile("./server/data/pages/post_test.html");
 	// put this info into the receiveStruct!!!
 
-	if (tempHeaderFields.count("Content-Type") && tempHeaderFields["Content-Type"] == "chunked")
-		this->_response.setPostChunked(clientFd); // this should set bool to true and create the tempTarget
-
-	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // put target into the response class
-	this->_response.setPostLength(clientFd, (request.getHeaderFields()));
+	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
+	this->_response.setPostLength(clientFd, (tempHeaderFields));
 	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
+	this->_response.setPostChunked(clientFd, tempHeaderFields); // this should set bool to true and create the tempTarget
 }
 
 static void staticRemoveTarget(const std::string& path)

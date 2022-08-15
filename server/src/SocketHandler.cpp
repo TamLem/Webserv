@@ -64,7 +64,7 @@ void SocketHandler::_listenMainSockets()
 {
 	for (std::map<int, int>::const_iterator it = this->_serverMap.begin(); it != this->_serverMap.end(); ++it)
 	{
-		if (listen(it->first, 5))
+		if (listen(it->first, -1))
 		{
 			std::cerr << RED << "Error listening" << std::endl;
 			perror(NULL);
@@ -168,10 +168,10 @@ bool SocketHandler::addSocket(int fd)
 
 int SocketHandler::getEvents()
 {
-	struct timespec timeout;
+	// struct timespec timeout;
 
-	timeout.tv_sec = 0;
-	timeout.tv_nsec = 100;
+	// timeout.tv_sec = 0;
+	// timeout.tv_nsec = 1000; // use this to increase performance
 	#ifdef SHOW_LOG_2
 		std::cout << "num clients: " << _clients.size() << std::endl;
 	#endif
@@ -245,7 +245,7 @@ bool SocketHandler::writeToClient(int i)
 		{
 			close(this->_fd);
 			std::cerr << RED << "write Error getting client for fd: " << this->_evList[i].ident << std::endl;
-			perror(NULL); // check if illegal
+			perror(NULL); // check if illegal !!!!!!!!!!!
 			std::cerr << RESET;
 			return (false); // throw exception
 		}

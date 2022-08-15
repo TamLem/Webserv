@@ -34,6 +34,7 @@ class Response : public Message
 	// private Methods
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
+		_createFileExistingHeader(int clientFd, std::string target);
 	protected: // why protected??? is there any class inheriting from response???
 		int sendall(const int sock_fd, char *buffer, const int len) const;
 		void sendChunk(int i);// i is the fd
@@ -57,15 +58,10 @@ class Response : public Message
 		void setPostTarget(int clientFd, std::string target);
 		void setPostLength(int clientFd, std::map<std::string, std::string> &headerFields);
 		void setPostBufferSize(int clientFd, size_t bufferSize);
-		bool checkReceiveExistance(int clientFd);
+		// bool checkReceiveExistance(int clientFd);
 		void setPostChunked(int clientFd, std::map<std::string, std::string> &headerFields);
-
-		// const std::string& getProtocol(void) const;
 		const std::string& getStatus(void) const;
-		const std::string& getStatusMessage(void) const;
-		const std::map<std::string, std::string>& getMessageMap(void) const;
 		std::string getResponse();
-
 		std::string constructHeader(void);
 		std::string constructChunkedHeader(void);
 		void endChunkedMessage(int i, int n);

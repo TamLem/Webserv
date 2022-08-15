@@ -160,6 +160,8 @@ void Server::handlePOST(int clientFd, const Request& request)
 	this->_response.setPostLength(clientFd, (tempHeaderFields));
 	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
 	this->_response.setPostChunked(clientFd, tempHeaderFields); // this should set bool to true and create the tempTarget
+
+	this->_response._checkTarget(clientFd); // move from the setPostTarget function to here !!!!!!!!!
 }
 
 static void staticRemoveTarget(const std::string& path)
@@ -612,6 +614,7 @@ void Server::_readRequestHead(int fd)
 		#ifdef SHOW_LOG
 			std::cout << RED << "HEAD BIGGER THAN " << MAX_REQUEST_HEADER_SIZE << " OR NO CRLFTWO FOUND (incomplete request)" << RESET << std::endl;
 		#endif
+		std:: cout << YELLOW << "received >" << RESET << this->_requestHead << YELLOW << "<" << RESET << std::endl;
 		throw Server::BadRequestException();
 	}
 }

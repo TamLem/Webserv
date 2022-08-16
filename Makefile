@@ -117,5 +117,11 @@ re: fclean all
 run: all
 	./$(NAME) server/config/test.conf
 
+ae: all
+	./$(NAME) server/config/ae.conf
+
+42: all
+	./$(NAME) server/config/42tester.conf
+
 #phony
 .PHONY: all clean fclean re run

@@ -1,6 +1,8 @@
 #include "Cgi/Cgi.hpp"
 
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 Cgi::Cgi(Request &request, ConfigStruct configStruct): _isPhp(false), _confStruct(configStruct)
 {

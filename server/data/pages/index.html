@@ -2,12 +2,16 @@
 	<head>
 	<title>Your Title Here</title>
 	<link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico">
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 	<meta charset="UTF-8">
 	</head>
 	<body bgcolor="FFFF00">
+	<div>
+		<h3><a href="/bigfile.random"> Large file</a></h3>
+	</div>
 	<!-- <center><img src="images/test_image.png" align="BOTTOM"> </center> -->
 	<center><img src="images/large.jpg" style="width:400px; height:auto;" align="BOTTOM"> </center>
-	<video controls="controls" width="800" height="600" name="onehour.mp4">
+	<video controls="controls" width="800" height="600" name="onehour.mp4" preload="none">
 		<source src="images/endless.mp4">
 	</video>
 	<hr>
@@ -45,4 +49,17 @@
 		<input type="submit" />
 	</form>
 	</body>
+	<script type="text/javascript">
+		function upload() {
+			var formData = new FormData();
+			formData.append('myfile', document.getElementById('myfile').files[0]);
+			axios.post('/upload', formData)
+				.then(function (response) {
+					console.log(response);
+				})
+				.catch(function (error) {
+					console.log(error);
+				});
+		}
+	</script>
 </html>

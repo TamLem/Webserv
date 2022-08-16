@@ -147,3 +147,10 @@ std::ostream& operator<<(std::ostream&, const Response&);
 bool targetExists(const std::string&);
 
 #endif
+
+/********** LEGACY CONTENT **********/
+
+		// int sendall(const int sock_fd, char *buffer, const int len) const; // LEGACY
+		// void sendChunk(int i);// i is the fd // LEGACY
+		// void endChunkedMessage(int i, int n); // LEGACY
+		// bool sendResponse(int); // LEGACY

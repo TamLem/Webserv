@@ -35,8 +35,10 @@
 // ResponseStruct
 struct ResponseStruct
 {
-	std::string buffer;
-	std::string header;
+// LEGACY
+	// std::string buffer; // LEGACY for when less than sendChunk() only sends part of the chunk
+	// std::string header; // LEGACY for chunked response only, was used in sendResponse()->sendChunk() not sure if still used????
+// general
 	std::string response;
 	// std::string status;
 	// std::string statusMessage;

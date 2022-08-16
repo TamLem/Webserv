@@ -421,3 +421,34 @@ const char* Response::ClientDisconnect::what(void) const throw()
 {
 	return ("client disconnected");
 }
+
+
+
+/********** LEGACY CODE BELOW **********/
+
+// int Response::sendall(const int sock_fd, char *buffer, const int len) const
+// {
+// 	int total;
+// 	int bytesleft;
+// 	int n;
+
+// 	total = len;
+// 	bytesleft = len;
+// 	while (total > 0)
+// 	{
+// 		n = send(sock_fd, buffer, bytesleft, 0);
+// 		if (n == -1)
+// 		{
+// 			perror("send");
+// 			return (-1);
+// 		}
+// 		total -= n;
+// 		bytesleft -= n;
+// 		buffer += n;
+// 	}
+// 	close(sock_fd);
+// 	#ifdef SHOW_LOG
+// 		std::cout << RED << "fd: " << sock_fd << " was closed after sending response" << RESET << std::endl;
+// 	#endif
+// 	return (0);
+// }

@@ -182,8 +182,8 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 	confStruct.root = "";
 	confStruct.cgiBin = "";
 	confStruct.indexPage = "";
-	confStruct.clientBodyBufferSize = (4 * 1024);
-	confStruct.clientMaxBodySize = (100 * 1024 * 1024);
+	confStruct.clientBodyBufferSize = (64 * 1024); // 64kb
+	confStruct.clientMaxBodySize = (1024 * 1024 * 1024); // 1gb
 	confStruct.autoIndex = false;
 
 	return (confStruct);

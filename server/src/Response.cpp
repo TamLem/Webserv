@@ -15,6 +15,17 @@ Response::Response(void)
 	this->createMessageMap();
 }
 
+void Response::setRequestMethod(const std::string& method)
+{
+	this->_requestMethod = method;
+}
+
+std::string Response::getRequestMethod(void) const
+{
+	return this->_requestMethod;
+}
+
+
 void Response::clear(void)
 {
 	this->protocol = "";
@@ -23,6 +34,7 @@ void Response::clear(void)
 	this->headerFields.clear();
 	this->status = "";
 	this->statusMessage = "";
+	this->_requestMethod = "";
 	target = "";
 }
 
@@ -148,9 +160,11 @@ const std::map<std::string, std::string>& Response::getMessageMap(void) const
 
 std::string Response::getResponse()
 {
+	std::cout << "Request Method: " << this->_requestMethod << std::endl;
 	std::stringstream buffer;
 	buffer << this->constructHeader();
-	buffer << this->getBody();
+	if (this->_requestMethod != "HEAD")
+		buffer << this->getBody();
 	buffer << CRLFTWO;
 
 	return (buffer.str());

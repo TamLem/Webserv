@@ -15,10 +15,15 @@
 //optional one for the server to send the response to the client
 bool Response::sendRes(int fd)
 {
+	std::cout << "In SENDRES Request Method: " << this->_requestMethod << std::endl;
+
 	std::cout << GREEN << "Sending response to client" << RESET << std::endl;
 	if (this->_responseMap.count(fd) == 0)
 	{
-		this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
+		if (this->_requestMethod != "HEAD")
+			this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
+		else
+			this->_responseMap[fd].response = this->constructHeader();
 	}
 	int sendSize = MAX_SEND_CHUNK_SIZE;
 	if (this->_responseMap[fd].response.size() < MAX_SEND_CHUNK_SIZE)

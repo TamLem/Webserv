@@ -220,6 +220,7 @@ void Server::handleRequest(int fd) // i is the index from the evList of the sock
 		{
 			this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
 			Request request(this->_requestHead);
+			this->_response.setRequestMethod(request.getMethod());
 			this->applyCurrentConfig(request);
 			//normalize target (in Request)
 			//normalize target (in Request)
@@ -292,7 +293,7 @@ void Server::_readRequestHead(int fd)
 	while (charsRead < MAX_REQUEST_HEADER_SIZE)
 	{
 		n = read(fd, buffer, 1);
-		if (n < 0) // read had an error reading from fd
+		if (n < 0) // read had an error reading from fd, was failing PUT
 		{
 			#ifdef SHOW_LOG
 				std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;

@@ -32,7 +32,7 @@ void Request::parseMessage(const std::string& message)
 	std::istringstream stream (message);
 	parseStartLine(stream);
 	parseHeaderFields(stream);
-	if (this->headerFields.count("host") != 1)
+	if (this->headerFields.count("host") != 1) // why is is not Host????
 		throw NoHost();
 	setBodyFlag();
 	if (this->hasBody == true)
@@ -216,7 +216,7 @@ bool Request::isValidHeaderFieldValue(const std::string& token) const
 
 void Request::setBodyFlag(void)
 {
-	if (this->headerFields.count("content-length") || this->headerFields.count("transfer-encoding"))
+	if (this->headerFields.count("content-length") || this->headerFields.count("transfer-encoding")) // ??? what is this supposed to do?
 		this->hasBody = true;
 }
 

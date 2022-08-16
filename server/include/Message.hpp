@@ -19,7 +19,7 @@ class Message
 
 	protected:
 		std::string protocol;
-		std::string body;
+		std::string body; // get rid of this!!!!!
 		bool hasBody;
 		std::string target;
 		bool isValidProtocol(const std::string&) const;

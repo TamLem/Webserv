@@ -25,8 +25,10 @@ bool Response::sendRes(int fd)
 	int n = send(fd, this->_responseMap[fd].response.c_str(), sendSize, 0);
 	if (n == -1)
 	{
-		std::cerr << RED << "send Error sending response for fd: " << fd << std::endl;
-		perror(NULL); // check if illegal
+		std::stringstream errorMessage;
+		errorMessage << "send Error sending response for fd: " << fd;
+		LOG_RED(errorMessage.str());
+		perror(NULL); // check if illegal!!!!!!
 		std::cerr << RESET;
 		return (true); // throw exception
 	}

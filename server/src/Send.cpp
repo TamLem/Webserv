@@ -47,53 +47,6 @@ bool Response::sendRes(int fd)
 	return (false);
 }
 
-bool Response::sendResponse(int fd)
-{
-	// return true;
-	// std::cout << "MAX_SEND_CHUNK_SIZE: " << MAX_SEND_CHUNK_SIZE << std::endl;
-// old start
-	// std::string response = this->constructHeader() + this->body;
-	// sendall(fd, (char *)response.c_str(), response.length());
-// old end
-	if (this->_responseMap.count(fd) == 0)
-	{
-		if (this->body.size() > MAX_SEND_CHUNK_SIZE)
-		{
-			this->_responseMap[fd].header = this->constructChunkedHeader();
-			this->_responseMap[fd].response = this->body; // only put the body in here
-		}
-		else
-		{
-			this->_responseMap[fd].response = this->constructHeader() + this->body; // only put the body in here
-		}
-		this->_responseMap[fd].total = this->_responseMap[fd].response.length();
-		this->_responseMap[fd].bytesLeft = this->_responseMap[fd].response.length();
-	}
-	try
-	{
-		sendChunk(fd);
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		return (true);
-	}
-
-	if (this->_responseMap.count(fd) == 0)
-		return (true);
-	return (false);
-}
-
-template< typename T >
-static std::string intToHexString(T number)
-{
-	std::stringstream converted;
-	converted	/*<< "0x"*/
-				// << std::setfill ('0') << std::setw(sizeof(T)*2)
-				<< std::hex << number;
-	return (converted.str());
-}
-
 bool Response::handleClientDisconnect(int fd)
 {
 	char buf[100];

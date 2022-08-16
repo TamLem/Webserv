@@ -48,9 +48,9 @@ class SocketHandler
 
 	// Private Variables
 		// Config *_config; // maybe not needed
-		std::map<std::string, ConfigStruct> _cluster;
-
 		std::set<int> _ports;
+		std::map<std::string, ConfigStruct> _cluster;
+		std::set<int> _keepalive;
 		std::vector<ClientStruct> _clients;
 		std::vector<int> _serverFds; // maybe not needed
 
@@ -87,16 +87,23 @@ class SocketHandler
 		int getEvents();
 		bool acceptConnection(int i);
 		bool addSocket(int fd);
+
 		bool readFromClient(int i);
 		bool writeToClient(int i);
+
 		bool removeClient(int fd, bool force = false);
 		void removeInactiveClients();
+
+		void addKeepAlive(int clientFd);
+		void removeKeepAlive(int clientFd);
+		bool isKeepAlive(int clientFd);
 
 	// Getter
 		int getNumEvents() const;
 		// const char *getBuffer() const;
 		std::string getBuffer() const;
 		int getFD(int i) const;
+		int getPort(int i);
 
 	// Setter
 		void setWriteable(int i);

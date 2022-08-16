@@ -296,6 +296,31 @@ void SocketHandler::removeInactiveClients()
 	}
 }
 
+void SocketHandler::addKeepAlive(int clientFd)
+{
+	if (this->_keepalive.count(clientFd) == 0)
+		this->_keepalive.insert(clientFd);
+	#ifdef SHOW_LOG
+		else
+			LOG_RED("Client to add already was part of keep-alive");
+	#endif
+}
+
+void SocketHandler::removeKeepAlive(int clientFd)
+{
+	if (this->_keepalive.count(clientFd) == 1)
+		this->_keepalive.erase(clientFd);
+	#ifdef SHOW_LOG
+		else
+			LOG_RED("Client to remove was NOT part of keep-alive");
+	#endif
+}
+
+bool SocketHandler::isKeepAlive(int clientFd)
+{
+	return (this->_keepalive.count(clientFd));
+}
+
 // Deconstructors
 SocketHandler::~SocketHandler()
 {
@@ -325,6 +350,20 @@ std::string SocketHandler::getBuffer() const
 int SocketHandler::getFD(int i) const
 {
 	return (this->_evList[i].ident);
+}
+
+// be carefull with using this, if you put a bigger number than number of ports configured in the config file
+// it will give you the last port
+int SocketHandler::getPort(int i)
+{
+	std::set<int>::const_iterator it = this->_ports.begin();
+	for (; it != this->_ports.end(); ++it, --i)
+	{
+		if (i == 0)
+			break ;
+	}
+
+	return (*it);
 }
 
 // Setter

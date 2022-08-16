@@ -314,6 +314,15 @@ const std::map<std::string, std::string>& Request::getHeaderFields() const
 	return (this->headerFields);
 }
 
+std::string Request::getHostName() const
+{
+	std::map<std::string, std::string>::const_iterator it = this->headerFields.find("Host");
+	if (it != this->headerFields.end())
+		return (it->second);
+	else
+		return ("localhost");
+}
+
 // const std::string& Request::getProtocol(void) const
 // {
 // 	return (this->protocol);

@@ -92,8 +92,8 @@ std::string Response::getResponse()
 void Response::putToResponseMap(int fd)
 {
 	// i purposly do not check for existance before writing to it so that everything would be overridden if it existed
-	this->_responseMap[fd].buffer = "";
-	this->_responseMap[fd].header = "";
+	// this->_responseMap[fd].buffer = ""; // LEGACY
+	// this->_responseMap[fd].header = ""; // LEGACY
 	this->_responseMap[fd].response = this->getResponse();
 	this->_responseMap[fd].total = this->_responseMap[fd].response.length();
 	this->_responseMap[fd].bytesLeft = this->_responseMap[fd].total;
@@ -122,33 +122,6 @@ std::string Response::constructChunkedHeader(void)
 	stream << "Transfer-Encoding: chunked" << CRLFTWO;
 
 	return (stream.str());
-}
-
-int Response::sendall(const int sock_fd, char *buffer, const int len) const
-{
-	int total;
-	int bytesleft;
-	int n;
-
-	total = len;
-	bytesleft = len;
-	while (total > 0)
-	{
-		n = send(sock_fd, buffer, bytesleft, 0);
-		if (n == -1)
-		{
-			perror("send");
-			return (-1);
-		}
-		total -= n;
-		bytesleft -= n;
-		buffer += n;
-	}
-	close(sock_fd);
-	#ifdef SHOW_LOG
-		std::cout << RED << "fd: " << sock_fd << " was closed after sending response" << RESET << std::endl;
-	#endif
-	return (0);
 }
 
 void Response::createErrorBody(void)
@@ -262,15 +235,15 @@ void Response::createBodyFromFile(const std::string& target)
 	}
 }
 
-void Response::addDefaultHeaderFields(void)
+void Response::addContentLengthHeaderField(void)
 {
 	std::stringstream contentLength;
 	// addHeaderField("Server", "localhost:8080");
-	if (headerFields.count("Transfer-Encoding") == 0)
-	{
+	// if (headerFields.count("Transfer-Encoding") == 0)
+	// {
 		contentLength << this->body.length();
 		addHeaderField("Content-Length", contentLength.str());
-	}
+	// }
 }
 
 void Response::createMessageMap(void)

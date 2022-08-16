@@ -133,8 +133,39 @@ void Server::handleGET(const Request& request)
 	else
 		_response.createBodyFromFile(request.getRoutedTarget() + request.indexPage);
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
-	_response.addDefaultHeaderFields();
+	_response.addContentLengthHeaderField();
 	_response.setStatus("200");
+}
+
+static size_t _strToSizeT(std::string str)
+{
+	size_t out = 0;
+	std::stringstream buffer;
+	#ifdef __APPLE__
+		buffer << SIZE_T_MAX;
+	#else
+		buffer << "18446744073709551615";
+	#endif
+	std::string sizeTMax = buffer.str();
+	if (str.find("-") != std::string::npos && str.find_first_of(DECIMAL) != std::string::npos && str.find("-") == str.find_first_of(DECIMAL) - 1)
+	{
+		std::cout << str << std::endl;
+		throw SingleServerConfig::NegativeDecimalsNotAllowedException();
+	}
+	else if (str.find_first_of(DECIMAL) != std::string::npos)
+	{
+		std::string number = str.substr(str.find_first_of(DECIMAL));
+		if (number.find_first_not_of(WHITESPACE) != std::string::npos)
+			number = number.substr(0, number.find_first_not_of(DECIMAL));
+		if (str.length() >= sizeTMax.length() && sizeTMax.compare(number) > 0)
+		{
+			std::cout << RED << ">" << number << RESET << std::endl;
+			throw SingleServerConfig::SizeTOverflowException();
+		}
+		else
+			std::istringstream(str) >> out;
+	}
+	return (out);
 }
 
 void Server::handlePOST(int clientFd, const Request& request)
@@ -143,25 +174,26 @@ void Server::handlePOST(int clientFd, const Request& request)
 		std::cout << "handlePost entered for" << clientFd << std::endl;
 	#endif
 	std::map<std::string, std::string> tempHeaderFields = request.getHeaderFields();
-	std::stringstream clientMaxBodySize;
-	clientMaxBodySize << this->_currentConfig.clientMaxBodySize;
+
 	if (tempHeaderFields.count("Content-Length") == 0 && tempHeaderFields.count("content-length") == 0)
 		throw Server::LengthRequiredException();
-	else if (tempHeaderFields["Content-Length"] > clientMaxBodySize.str())
+	else if (tempHeaderFields.count("Content-Length") && _strToSizeT(tempHeaderFields["Content-Length"]) > this->_currentConfig.clientMaxBodySize)
+		throw Server::ContentTooLargeException();
+	else if (tempHeaderFields.count("content-length") && _strToSizeT(tempHeaderFields["content-length"]) > this->_currentConfig.clientMaxBodySize) // check how to remove this
 		throw Server::ContentTooLargeException();
 
 	this->_response.setProtocol(PROTOCOL);
 	this->_response.addHeaderField("Server", this->_currentConfig.serverName);
 	this->_response.setStatus("201");
-	this->_response.createBodyFromFile("./server/data/pages/post_test.html");
-	// put this info into the receiveStruct!!!
+	this->_response.createBodyFromFile("./server/data/pages/post_success.html");
+	// put this info into the receiveStruct maybe ????
 
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
-	this->_response.setPostLength(clientFd, (tempHeaderFields));
+	this->_response.setPostLength(clientFd, tempHeaderFields);
 	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
-	this->_response.setPostChunked(clientFd, tempHeaderFields); // this should set bool to true and create the tempTarget
 
-	this->_response._checkTarget(clientFd); // move from the setPostTarget function to here !!!!!!!!!
+	this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
+	this->_response.setPostChunked(clientFd, request.getRoutedTarget(), tempHeaderFields); // this should set bool to true and create the tempTarget
 }
 
 static void staticRemoveTarget(const std::string& path)
@@ -200,7 +232,7 @@ void Server::handleERROR(const std::string& status)
 	else
 		_response.createErrorBody();
 	_response.addHeaderField("Server", this->_currentConfig.serverName);
-	_response.addDefaultHeaderFields();
+	_response.addContentLengthHeaderField();
 }
 
 void Server::applyCurrentConfig(const Request& request)
@@ -390,7 +422,7 @@ void Server::matchLocation(Request& request)
 	if (max_count == 0)
 		routeDefault(request);
 	#ifdef SHOW_LOG
-		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << std::endl;
+		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << RESET << std::endl;
 	#endif
 }
 
@@ -480,7 +512,7 @@ void Server::handleRequest(int i) // i is the index from the evList of the socke
 	try
 	{
 		// if (this->_response._receiveMap.count(fd) == 1)
-		if (this->_response.checkReceiveExistance(fd) == 1)
+		if (this->_response.isInReceiveMap(fd) == true)
 			this->_response.receiveChunk(fd);
 		else
 		{

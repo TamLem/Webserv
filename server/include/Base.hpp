@@ -30,7 +30,7 @@
 #define MAX_REQUEST_LINE_SIZE 512 // change this to increase the max length of accepted URI
 #define MAX_REQUEST_HEADER_SIZE 1024 // change this to increase the size of accepted request-headers
 #define MAX_EVENTS 128
-#define MAX_SEND_CHUNK_SIZE (4 * 1024) // this controlls the size of the chunks we are sending back to the client
+#define MAX_SEND_CHUNK_SIZE (1024 * 1024) // this controlls the size of the chunks we are sending back to the client
 
 // ResponseStruct
 struct ResponseStruct
@@ -44,6 +44,12 @@ struct ResponseStruct
 	// std::string statusMessage;
 	size_t total;
 	size_t bytesLeft;
+	std::istream *requestedFile;
+// header information
+	std::string protocoll;
+	std::string status;
+	std::string statusMessage;
+	std::string target; // this is the target after directory/file routing
 };
 
 // LocationStruct
@@ -59,10 +65,11 @@ struct LocationStruct
 // ReceiveStruct
 struct ReceiveStruct
 {
+// chunking
 	bool isChunked;
-	std::string chunkedTarget;
-	size_t chunkedLeft;
-
+	std::string tempTarget; // rethink this!!!!!!
+	size_t chunkedLeft; // rethink the use of this!!!!!!!
+// general
 	std::string target;
 	// std::string status;
 	// std::string statusMessage;

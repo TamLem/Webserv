@@ -104,12 +104,10 @@ void Response::removeFromReceiveMap(int fd)
 		this->_receiveMap.erase(fd);
 }
 
-void Response::_fillTempFile(int i)
+void Response::_fillTempFile(int clientFd) // rethink this
 {
-	this->_receiveMap[i].chunkedTarget = "post_buffer_fd_"/* + i*/;
-
 	std::ofstream buffer;
-	buffer.open(this->_receiveMap[i].chunkedTarget);
+	buffer.open(this->_receiveMap[clientFd].tempTarget);
 
 	if (buffer.is_open() == false)
 	{
@@ -117,24 +115,38 @@ void Response::_fillTempFile(int i)
 	}
 
 
+
+// implement reading of chunks
+
+
+			LOG_RED("_fillTempFile is not yet implemented");
+			this->_receiveMap[clientFd].bytesLeft = 0;
+
+
+
+
+
+
+
 }
 
 void Response::setPostTarget(int clientFd, std::string target)
 {
-	int ret = access( target.c_str(), F_OK );
-	if (ret == -1)
-		this->_receiveMap[clientFd].target = target;
-	else
-	{
-		this->removeFromReceiveMap(clientFd);
-		std::cout << "file is already existing" << std::endl; // instead send a response that makes sense
-		this->putToResponseMap(this->_createFileExistingHeader(clientFd, target));
-	}
+	this->_receiveMap[clientFd].target = target;
+	std::stringstream buffer;
+	buffer << target << "." << clientFd << ".temp";
+	this->_receiveMap[clientFd].tempTarget = buffer.str();
 }
 
-std::string Response::_createFileExistingHeader(int clientFd, std::string target)
+void Response::checkPostTarget(int clientFd, const Request &request, int port)
 {
-	// put stuff here to create a header that makes sense
+	std::string target = request.getRoutedTarget();
+	if (access(target.c_str(), F_OK ) != -1)
+	{
+		this->removeFromReceiveMap(clientFd);
+		std::cout << "file is already existing" << std::endl; // instead create a response that makes sense
+		this->_createFileExistingHeader(clientFd, request, port);
+	}
 }
 
 static size_t _strToSizeT(std::string str)
@@ -144,7 +156,7 @@ static size_t _strToSizeT(std::string str)
 	#ifdef __APPLE__
 		buffer << SIZE_T_MAX;
 	#else
-		buffer << "18446744073709551615";
+		buffer << "18446744073709551615"; // size_t max value
 	#endif
 	std::string sizeTMax = buffer.str();
 	if (str.find("-") != std::string::npos && str.find_first_of(DECIMAL) != std::string::npos && str.find("-") == str.find_first_of(DECIMAL) - 1)
@@ -168,15 +180,58 @@ static size_t _strToSizeT(std::string str)
 	return (out);
 }
 
-void Response::setPostLength(int clientFd, std::map<std::string, std::string> headerFields)
+void Response::setPostChunked(int clientFd, std::string target, std::map<std::string, std::string> &headerFields)
+{
+	if (this->_receiveMap.count(clientFd) && headerFields.count("Transfer-Encoding") && headerFields["Transfer-Encoding"] == "chunked")
+		this->_receiveMap[clientFd].isChunked = true;
+
+	if (this->_receiveMap.count(clientFd) && this->_receiveMap[clientFd].isChunked == true)
+	{
+		std::stringstream fileName;
+		fileName << target << "." << clientFd << ".temp"; // will result in a filename like: 7_larger.jpg.temp
+		std::ofstream tempFile;
+		tempFile.open(fileName.str(), std ::ios::out | std::ios_base::trunc | std::ios::binary);
+		if (!tempFile.is_open())
+		{
+			LOG_RED("failed to create/open the temp file");
+			throw Response::ERROR_423();
+		}
+		else
+		{
+			tempFile.close();
+		}
+	}
+}
+
+void Response::_createFileExistingHeader(int clientFd, const Request &request, int port)
+{
+	std::stringstream serverNamePort;
+	serverNamePort << request.getHostName() << ":" << port; // creates ie. localhost:8080
+// clear all the unused data
+	this->headerFields.clear();
+	this->body.clear();
+	this->removeFromReceiveMap(clientFd);
+	this->removeFromResponseMap(clientFd);
+// set all the data for the header
+	this->setProtocol(PROTOCOL);
+	this->setStatus("303");
+	std::string location = "http://" + serverNamePort.str() + request.getRawTarget();
+	this->addHeaderField("Location", location);
+
+	// set fd to eof
+
+	this->putToResponseMap(clientFd);
+}
+
+void Response::setPostLength(int clientFd, std::map<std::string, std::string> &headerFields)
 {
 	size_t length = 0;
-	if (headerFields.count("Conten-Length"))
+	if (headerFields.count("Content-Length"))
 	{
 		std::cout << headerFields["Content-Length"] << std::endl;
 		length = _strToSizeT(headerFields["Content-Length"]);
 	}
-	else
+	else if (headerFields.count("Content-length"))
 	{
 		std::cout << headerFields["content-length"] << std::endl;
 		length = _strToSizeT(headerFields["content-length"]);
@@ -191,10 +246,10 @@ void Response::setPostBufferSize(int clientFd, size_t bufferSize)
 	this->_receiveMap[clientFd].bufferSize = bufferSize;
 }
 
-bool Response::checkReceiveExistance(int clientFd)
-{
-	if (this->_receiveMap.count(clientFd) == 1)
-		return (true);
-	else
-		return (false);
-}
+// bool Response::checkReceiveExistance(int clientFd)
+// {
+// 	if (this->_receiveMap.count(clientFd) == 1)
+// 		return (true);
+// 	else
+// 		return (false);
+// }

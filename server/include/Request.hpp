@@ -67,6 +67,7 @@ class Request : public Message
 		const std::string& getQuery(void) const;
 		const std::string& getFragment(void) const;
 		const std::map<std::string, std::string>& getHeaderFields() const;
+		std::string getHostName() const;
 		// const std::string& getProtocol(void) const;
 
 	class InvalidNumberOfTokens : public Message::BadRequest

@@ -177,6 +177,7 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	return (this->_clients.size() - 1);
 }
 
+// removes client from _clients and closes the connection if !keep-alive and only if EV_EOF | EV_ERROR is set
 bool SocketHandler::removeClient(int i, bool force)
 {
 	int clientFd = this->_evList[i].ident;
@@ -370,7 +371,7 @@ void SocketHandler::setWriteable(int i)
 	this->setNonBlocking(fd);
 }
 
-void SocketHandler::setEvent(int ident, int flags, int filter)
+void SocketHandler::setEvent(int ident, int flags, int filter) // what is ident? is it the i from the evList or the fd? @Tam
 {
 	struct kevent ev;
 

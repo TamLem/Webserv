@@ -40,6 +40,9 @@ bool Response::sendRes(int fd)
 	}
 	#ifdef SHOW_LOG_2
 		else
+	// disable after testing!!!!!!!!!!
+		// std::cout << BLUE << "was send >" << RESET << this->_responseMap[fd].response << BLUE << "<" << RESET << std::endl;
+	//
 			std::cout << YELLOW << "sent " << n << " bytes to fd: " << fd  << RESET << std::endl;
 	#endif
 	this->_responseMap[fd].response = this->_responseMap[fd].response.substr(n);
@@ -49,6 +52,7 @@ bool Response::sendRes(int fd)
 			std::cout << RED << " FULL Response sent for fd: " << fd << RESET << std::endl;
 		#endif
 		// close(fd); // never ever close here, we need to rely on the remove client to close the connection, otherwise keep-alive does not work!
+		this->lastExitStatus = this->_responseMap[fd].status; // this might be temporary
 		if (this->_responseMap.count(fd) == 1)
 			this->_responseMap.erase(fd);
 		return (true);

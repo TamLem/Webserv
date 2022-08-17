@@ -51,13 +51,9 @@ class Response : public Message
 		// void setTarget(const std::string&);
 		void setFd(int); // is this used???
 		void setProtocol(const std::string&);
-		void setPostTarget(int clientFd, std::string target);
-		void setPostLength(int clientFd, std::map<std::string, std::string> headerFields);
-		void setPostBufferSize(int clientFd, size_t bufferSize);
 		void setRequestMethod(const std::string&);
-		bool checkReceiveExistance(int clientFd);
 
-		bool was3XXCode(int clientFd);
+		bool was3XXCode(int clientFd); // for keep-alive
 
 	// for POST requests
 		void setPostTarget(int clientFd, std::string target);
@@ -77,8 +73,6 @@ class Response : public Message
 
 		void putToResponseMap(int fd);
 
-		void putToResponseMap(int fd);
-
 		void clear(void);
 		void clearResponseMap();
 		void removeFromResponseMap(int fd);
@@ -90,7 +84,6 @@ class Response : public Message
 		void createIndex(const Request&);
 		void createErrorBody(void);
 		bool sendRes(int);
-		const std::map<std::string, std::string>& getMessageMap(void) const;
 
 	bool handleClientDisconnect(int fd);
 

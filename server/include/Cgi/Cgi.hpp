@@ -30,15 +30,15 @@ class Cgi
 		Cgi& operator=(const Cgi&);
 
 	// private variables
-		char** _env;
+		string _docRoot;
+		std::map<string, string> _env;
 		string _method;
 		string _scriptName;
 		string _pathInfo;
+		string _pathTranslated;
 		string _queryString;
 		bool	_selfExecuting;
 		ConfigStruct _confStruct;
-		bool	_isTester;
-		string  _docRoot;
 	public:
 		Cgi(Request &request, ConfigStruct confStruct);
 
@@ -50,8 +50,4 @@ class Cgi
 		void passAsInput();
 		void printEnv();
 };
-
-
-
-
 #endif

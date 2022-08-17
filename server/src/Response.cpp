@@ -122,26 +122,15 @@ void Response::putToResponseMap(int fd)
 	this->_responseMap[fd].bytesLeft = this->_responseMap[fd].total;
 }
 
-std::string Response::constructHeader(void)
-{
-	std::stringstream buffer;
-	buffer << this->constructHeader();
-	buffer << this->getBody();
-	buffer << CRLFTWO;
+// std::string Response::constructHeader(void) // not sure where the other construct header came from, check this!!!!
+// {
+// 	std::stringstream buffer;
+// 	// buffer << this->constructHeader();
+// 	buffer << this->getBody();
+// 	buffer << CRLFTWO;
 
-	return (buffer.str());
-}
-
-void Response::putToResponseMap(int fd)
-{
-	// i purposly do not check for existance before writing to it so that everything would be overridden if it existed
-
-	// this->_responseMap[fd].buffer = ""; // LEGACY
-	// this->_responseMap[fd].header = ""; // LEGACY
-	this->_responseMap[fd].response = this->getResponse();
-	this->_responseMap[fd].total = this->_responseMap[fd].response.length();
-	this->_responseMap[fd].bytesLeft = this->_responseMap[fd].total;
-}
+// 	return (buffer.str());
+// }
 
 std::string Response::constructHeader(void)
 {

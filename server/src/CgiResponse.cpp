@@ -107,4 +107,3 @@ string &CgiResponse::getValue(std::string &keyValueString)
 	value = keyValueString.substr(keyValueString.find(":") + 1, string::npos);
 	return value;
 }
-

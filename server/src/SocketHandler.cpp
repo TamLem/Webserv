@@ -148,7 +148,7 @@ void SocketHandler::addSocket(int fd)
 
 int SocketHandler::getEvents()
 {
-	// struct timespec timeout;
+	struct timespec timeout;
 
 	timeout.tv_sec = 1;
 	timeout.tv_nsec = 0;

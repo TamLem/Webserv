@@ -84,7 +84,7 @@ void Server::runEventLoop()
 				}
 				catch(const std::exception& e)
 				{
-					this->_socketHandler.removeKeepAlive(this->_socketHandler->getFD(i));
+					this->_socketHandler->removeKeepAlive(this->_socketHandler->getFD(i));
 					std::cerr << YELLOW << e.what() << RESET << '\n';
 					this->_socketHandler->removeClient(i, true);
 					removeClientTraces(this->_socketHandler->getFD(i));
@@ -422,14 +422,4 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 
 
 	newCgi.cgi_response(fd);
-}
-
-const char* Server::LengthRequiredException::what() const throw()
-{
-	return ("411");
-}
-
-const char* Server::ContentTooLargeException::what() const throw()
-{
-	return ("413");
 }

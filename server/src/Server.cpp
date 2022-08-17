@@ -69,7 +69,7 @@ void Server::runEventLoop()
 			#endif
 			if (this->_socketHandler->acceptConnection(i))
 				continue ;
-			else if (this->_socketHandler->readFromClient(i) == true)
+			else if (this->_socketHandler->readFromClient(i) == true /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false */)
 			{
 				#ifdef SHOW_LOG_2
 					std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
@@ -80,6 +80,9 @@ void Server::runEventLoop()
 					if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == false)
 					{
 						this->_socketHandler->setWriteable(i);
+						// + get rid of any eventual read event that still is left @Tam
+						// this->_socketHandler->setEvent(i, EV_??????, EVFILT_READ);
+						// lseek(this->_socketHandler->getFD(i), 0, SEEK_END); // lseek fails
 					}
 				}
 				catch(const std::exception& e)
@@ -95,20 +98,20 @@ void Server::runEventLoop()
 				#ifdef SHOW_LOG_2
 					std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
 				#endif
-				if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true) // function that force sends as much data as accepted again and again until all data was send
-				// if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true) // LEGACY function to send the response in predefined chunks, with chunking headers
+				if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true)
 				{
+					if (this->_response.was3XXCode(this->_socketHandler->getFD(i)) == false)
+						this->_socketHandler->removeKeepAlive(this->_socketHandler->getFD(i));
 					if (this->_socketHandler->removeClient(i, true) == true)
 					{
-						if (this->_response.was3XXCode(this->_socketHandler->getFD(i)) == false)
-							removeClientTraces(this->_socketHandler->getFD(i)); // removes client from receive and response Map
-						else
-							this->_socketHandler->removeKeepAlive(this->_socketHandler->getFD(i));
+						removeClientTraces(this->_socketHandler->getFD(i)); // removes client from receive and response Map
 					}
+					else
+						// set the fd to readable!!!! @Tam
 				}
 			}
 			if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients
-				removeClientTraces(this->_socketHandler->getFD(i)); // removes client from receive, response Map and keepalive set
+				removeClientTraces(this->_socketHandler->getFD(i));
 		}
 	}
 }
@@ -238,6 +241,7 @@ void Server::applyCurrentConfig(const Request& request)
 	this->_currentConfig = this->_config->getConfigStruct(host);
 }
 
+// removes any data of the client from _responseMap, _receiveMap and _keepalive
 void Server::removeClientTraces(int clientFd)
 {
 	this->_response.removeFromReceiveMap(clientFd);
@@ -341,7 +345,9 @@ void Server::_readRequestHead(int clientFd)
 			#ifdef SHOW_LOG
 				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED" << std::endl;
 			#endif
-			throw Server::ClientDisconnect();
+			#ifndef FORTYTWO_TESTER
+				throw Server::ClientDisconnect(); // only for testing!!!!!
+			#endif
 		}
 		else if (n == 0) // read reached eof
 			break ;
@@ -392,7 +398,12 @@ void Server::_readRequestHead(int clientFd)
 
 void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 {
-
+	#ifdef FORTYTWO_TESTER
+// was missing for the tester maybe????
+	_response.setProtocol(PROTOCOL);
+	_response.setStatus("200");
+ //
+	#endif
 	int cgiPipe[2];
 	if (pipe(cgiPipe) == -1)
 	{

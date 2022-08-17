@@ -1,5 +1,10 @@
 #include "Response.hpp"
-
+//// might be temporary
+	bool Response::isInResponseMap(int clientFd)
+	{
+		return (this->_responseMap.count(clientFd));
+	}
+////
 bool Response::isValidStatus(const std::string& status)
 {
 	if (this->messageMap.count(status))
@@ -78,10 +83,12 @@ void Response::setProtocol(const std::string& protocol)
 
 bool Response::was3XXCode(int clientFd)
 {
-	if (this->_responseMap.count(clientFd))
-		return (this->_responseMap[clientFd].status[0] == '3');
-	else
-		return (false);
+	(void)clientFd;
+	// if (this->_responseMap.count(clientFd))
+		// return (this->_responseMap[clientFd].status[0] == '3');
+		return (this->status[0] == '3');
+	// else
+	// 	return (false);
 }
 
 const std::string& Response::getStatus(void) const

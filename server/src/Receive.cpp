@@ -86,9 +86,14 @@ void Response::receiveChunk(int i)
 
 std::string Response::constructPostResponse() // this needs to be worked on !!!!!!
 {
+	std::ifstream postBody;
+	postBody.open("./server/data/pages/post_success.html");
+
 	std::stringstream buffer;
 	buffer << "HTTP/1.1 201 Created";
 	buffer << CRLFTWO;
+	if (postBody.is_open())
+		buffer << postBody.rdbuf();
 
 	return (buffer.str());
 }

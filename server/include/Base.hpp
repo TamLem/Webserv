@@ -53,9 +53,6 @@
 // ResponseStruct
 struct ResponseStruct
 {
-// LEGACY
-	// std::string buffer; // LEGACY for when less than sendChunk() only sends part of the chunk
-	// std::string header; // LEGACY for chunked response only, was used in sendResponse()->sendChunk() not sure if still used????
 // general
 	std::string response;
 	size_t total;
@@ -114,3 +111,7 @@ struct ConfigStruct
 };
 
 #endif // BASE_HPP
+
+// LEGACY from ResponseStruct
+	// std::string buffer; // LEGACY for when less than sendChunk() only sends part of the chunk
+	// std::string header; // LEGACY for chunked response only, was used in sendResponse()->sendChunk() not sure if still used????

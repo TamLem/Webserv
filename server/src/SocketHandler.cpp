@@ -194,6 +194,8 @@ bool SocketHandler::removeClient(int i, bool force)
 	int clientFd = this->_evList[i].ident;
 	if ((this->_evList[i].flags & EV_EOF )  || (this->_evList[i].flags & EV_ERROR )/* || (this->_evList[i].flags & EV_CLEAR) */ || force)
 	{
+		if (this->_keepalive.count(clientFd))
+			return (false); // and set to readable maybe?
 		#ifdef SHOW_LOG_2
 			std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
 		#endif
@@ -299,7 +301,14 @@ void SocketHandler::removeInactiveClients()
 void SocketHandler::addKeepAlive(int clientFd)
 {
 	if (this->_keepalive.count(clientFd) == 0)
+	{
 		this->_keepalive.insert(clientFd);
+		#ifdef SHOW_LOG_2
+			std::stringstream buffer;
+			buffer << clientFd << " was added to keep-alive";
+			LOG_YELLOW(buffer.str());
+		#endif
+	}
 	#ifdef SHOW_LOG
 		else
 			LOG_RED("Client to add already was part of keep-alive");
@@ -309,7 +318,14 @@ void SocketHandler::addKeepAlive(int clientFd)
 void SocketHandler::removeKeepAlive(int clientFd)
 {
 	if (this->_keepalive.count(clientFd) == 1)
+	{
 		this->_keepalive.erase(clientFd);
+		#ifdef SHOW_LOG_2
+			std::stringstream buffer;
+			buffer << clientFd << " was removed from keep-alive";
+			LOG_YELLOW(buffer.str());
+		#endif
+	}
 	#ifdef SHOW_LOG
 		else
 			LOG_RED("Client to remove was NOT part of keep-alive");

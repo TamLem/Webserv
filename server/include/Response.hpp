@@ -51,6 +51,8 @@ class Response : public Message
 		void setFd(int); // is this used???
 		void setProtocol(const std::string&);
 
+		bool was3XXCode(int clientFd);
+
 	// for POST requests
 		void setPostTarget(int clientFd, std::string target);
 		void setPostLength(int clientFd, std::map<std::string, std::string> &headerFields);

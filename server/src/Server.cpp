@@ -104,14 +104,19 @@ void Server::runEventLoop()
 					std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
 				#endif
 				if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true) // function that force sends as much data as accepted again and again until all data was send
-				// if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true) // function to send the response in predefined chunks, with chunking headers
+				// if (this->_response.sendResponse(this->_socketHandler->getFD(i)) == true) // LEGACY function to send the response in predefined chunks, with chunking headers
 				{
 					if (this->_socketHandler->removeClient(i, true) == true)
-						removeClientTraces(this->_socketHandler->getFD(i)); // removes client from receive and response Map
+					{
+						if (this->_response.was3XXCode(this->_socketHandler->getFD(i)) == false)
+							removeClientTraces(this->_socketHandler->getFD(i)); // removes client from receive and response Map
+						else
+							this->_socketHandler->removeKeepAlive(this->_socketHandler->getFD(i));
+					}
 				}
 			}
 			if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 && this->_socketHandler->removeClient(i) == true)
-				removeClientTraces(this->_socketHandler->getFD(i)); // removes client from receive and response Map
+				removeClientTraces(this->_socketHandler->getFD(i)); // removes client from receive, response Map and keepalive set
 		}
 	}
 }
@@ -240,6 +245,7 @@ void Server::applyCurrentConfig(const Request& request)
 	this->_currentConfig = this->_config->getConfigStruct(host);
 }
 
+// removes client data from _responseMap, _receiveMap and _keepalive
 void Server::removeClientTraces(int clientFd)
 {
 	this->_response.removeFromReceiveMap(clientFd);
@@ -507,15 +513,15 @@ void Server::handleRequest(int i) // i is the index from the evList of the socke
 	bool isCgi = false;
 	this->_response.clear();
 	this->loopDetected = false;
-	int fd = this->_socketHandler->getFD(i);
+	int clientFd = this->_socketHandler->getFD(i);
 	try
 	{
-		// if (this->_response._receiveMap.count(fd) == 1)
-		if (this->_response.isInReceiveMap(fd) == true)
-			this->_response.receiveChunk(fd);
+		// if (this->_response._receiveMap.count(clientFd) == 1)
+		if (this->_response.isInReceiveMap(clientFd) == true)
+			this->_response.receiveChunk(clientFd);
 		else
 		{
-			this->_readRequestHead(fd); // read 1024 charackters or if less until /r/n/r/n is found
+			this->_readRequestHead(clientFd); // read 1024 charackters or if less until /r/n/r/n is found
 			Request request(this->_requestHead);
 			this->applyCurrentConfig(request);
 			//normalize target (in Request)
@@ -533,14 +539,18 @@ void Server::handleRequest(int i) // i is the index from the evList of the socke
 			// request.setRoutedTarget("." + request.getRoutedTarget());
 			//check method
 			checkLocationMethod(request);
+
+			if (request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive")
+				this->_socketHandler->addKeepAlive(clientFd);
+
 			if (isCgi == true)
 			{
 				std::cout << "CGI REQUEST: " << request.getRoutedTarget() << std::endl;
 				this->applyCurrentConfig(request);
-				cgi_handle(request, fd, this->_currentConfig);
+				cgi_handle(request, clientFd, this->_currentConfig);
 			}
 			else if (request.getMethod() == "POST" || request.getMethod() == "PUT")
-				this->handlePOST(fd, request);
+				this->handlePOST(clientFd, request);
 			else if (request.getMethod() == "DELETE")
 				this->handleDELETE(request);
 			else
@@ -565,9 +575,9 @@ void Server::handleRequest(int i) // i is the index from the evList of the socke
 				code = "500";
 			handleERROR(code);
 		}
-		if (this->_response.isInReceiveMap(fd) == true)
-			this->_response.removeFromReceiveMap(fd);
-		this->_response.putToResponseMap(fd);
+		if (this->_response.isInReceiveMap(clientFd) == true)
+			this->_response.removeFromReceiveMap(clientFd);
+		this->_response.putToResponseMap(clientFd);
 	}
 	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 }
@@ -589,7 +599,7 @@ bool Server::_isPrintableAscii(char c)
 }
 
 // read 1024 charackters or if less until /r/n/r/n is found
-void Server::_readRequestHead(int fd)
+void Server::_readRequestHead(int clientFd)
 {
 	this->_requestHead.clear();
 	size_t charsRead = 0;
@@ -598,11 +608,11 @@ void Server::_readRequestHead(int fd)
 	char buffer[2];
 	while (charsRead < MAX_REQUEST_HEADER_SIZE)
 	{
-		n = read(fd, buffer, 1);
-		if (n < 0) // read had an error reading from fd
+		n = read(clientFd, buffer, 1);
+		if (n < 0) // read had an error reading from clientFd
 		{
 			#ifdef SHOW_LOG
-				std::cerr << RED << "READING FROM FD " << fd << " FAILED" << std::endl;
+				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED" << std::endl;
 			#endif
 			throw Server::InternalServerErrorException();
 		}
@@ -638,7 +648,7 @@ void Server::_readRequestHead(int fd)
 	if (charsRead <= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == true)
 	{
 		#ifdef SHOW_LOG
-			std::cout << YELLOW << "Received->" << RESET << this->_requestHead << YELLOW << "<-Received on fd: " << fd << RESET << std::endl;
+			std::cout << YELLOW << "Received->" << RESET << this->_requestHead << YELLOW << "<-Received on fd: " << clientFd << RESET << std::endl;
 		#endif
 	}
 	else

@@ -271,12 +271,15 @@ void Config::printCluster()
 }
 
 // Getter
+
+// gives you the whole _cluster which contains all ConfigStructs in a map with the serverName as key
 std::map<std::string, ConfigStruct> Config::getCluster()
 {
 	return (this->_cluster);
 }
 
-const ConfigStruct& Config::getConfigStruct(std::string hostName) // use this function if you want to have access to the ConfigStruct of a server
+// returns the correct ConfigStruct for the supplied hostName, returns default if hostName was not found
+const ConfigStruct& Config::getConfigStruct(std::string hostName)
 {
 	std::string defaultConfig = "default";
 	if (this->applyConfig(hostName) == true)

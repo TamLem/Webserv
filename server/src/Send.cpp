@@ -28,7 +28,7 @@ bool Response::sendRes(int fd)
 		std::stringstream errorMessage;
 		errorMessage << "send Error sending response for fd: " << fd;
 		LOG_RED(errorMessage.str());
-		perror(NULL); // check if illegal!!!!!!
+		// perror(NULL); // check if illegal!!!!!!
 		std::cerr << RESET;
 		return (true); // throw exception
 	}
@@ -53,7 +53,7 @@ bool Response::handleClientDisconnect(int fd)
 {
 	char buf[100];
 
-	while(read(fd, buf, 100));
+	while(read(fd, buf, 100)); // this is bad, might lead to hanging connections if a lot of data was put on the fd, but maybe not that bad since a fd can only hold 64kb at once
 
 	close(fd);
 	this->_responseMap.erase(fd);

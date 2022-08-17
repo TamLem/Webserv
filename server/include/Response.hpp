@@ -62,7 +62,6 @@ class Response : public Message
 		const std::string& getStatusMessage(void) const;
 		std::string getResponse();
 		std::string constructHeader(void);
-		std::string constructChunkedHeader(void);
 
 		void putToResponseMap(int fd);
 
@@ -152,3 +151,4 @@ bool targetExists(const std::string&);
 		// void sendChunk(int i);// i is the fd // LEGACY
 		// void endChunkedMessage(int i, int n); // LEGACY
 		// bool sendResponse(int); // LEGACY
+		// std::string constructChunkedHeader(void); // LEGACY

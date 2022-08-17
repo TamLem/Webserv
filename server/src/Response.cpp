@@ -113,17 +113,6 @@ std::string Response::constructHeader(void)
 	return (stream.str());
 }
 
-std::string Response::constructChunkedHeader(void)
-{
-	std::stringstream stream;
-
-	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
-	// stream << "Content-Type: " << "image/jpg" << CRLF;
-	stream << "Transfer-Encoding: chunked" << CRLFTWO;
-
-	return (stream.str());
-}
-
 void Response::createErrorBody(void)
 {
 	std::stringstream body;
@@ -239,7 +228,7 @@ void Response::addContentLengthHeaderField(void)
 {
 	std::stringstream contentLength;
 	// addHeaderField("Server", "localhost:8080");
-	// if (headerFields.count("Transfer-Encoding") == 0)
+	// if (headerFields.count("transfer-encoding") == 0)
 	// {
 		contentLength << this->body.length();
 		addHeaderField("Content-Length", contentLength.str());
@@ -424,4 +413,15 @@ const char* Response::ClientDisconnect::what(void) const throw()
 // 		std::cout << RED << "fd: " << sock_fd << " was closed after sending response" << RESET << std::endl;
 // 	#endif
 // 	return (0);
+// }
+
+// std::string Response::constructChunkedHeader(void)
+// {
+// 	std::stringstream stream;
+
+// 	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
+// 	// stream << "Content-Type: " << "image/jpg" << CRLF;
+// 	stream << "Transfer-Encoding: chunked" << CRLFTWO;
+
+// 	return (stream.str());
 // }

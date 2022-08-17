@@ -132,7 +132,7 @@ void Server::handleGET(const Request& request)
 	}
 	else
 		_response.createBodyFromFile(request.getRoutedTarget() + request.indexPage);
-	_response.addHeaderField("Server", this->_currentConfig.serverName);
+	_response.addHeaderField("server", this->_currentConfig.serverName);
 	_response.addContentLengthHeaderField();
 	_response.setStatus("200");
 }
@@ -175,15 +175,13 @@ void Server::handlePOST(int clientFd, const Request& request)
 	#endif
 	std::map<std::string, std::string> tempHeaderFields = request.getHeaderFields();
 
-	if (tempHeaderFields.count("Content-Length") == 0 && tempHeaderFields.count("content-length") == 0)
+	if (tempHeaderFields.count("content-length") == 0)
 		throw Server::LengthRequiredException();
-	else if (tempHeaderFields.count("Content-Length") && _strToSizeT(tempHeaderFields["Content-Length"]) > this->_currentConfig.clientMaxBodySize)
-		throw Server::ContentTooLargeException();
-	else if (tempHeaderFields.count("content-length") && _strToSizeT(tempHeaderFields["content-length"]) > this->_currentConfig.clientMaxBodySize) // check how to remove this
+	else if (tempHeaderFields.count("content-length") && _strToSizeT(tempHeaderFields["content-length"]) > this->_currentConfig.clientMaxBodySize)
 		throw Server::ContentTooLargeException();
 
 	this->_response.setProtocol(PROTOCOL);
-	this->_response.addHeaderField("Server", this->_currentConfig.serverName);
+	this->_response.addHeaderField("server", this->_currentConfig.serverName);
 	this->_response.setStatus("201");
 	this->_response.createBodyFromFile("./server/data/pages/post_success.html");
 	// put this info into the receiveStruct maybe ????
@@ -216,7 +214,7 @@ void Server::handleDELETE(const Request& request)
 	staticRemoveTarget(request.getRoutedTarget());
 	_response.setProtocol(PROTOCOL);
 	_response.setBody("");
-	_response.addHeaderField("Server", this->_currentConfig.serverName);
+	_response.addHeaderField("server", this->_currentConfig.serverName);
 	_response.setStatus("200");
 }
 
@@ -231,7 +229,7 @@ void Server::handleERROR(const std::string& status)
 	}
 	else
 		_response.createErrorBody();
-	_response.addHeaderField("Server", this->_currentConfig.serverName);
+	_response.addHeaderField("server", this->_currentConfig.serverName);
 	_response.addContentLengthHeaderField();
 }
 
@@ -246,6 +244,7 @@ void Server::removeClientTraces(int clientFd)
 {
 	this->_response.removeFromReceiveMap(clientFd);
 	this->_response.removeFromResponseMap(clientFd);
+	this->_socketHandler->removeKeepAlive(clientFd);
 }
 
 // static std::string staticRemoveTrailingSlash(std::string string)
@@ -541,12 +540,12 @@ void Server::handleRequest(int i) // i is the index from the evList of the socke
 				cgi_handle(request, fd, this->_currentConfig);
 			}
 			else if (request.getMethod() == "POST" || request.getMethod() == "PUT")
-				handlePOST(fd, request);
+				this->handlePOST(fd, request);
 			else if (request.getMethod() == "DELETE")
-				handleDELETE(request);
+				this->handleDELETE(request);
 			else
 			{
-				handleGET(request);
+				this->handleGET(request);
 			}
 		}
 	}

@@ -92,6 +92,7 @@ std::string Response::getResponse()
 void Response::putToResponseMap(int fd)
 {
 	// i purposly do not check for existance before writing to it so that everything would be overridden if it existed
+
 	// this->_responseMap[fd].buffer = ""; // LEGACY
 	// this->_responseMap[fd].header = ""; // LEGACY
 	this->_responseMap[fd].response = this->getResponse();
@@ -231,7 +232,7 @@ void Response::addContentLengthHeaderField(void)
 	// if (headerFields.count("transfer-encoding") == 0)
 	// {
 		contentLength << this->body.length();
-		addHeaderField("Content-Length", contentLength.str());
+		addHeaderField("content-length", contentLength.str());
 	// }
 }
 

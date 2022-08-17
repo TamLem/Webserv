@@ -182,7 +182,7 @@ static size_t _strToSizeT(std::string str)
 
 void Response::setPostChunked(int clientFd, std::string target, std::map<std::string, std::string> &headerFields)
 {
-	if (this->_receiveMap.count(clientFd) && headerFields.count("Transfer-Encoding") && headerFields["Transfer-Encoding"] == "chunked")
+	if (this->_receiveMap.count(clientFd) && headerFields.count("transfer-encoding") && headerFields["transfer-encoding"] == "chunked")
 		this->_receiveMap[clientFd].isChunked = true;
 
 	if (this->_receiveMap.count(clientFd) && this->_receiveMap[clientFd].isChunked == true)
@@ -216,7 +216,7 @@ void Response::_createFileExistingHeader(int clientFd, const Request &request, i
 	this->setProtocol(PROTOCOL);
 	this->setStatus("303");
 	std::string location = "http://" + serverNamePort.str() + request.getRawTarget();
-	this->addHeaderField("Location", location);
+	this->addHeaderField("location", location);
 
 	// set fd to eof
 
@@ -226,12 +226,12 @@ void Response::_createFileExistingHeader(int clientFd, const Request &request, i
 void Response::setPostLength(int clientFd, std::map<std::string, std::string> &headerFields)
 {
 	size_t length = 0;
-	if (headerFields.count("Content-Length"))
+	/* if (headerFields.count("Content-Length"))
 	{
 		std::cout << headerFields["Content-Length"] << std::endl;
 		length = _strToSizeT(headerFields["Content-Length"]);
 	}
-	else if (headerFields.count("Content-length"))
+	else  */if (headerFields.count("content-length"))
 	{
 		std::cout << headerFields["content-length"] << std::endl;
 		length = _strToSizeT(headerFields["content-length"]);

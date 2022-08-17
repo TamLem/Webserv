@@ -31,7 +31,7 @@ void CgiResponse::parseSingleHeaderField(string& headerLine)
 	{
 		if (headerLine.find("http://") || headerLine.find("localhost")) //treat as absolute request
 		{
-			this->addHeaderField("Location", getValue(headerLine));
+			this->addHeaderField("location", getValue(headerLine));
 		}
 		else
 		{
@@ -47,7 +47,7 @@ void CgiResponse::parseSingleHeaderField(string& headerLine)
 	}
 	if (headerLine.find("Content-Type") != string::npos)
 	{
-		addHeaderField("Content-Type", getValue(headerLine));
+		addHeaderField("content-type", getValue(headerLine));
 	}
 }
 

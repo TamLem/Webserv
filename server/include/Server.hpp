@@ -83,6 +83,7 @@ class Server
 		ConfigStruct _currentConfig;
 		std::string _currentLocationKey;
 		bool loopDetected;
+		std::vector<int> _cgiSockets;
 
 	// private Methods
 		static void handle_signal(int sig);
@@ -106,10 +107,15 @@ class Server
 		void _handleResponse(int i);
 
 		bool _isCgiRequest(std::string requestHead);
+		void cgi_handle(Request& request, int fd, ConfigStruct configStruct);
 
 	public:
 
 	// Exceptions
+		class ClientDisconnect: public  std::exception {
+			public:
+				virtual const char* what() const throw();
+		};
 		class InternalServerErrorException : public std::exception
 		{
 			public:
@@ -149,6 +155,7 @@ class Server
 		};
 };
 
-void cgi_handle(Request& request, int fd, ConfigStruct configStruct);
+std::string staticPercentDecodingFix(std::string target);
+std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace);
 
 #endif

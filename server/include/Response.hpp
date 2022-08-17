@@ -30,6 +30,7 @@ class Response : public Message
 		std::map<std::string, std::string> messageMap;
 		std::map<size_t, ReceiveStruct> _receiveMap; // this will store temp data for the POST events
 		std::map<size_t, ResponseStruct> _responseMap; // this will store temp data for sending
+		std::string _requestMethod;
 		// std::string target;
 	// private Methods
 		void createMessageMap(void);
@@ -50,6 +51,11 @@ class Response : public Message
 		// void setTarget(const std::string&);
 		void setFd(int); // is this used???
 		void setProtocol(const std::string&);
+		void setPostTarget(int clientFd, std::string target);
+		void setPostLength(int clientFd, std::map<std::string, std::string> headerFields);
+		void setPostBufferSize(int clientFd, size_t bufferSize);
+		void setRequestMethod(const std::string&);
+		bool checkReceiveExistance(int clientFd);
 
 		bool was3XXCode(int clientFd);
 
@@ -62,8 +68,14 @@ class Response : public Message
 
 		const std::string& getStatus(void) const;
 		const std::string& getStatusMessage(void) const;
+		const std::map<std::string, std::string>& getMessageMap(void) const;
 		std::string getResponse();
+		std::string getRequestMethod(void) const;
+
+
 		std::string constructHeader(void);
+
+		void putToResponseMap(int fd);
 
 		void putToResponseMap(int fd);
 
@@ -140,6 +152,7 @@ class Response : public Message
 			virtual const char* what() const throw();
 	};
 };
+
 
 std::ostream& operator<<(std::ostream&, const Response&);
 

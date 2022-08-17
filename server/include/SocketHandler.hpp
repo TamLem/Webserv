@@ -55,14 +55,12 @@ class SocketHandler
 		std::vector<int> _serverFds; // maybe not needed
 
 		struct kevent _evList[MAX_EVENTS];
+		std::vector<struct kevent> _eventsChanges;
 
 		std::map<int, int> _serverMap;
 		int _kq;
-		int _numEvents;
 		// char _buffer[1024]; //temp
 		struct kevent _ev; // temp
-		std::string _buffer; //temp
-		int _fd; //temp
 
 
 	// Private Members
@@ -86,8 +84,7 @@ class SocketHandler
 	// Public Methods
 		int getEvents();
 		bool acceptConnection(int i);
-		bool addSocket(int fd);
-
+		void addSocket(int fd);
 		bool readFromClient(int i);
 		bool writeToClient(int i);
 
@@ -99,15 +96,20 @@ class SocketHandler
 		bool isKeepAlive(int clientFd);
 
 	// Getter
-		int getNumEvents() const;
-		// const char *getBuffer() const;
-		std::string getBuffer() const;
 		int getFD(int i) const;
 		int getPort(int i);
 
 	// Setter
 		void setWriteable(int i);
-		void setReadable(int i);
+		void setEvent(int ident, int flags, int filter);
+
+	// Other
+	void setNonBlocking(int fd);
+	void setNoSigpipe(int fd);
+
+
 
 };
+
+
 #endif // SOCKETHANDLER_HPP

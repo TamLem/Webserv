@@ -35,7 +35,7 @@ class Cgi
 		string _scriptName;
 		string _pathInfo;
 		string _queryString;
-		bool	_isPhp;
+		bool	_selfExecuting;
 		ConfigStruct _confStruct;
 		bool	_isTester;
 		string  _docRoot;
@@ -44,18 +44,11 @@ class Cgi
 
 		~Cgi();
 
-		void printEnv()
-		{
-			for (int i=0; _env[i]; i++)
-				std::cout << _env[i] << std::endl;
-		}
-
-
-	void setEnv(Request &request);
-	void cgi_response(int fd);
-	void phpHandler(Request &req);
-	void blaHandler(Request &req);
-
+		void setEnv(Request &request);
+		void cgi_response(int fd);
+		void phpHandler(Request &req);
+		void passAsInput();
+		void printEnv();
 };
 
 

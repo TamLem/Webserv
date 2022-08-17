@@ -4,23 +4,21 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-Cgi::Cgi(Request &request, ConfigStruct configStruct): _isPhp(false), _confStruct(configStruct)
+Cgi::Cgi(Request &request, ConfigStruct configStruct): _selfExecuting(false), _confStruct(configStruct)
 {
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Cgi Constructor called for " << this << RESET << std::endl;
 	#endif
 	_env = NULL;
 	_method = request.getMethod();
-	string url = request.getUrl();
-	if (url.find(".php") != string::npos)
-	{
-		phpHandler(request);
-	}
-	else if (url.find(".bla") != string::npos)
-	{
-		blaHandler(request);
-	}
-	else
+	string url = request.getDecodedTarget();
+	string extension = url.substr(url.find_last_of("."));
+
+	if (url.find("/cgi/") != string::npos)
+		_selfExecuting = true;
+
+	int queryStart = url.find("?");
+	if (_selfExecuting)
 	{
 		int scriptNameStart = url.find("/cgi/") + 5;
 		int scriptNameEnd = url.find("/", scriptNameStart);
@@ -73,15 +71,15 @@ void Cgi::setEnv(Request &request) // think about changing this to return a cons
 	_env[i] = _pathInfo.empty() ? strdup((envVars[i] + "=" + "").c_str()) : strdup((envVars[i] + "=" + "./" + _pathInfo).c_str()); i++;
 	_env[i] = strdup((envVars[i] + "=" + "./" + _scriptName).c_str()); i++;
 	_env[i] = strdup((envVars[i] + "=" + _queryString).c_str()); i++;
-	_env[i] = strdup((envVars[i] + "=" + "localhost").c_str()); i++;
-	_env[i] = strdup((envVars[i] + "=" + "8080").c_str()); i++;
+	_env[i] = strdup((envVars[i] + "=" + "localhost").c_str()); i++; // please do not hardcode the hostname since it can be very different
+	_env[i] = strdup((envVars[i] + "=" + "8080").c_str()); i++; // please do not hardcode the port since it can be very different
 	_env[i] = strdup((envVars[i] + "=" + "HTTP/1.1").c_str()); i++;
 	if (_method == "POST")
 	{
-		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Content-Type")->second).c_str()); i++;
-		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Content-Length")->second).c_str()); i++;
-		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Origin")->second).c_str()); i++;
-		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Origin")->second).c_str()); i++;
+		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Content-Type")->second).c_str()); i++; // the header fields are parsed in a way so they only have lowercase letters!!!!
+		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Content-Length")->second).c_str()); i++; // same as above
+		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Origin")->second).c_str()); i++; // same as above
+		_env[i] = strdup((envVars[i] + "=" + reqHeaders.find("Origin")->second).c_str()); i++; // same as above
 	}
 
 	while(_env[i])
@@ -90,7 +88,7 @@ void Cgi::setEnv(Request &request) // think about changing this to return a cons
 
 void Cgi::phpHandler(Request &req)
 {
-	string docRoot = "/Users/tlemma/Documents/Webserv/main/init/server/pages";
+	string docRoot = "/Users/tlemma/Documents/Webserv/main/init/server/pages"; // don't hardcode this since this can change depending on the conf file !!!!! and this path contains the username which will mess up when running on the evaluators pc
 	string filePath = req.getUrl();
 	_pathInfo = docRoot + filePath;
 	cout << "url :" << _pathInfo << endl;
@@ -102,9 +100,9 @@ void Cgi::phpHandler(Request &req)
 	_isPhp = true;
 }
 
-void Cgi::blaHandler(Request &req)
+void Cgi::blaHandler(Request &req) // please use #ifdef for all the 42 tester only stuff
 {
-	_docRoot = "/Users/aenglert/testfolder/webserv/42tester";
+	_docRoot = "/Users/aenglert/testfolder/webserv/42tester"; // this contains the username!!!!!!!!!!!
 	string filePath = req.getUrl();
 	_pathInfo = _docRoot + filePath;
 	cout << "url :" << _pathInfo << endl;
@@ -116,6 +114,20 @@ void Cgi::blaHandler(Request &req)
 	_isTester = true;
 }
 
+void Cgi::passAsInput(void)
+{
+	#ifdef FORTYTWO_TESTER
+		int fileFd = open("./42tester/YoupiBanane/youpi.bla", O_RDONLY);
+		if (fileFd == -1)
+		{
+			cout << "path not found" << endl;
+			return;
+		}
+		dup2(fileFd, STDIN_FILENO);
+		close(fileFd);
+	#endif
+}
+
 void Cgi::cgi_response(int fd)
 {
 	std::string file;
@@ -124,26 +136,12 @@ void Cgi::cgi_response(int fd)
 	int pipefd[2];
 
 	args = NULL;
-	if (_isPhp)
-	{
-		executable = "php-cgi";
-		args = new char *[3];
-		args[0] = strdup(executable.c_str());
-		args[1] = strdup(_pathInfo.c_str());
-		args[2] = NULL;
-	}
-	else if (_isTester)
-	{
-		executable = _docRoot + "/cgi_tester";
-		args = new char *[3];
-		args[0] = strdup(executable.c_str());
-		args[1] = strdup(_pathInfo.c_str());
-		args[2] = NULL;
-	}
-	else
-		executable = _scriptName.c_str();
+	executable = _scriptName;
+	cout << "executable: " << executable << endl;
+	if (!_selfExecuting)
+		passAsInput();
 	std::cout << GREEN << "Executing CGI..." << std::endl;
-	file = "index.php";
+	file = "index.php"; // what if the filename changes???
 	int stdout_init = dup(STDOUT_FILENO);
 	pipe(pipefd);
 	dup2(pipefd[1], STDOUT_FILENO);
@@ -151,11 +149,12 @@ void Cgi::cgi_response(int fd)
 	int pid = fork();
 	if (pid == 0)
 	{
-		chdir("cgi-bin");
+		chdir("cgi-bin"); // what if dirname changes????
 		if (execve(executable.c_str(), args, _env) == -1)
 		{
 			std::cout << "error executing cgi" << std::endl;
 		}
+
 		exit(0);
 	}
 	wait(NULL);
@@ -167,7 +166,9 @@ void Cgi::cgi_response(int fd)
 	int n;
 	while((n = read(pipefd[0], buf, 1023)) > 0)
 	{
-		cout << "cgi output: " << buf << endl;
+		#ifdef SHOW_LOG
+			cout << "cgi output: " << buf << endl;
+		#endif
 		send(fd, buf, n, 0);
 	}
 	close(pipefd[0]);

@@ -15,6 +15,17 @@ Response::Response(void)
 	this->createMessageMap();
 }
 
+void Response::setRequestMethod(const std::string& method)
+{
+	this->_requestMethod = method;
+}
+
+std::string Response::getRequestMethod(void) const
+{
+	return this->_requestMethod;
+}
+
+
 void Response::clear(void)
 {
 	this->protocol = "";
@@ -23,6 +34,7 @@ void Response::clear(void)
 	this->headerFields.clear();
 	this->status = "";
 	this->statusMessage = "";
+	this->_requestMethod = "";
 	target = "";
 }
 
@@ -88,6 +100,29 @@ const std::map<std::string, std::string>& Response::getMessageMap(void) const
 }
 
 std::string Response::getResponse()
+{
+	std::cout << "Request Method: " << this->_requestMethod << std::endl;
+	std::stringstream buffer;
+	buffer << this->constructHeader();
+	if (this->_requestMethod != "HEAD")
+		buffer << this->getBody();
+	buffer << CRLFTWO;
+
+	return (buffer.str());
+}
+
+void Response::putToResponseMap(int fd)
+{
+	// i purposly do not check for existance before writing to it so that everything would be overridden if it existed
+
+	// this->_responseMap[fd].buffer = ""; // LEGACY
+	// this->_responseMap[fd].header = ""; // LEGACY
+	this->_responseMap[fd].response = this->getResponse();
+	this->_responseMap[fd].total = this->_responseMap[fd].response.length();
+	this->_responseMap[fd].bytesLeft = this->_responseMap[fd].total;
+}
+
+std::string Response::constructHeader(void)
 {
 	std::stringstream buffer;
 	buffer << this->constructHeader();

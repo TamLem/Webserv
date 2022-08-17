@@ -10,7 +10,7 @@ else
 CXXFLAGS	=	-std=c++98 -Wall -Wextra #-Werror // please fix this Tam
 endif
 
-CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
+# CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
 
 # CXXFLAGS	+=	-D FORTYTWO_TESTER
 
@@ -41,6 +41,9 @@ ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be differe
 SRC_FILES	=	main.cpp \
 				SocketHandler.cpp \
 				Server.cpp \
+				ServerExceptions.cpp \
+				Routing.cpp	\
+				ServerUtils.cpp \
 				Message.cpp \
 				Response.cpp \
 				Send.cpp \

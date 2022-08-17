@@ -19,21 +19,21 @@
 #define BOLD "\033[1m"
 #define UNDERLINED "\033[4m"
 
-#ifdef SHOW_LOG_2
+// #ifdef SHOW_LOG_2
 	#define LOG_RED(x) (std::cout << __FILE__ << ":" << __LINE__ << "\t\033[1;31m" << x << "\033[0m" << std::endl)
 	#define LOG_YELLOW(x) (std::cout << __FILE__ << ":" << __LINE__ << "\t\033[1;33m" << x << "\033[0m" << std::endl)
-#else
-	#define LOG_RED(x) (void(x))
-	#define LOG_YELLOW(x) (void(x))
-#endif
+// #else
+// 	#define LOG_RED(x) (void(x))
+// 	#define LOG_YELLOW(x) (void(x))
+// #endif
 
-#ifdef SHOW_LOG
+// #ifdef SHOW_LOG
 	#define LOG_GREEN(x) (std::cout << __FILE__ << ":" << __LINE__ << "\t\033[1;32m" << x << "\033[0m" << std::endl)
 	#define LOG_BLUE(x) (std::cout << __FILE__ << ":" << __LINE__ << "\t\033[1;34m" << x << "\033[0m" << std::endl)
-#else
-	#define LOG_GREEN(x) (void(x))
-	#define LOG_BLUE(x) (void(x))
-#endif
+// #else
+// 	#define LOG_GREEN(x) (void(x))
+// 	#define LOG_BLUE(x) (void(x))
+// #endif
 
 // other defines
 #define CRLF "\r\n"

@@ -45,8 +45,6 @@ struct client
 	struct sockaddr_in addr;
 };
 
-void cgi_handle(Request& request, std::string buf, int fd); // what tf is this @Tam
-
 static volatile int keep_running = 1;
 
 class Server

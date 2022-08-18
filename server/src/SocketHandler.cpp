@@ -312,6 +312,12 @@ void SocketHandler::setWriteable(int i)
 	this->setNonBlocking(fd);
 }
 
+/**
+ * @brief adds events to the change list
+ * @param ident fd of the client
+ * @param flags event flag
+ * @param filter event filter
+ */
 void SocketHandler::setEvent(int ident, int flags, int filter)
 {
 	struct kevent ev;

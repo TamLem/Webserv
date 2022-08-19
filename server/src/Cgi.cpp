@@ -18,7 +18,7 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct): _selfExecuting(false), _c
 
 	if (url.find("/cgi/") != string::npos)
 		_selfExecuting = true;
-	
+
 	int queryStart = url.find("?");
 	if (_selfExecuting)
 	{
@@ -28,8 +28,8 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct): _selfExecuting(false), _c
 			scriptNameEnd = url.find("?", scriptNameStart);
 		_scriptName = url.substr(scriptNameStart, scriptNameEnd - scriptNameStart);
 		_scriptName = "." + _docRoot + "cgi-bin/" + _scriptName;
-		_pathInfo = (scriptNameEnd != (int)string::npos ) ? 
-			url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";	
+		_pathInfo = (scriptNameEnd != (int)string::npos ) ?
+			url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";
 	}
 	else
 	{
@@ -38,7 +38,7 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct): _selfExecuting(false), _c
 			_scriptName = _confStruct.cgi[extension];
 		}
 		_pathInfo = url;
-		_pathTranslated = "." + _docRoot + _pathInfo.substr(1);	
+		_pathTranslated = "." + _docRoot + _pathInfo.substr(1);
 	}
 	_queryString = request.getQuery().length() > 1 ? request.getQuery().substr(1) : "";
 	setEnv(request);
@@ -136,7 +136,7 @@ void Cgi::cgi_response(int fd)
 		{
 			std::cerr << "error executing cgi" << std::endl;
 		}
-		
+
 		exit(0);
 	}
 	wait(NULL);

@@ -1,4 +1,5 @@
 #include "SocketHandler.hpp"
+#include "Response.hpp"
 
 // Private Members
 void SocketHandler::_initPorts()
@@ -154,7 +155,8 @@ int SocketHandler::getEvents()
 	#ifdef SHOW_LOG_2
 		std::cout << "num clients: " << _clients.size() << std::endl;
 	#endif
-	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL);
+	// int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, &timeout); // use this for final working version
+	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL); // use this only for testing !!!!!!
 	this->_eventsChanges.clear();
 	if (numEvents == -1)
 	{
@@ -175,14 +177,18 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	return (this->_clients.size() - 1);
 }
 
+// removes client from _clients and closes the connection if !keep-alive and only if EV_EOF | EV_ERROR is set
 bool SocketHandler::removeClient(int i, bool force)
 {
+	int clientFd = this->_evList[i].ident;
 	if ((this->_evList[i].flags == EV_EOF )  || (this->_evList[i].flags == EV_ERROR )/* || (this->_evList[i].flags & EV_CLEAR) */ || force)
 	{
+		if (this->_keepalive.count(clientFd))
+			return (false); // and set to readable maybe?
 		#ifdef SHOW_LOG_2
 			std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
 		#endif
-		close(this->_evList[i].ident);
+		close(clientFd);
 		int index = this->_getClient(this->_evList[i].ident);
 		if (index != -1)
 		{
@@ -190,14 +196,14 @@ bool SocketHandler::removeClient(int i, bool force)
 			// this->setEvent(this->_evList[i].ident, EV_DELETE, EVFILT_WRITE); //event will be removed automatically when the fd is closed
 			this->_clients.erase(this->_clients.begin() + index);
 			#ifdef SHOW_LOG
-				std::cout << RED << "Client " << this->_evList[i].ident << " disconnected" << RESET << std::endl;
+				std::cout << RED << "Client " << clientFd << " disconnected" << RESET << std::endl;
 			#endif
 			return (true);
 		}
 		else
 		{
 			std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl;
-			exit(112);
+			exit(112); // carefull with exit please!!!!
 		}
 	}
 	return (false);
@@ -233,7 +239,7 @@ bool SocketHandler::writeToClient(int i)
 		int status = this->_getClient(fd);
 		if (status == -1)
 		{
-			close(fd); 
+			close(fd);
 			std::cerr << RED << "write Error getting client for fd: " << fd << std::endl;
 			perror(NULL); // check if illegal
 			std::cerr << RESET;
@@ -280,6 +286,45 @@ void SocketHandler::removeInactiveClients()
 	this->_clients.clear();
 }
 
+void SocketHandler::addKeepAlive(int clientFd)
+{
+	if (this->_keepalive.count(clientFd) == 0)
+	{
+		this->_keepalive.insert(clientFd);
+		#ifdef SHOW_LOG_2
+			std::stringstream buffer;
+			buffer << clientFd << " was added to keep-alive";
+			LOG_YELLOW(buffer.str());
+		#endif
+	}
+	#ifdef SHOW_LOG
+		else
+			LOG_RED("Client to add already was part of keep-alive");
+	#endif
+}
+
+void SocketHandler::removeKeepAlive(int clientFd)
+{
+	if (this->_keepalive.count(clientFd) == 1)
+	{
+		this->_keepalive.erase(clientFd);
+		#ifdef SHOW_LOG_2
+			std::stringstream buffer;
+			buffer << clientFd << " was removed from keep-alive";
+			LOG_YELLOW(buffer.str());
+		#endif
+	}
+	#ifdef SHOW_LOG
+		else
+			LOG_RED("Client to remove was NOT part of keep-alive");
+	#endif
+}
+
+bool SocketHandler::isKeepAlive(int clientFd)
+{
+	return (this->_keepalive.count(clientFd));
+}
+
 // Deconstructors
 SocketHandler::~SocketHandler()
 {
@@ -299,6 +344,20 @@ SocketHandler::~SocketHandler()
 int SocketHandler::getFD(int i) const
 {
 	return (this->_evList[i].ident);
+}
+
+// be carefull with using this, if you put a bigger number than number of ports configured in the config file
+// it will give you the last port
+int SocketHandler::getPort(int i)
+{
+	std::set<int>::const_iterator it = this->_ports.begin();
+	for (; it != this->_ports.end(); ++it, --i)
+	{
+		if (i == 0)
+			break ;
+	}
+
+	return (*it);
 }
 
 // Setter

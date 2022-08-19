@@ -15,7 +15,7 @@
 
 int main()
 {
-	int numConnections = 50; // us this to determine how many interrupted connection you want to have
+	int numConnections = 1; // us this to determine how many interrupted connection you want to have
 	// while (true) // use this to bomb a server
 	while (numConnections > 0)
 	{
@@ -44,7 +44,7 @@ int main()
 	else
 		std::cout << GREEN << "Connected to socket: " << sockfd << std::endl << RESET;
 	// char buffer[10000] = {0};
-	std::string buffer = "GET /index.html HTTP/1.1\r\nHost: localhost:8080\r\n\r\n";
+	std::string buffer = "POST /uploads/upload_test.txt HTTP/1.1\r\nHost: localhost:8080\r\nContent-Length: 18\r\n\r\nThis is a test from the body!!!!\r\n\r\n";
 	char read_buffer[10000] = {0};
 	int msg_size = buffer.length();
 		if (write(sockfd, buffer.c_str(), msg_size) < 0)
@@ -55,13 +55,18 @@ int main()
 		else
 			std::cout << GREEN << "Request send to server" << RESET << std::endl;
 		usleep(100); // now only the headd gets to the client
-		if (read(sockfd, read_buffer, sizeof(read_buffer)) < 0)
+		int n = read(sockfd, read_buffer, sizeof(read_buffer));
+		if (n < 0)
 		{
 			std::cout << RED << "Error reading from socket" << std::endl << RESET;
 			return 1;
 		}
 		else
-			std::cout << GREEN << "Message received:\n>" << RESET << read_buffer << GREEN << "<" << std::endl << RESET;
+		{
+			read_buffer[n] = '\0';
+			std::string readString = read_buffer;
+			std::cout << GREEN << "Message received:\n>" << RESET << readString << GREEN << "<" << std::endl << RESET;
+		}
 		close(sockfd);
 		// memset(buffer, 0, sizeof(buffer));
 		--numConnections;

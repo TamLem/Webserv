@@ -35,15 +35,18 @@ class Response : public Message
 	// private Methods
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
-	protected:
-		int sendall(const int sock_fd, char *buffer, const int len) const;
-		void sendChunk(int i);// i is the fd
+		void _createFileExistingHeader(int clientFd, const Request &request, int port);
+		void _fillTempFile(int i); // rethink this
 	public:
 		Response(void);
 		~Response(void);
 
+/////
+		bool isInResponseMap(int clientFd);
+		std::string lastExitStatus;
+/////
 		void receiveChunk(int i);
-		bool isInReceiveMap(int clientFd);
+		bool isInReceiveMap(int clientFd); // to verify wether the receiveMap has a key for the filedescriptor
 		std::string constructPostResponse();
 
 		// void setProtocol(const std::string&);
@@ -52,13 +55,17 @@ class Response : public Message
 		// void setTarget(const std::string&);
 		void setFd(int); // is this used???
 		void setProtocol(const std::string&);
-		void setPostTarget(int clientFd, std::string target);
-		void setPostLength(int clientFd, std::map<std::string, std::string> headerFields);
-		void setPostBufferSize(int clientFd, size_t bufferSize);
 		void setRequestMethod(const std::string&);
-		bool checkReceiveExistance(int clientFd);
 
-		// const std::string& getProtocol(void) const;
+		bool was3XXCode(int clientFd); // for keep-alive
+
+	// for POST requests
+		void setPostTarget(int clientFd, std::string target);
+		void setPostLength(int clientFd, std::map<std::string, std::string> &headerFields);
+		void setPostBufferSize(int clientFd, size_t bufferSize);
+		void checkPostTarget(int clientFd, const Request &request, int port);
+		void setPostChunked(int clientFd, std::string target, std::map<std::string, std::string> &headerFields);
+
 		const std::string& getStatus(void) const;
 		const std::string& getStatusMessage(void) const;
 		const std::map<std::string, std::string>& getMessageMap(void) const;
@@ -67,8 +74,6 @@ class Response : public Message
 
 
 		std::string constructHeader(void);
-		std::string constructChunkedHeader(void);
-		void endChunkedMessage(int i, int n);
 
 		void putToResponseMap(int fd);
 
@@ -78,11 +83,10 @@ class Response : public Message
 		void removeFromReceiveMap(int fd);
 		// void init(const Request&);
 		// void init(const std::string&, int, const std::string&);
-		void addDefaultHeaderFields(void);
+		void addContentLengthHeaderField(void);
 		void createBodyFromFile(const std::string&);
 		void createIndex(const Request&);
 		void createErrorBody(void);
-		bool sendResponse(int);
 		bool sendRes(int);
 
 	bool handleClientDisconnect(int fd);
@@ -138,6 +142,12 @@ class Response : public Message
 		public:
 			virtual const char* what() const throw();
 	};
+
+	class ClientDisconnect : public std::exception
+	{
+		public:
+			virtual const char* what() const throw();
+	};
 };
 
 
@@ -146,3 +156,11 @@ std::ostream& operator<<(std::ostream&, const Response&);
 bool targetExists(const std::string&);
 
 #endif
+
+/********** LEGACY CONTENT **********/
+
+		// int sendall(const int sock_fd, char *buffer, const int len) const; // LEGACY
+		// void sendChunk(int i);// i is the fd // LEGACY
+		// void endChunkedMessage(int i, int n); // LEGACY
+		// bool sendResponse(int); // LEGACY
+		// std::string constructChunkedHeader(void); // LEGACY

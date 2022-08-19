@@ -155,8 +155,8 @@ int SocketHandler::getEvents()
 	#ifdef SHOW_LOG_2
 		std::cout << "num clients: " << _clients.size() << std::endl;
 	#endif
-	// int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, &timeout); // use this for final working version
-	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL); // use this only for testing !!!!!!
+	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, &timeout); // use this for final working version
+	// int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL); // use this only for testing !!!!!!
 	this->_eventsChanges.clear();
 	if (numEvents == -1)
 	{
@@ -184,7 +184,7 @@ bool SocketHandler::removeClient(int i, bool force)
 	if ((this->_evList[i].flags == EV_EOF )  || (this->_evList[i].flags == EV_ERROR )/* || (this->_evList[i].flags & EV_CLEAR) */ || force)
 	{
 		if (this->_keepalive.count(clientFd))
-			return (false); // and set to readable maybe?
+			return (false);
 		#ifdef SHOW_LOG_2
 			std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
 		#endif

@@ -76,7 +76,7 @@ void Server::runEventLoop()
 				#endif
 				try
 				{
-					handleRequest(i);
+					handleRequest(this->_socketHandler->getFD(i));
 					if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == false)
 					{
 						this->_socketHandler->setWriteable(i);
@@ -249,12 +249,11 @@ void Server::removeClientTraces(int clientFd)
 	this->_socketHandler->removeKeepAlive(clientFd);
 }
 
-void Server::handleRequest(int i) // i is the index from the evList of the socketHandler
+void Server::handleRequest(int clientFd) // i is the index from the evList of the socketHandler
 {
 	bool isCgi = false;
 	this->_response.clear();
 	this->loopDetected = false;
-	int clientFd = this->_socketHandler->getFD(i);
 	try
 	{
 		if (this->_response.isInReceiveMap(clientFd) == true)

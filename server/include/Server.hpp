@@ -67,7 +67,7 @@ class Server
 
 		// void run(void);
 
-		void handleRequest(int i);
+		void handleRequest(int clientFd);
 	private:
 	// defines only to not have undefined behaviour
 		Server(const Server&);

@@ -76,24 +76,22 @@ void Server::runEventLoop()
 				#endif
 				try
 				{
-					handleRequest(i);
+					handleRequest(this->_socketHandler->getFD(i));
 					if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == false)
 					{
 						this->_socketHandler->setWriteable(i);
-						// + get rid of any eventual read event that still is left @Tam
-						// this->_socketHandler->setEvent(i, EV_??????, EVFILT_READ);
-						// lseek(this->_socketHandler->getFD(i), 0, SEEK_END); // lseek fails
+						this->_socketHandler->setEvent(this->_socketHandler->getFD(i), EV_DELETE, EVFILT_READ); // removes any possible read event that is still left
 					}
 				}
 				catch(const std::exception& e)
 				{
-					this->_socketHandler->removeKeepAlive(this->_socketHandler->getFD(i));
+					// this->_socketHandler->removeKeepAlive(this->_socketHandler->getFD(i)); // already in remove client traces
 					std::cerr << YELLOW << e.what() << RESET << '\n';
 					this->_socketHandler->removeClient(i, true);
 					removeClientTraces(this->_socketHandler->getFD(i));
 				}
 			}
-			else if (this->_socketHandler->writeToClient(i) == true)
+			else if (this->_socketHandler->writeToClient(i) == true /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) */) // this commented part is a dirty workaround, only use it for testing!!!!
 			{
 				#ifdef SHOW_LOG_2
 					std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
@@ -102,12 +100,14 @@ void Server::runEventLoop()
 				{
 					if (this->_response.was3XXCode(this->_socketHandler->getFD(i)) == false)
 						this->_socketHandler->removeKeepAlive(this->_socketHandler->getFD(i));
+					// else
+					// 	this->_socketHandler->setEvent(this->_socketHandler->getFD(i), EV_ADD, EVFILT_READ); // tried to reuse the same socket for the keepalive answer, did not work for some reason.... try implementing the timeout we talked about instead
 					if (this->_socketHandler->removeClient(i, true) == true)
 					{
-						removeClientTraces(this->_socketHandler->getFD(i)); // removes client from receive and response Map
+						removeClientTraces(this->_socketHandler->getFD(i));
 					}
-					else
-						// set the fd to readable!!!! @Tam
+					else if (this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false)
+						this->_socketHandler->setEvent(this->_socketHandler->getFD(i), EV_DELETE, EVFILT_WRITE);
 				}
 			}
 			if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients
@@ -249,12 +249,11 @@ void Server::removeClientTraces(int clientFd)
 	this->_socketHandler->removeKeepAlive(clientFd);
 }
 
-void Server::handleRequest(int i) // i is the index from the evList of the socketHandler
+void Server::handleRequest(int clientFd) // i is the index from the evList of the socketHandler
 {
 	bool isCgi = false;
 	this->_response.clear();
 	this->loopDetected = false;
-	int clientFd = this->_socketHandler->getFD(i);
 	try
 	{
 		if (this->_response.isInReceiveMap(clientFd) == true)

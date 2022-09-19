@@ -6,6 +6,8 @@
 #include <string>
 #include <iostream>
 #include <stdbool.h>
+#include <istream>
+#include <ios>
 
 /* put here includes and defines that are needed for the whole project only */
 // Colors and Printing
@@ -17,6 +19,22 @@
 #define BOLD "\033[1m"
 #define UNDERLINED "\033[4m"
 
+// #ifdef SHOW_LOG_2
+	#define LOG_RED(x) (std::cout << __FILE__ << ":" << __LINE__ << "\t\033[1;31m" << x << "\033[0m" << std::endl)
+	#define LOG_YELLOW(x) (std::cout << __FILE__ << ":" << __LINE__ << "\t\033[1;33m" << x << "\033[0m" << std::endl)
+// #else
+// 	#define LOG_RED(x) (void(x))
+// 	#define LOG_YELLOW(x) (void(x))
+// #endif
+
+// #ifdef SHOW_LOG
+	#define LOG_GREEN(x) (std::cout << __FILE__ << ":" << __LINE__ << "\t\033[1;32m" << x << "\033[0m" << std::endl)
+	#define LOG_BLUE(x) (std::cout << __FILE__ << ":" << __LINE__ << "\t\033[1;34m" << x << "\033[0m" << std::endl)
+// #else
+// 	#define LOG_GREEN(x) (void(x))
+// 	#define LOG_BLUE(x) (void(x))
+// #endif
+
 // other defines
 #define CRLF "\r\n"
 #define CRLFTWO "\r\n\r\n"
@@ -27,21 +45,25 @@
 #define TCHAR "!#$%&'*+-.^_`|~"
 
 // defines for reading from client
-#define MAX_REQUEST_HEADER_SIZE 1024
+#define MAX_REQUEST_LINE_SIZE 512 // change this to increase the max length of accepted URI
+#define MAX_REQUEST_HEADER_SIZE 1024 // change this to increase the size of accepted request-headers
 #define MAX_EVENTS 128
-#define MAX_REQUEST_LINE_SIZE 512
-#define MAX_SEND_CHUNK_SIZE (4 * 1024)
+#define MAX_SEND_CHUNK_SIZE (1024 * 1024) // this controlls the size of the chunks we are sending back to the client
+#define CLIENT_TIMEOUT 30 // this will kick clients after X amount of inactivity
 
 // ResponseStruct
 struct ResponseStruct
 {
-	std::string buffer;
-	std::string header;
+// general
 	std::string response;
-	// std::string status;
-	// std::string statusMessage;
 	size_t total;
 	size_t bytesLeft;
+	std::istream *requestedFile;
+// header information
+	std::string protocoll;
+	std::string status;
+	std::string statusMessage;
+	std::string target; // this is the target after directory/file routing
 };
 
 // LocationStruct
@@ -54,6 +76,20 @@ struct LocationStruct
 	std::string indexPage;
 };
 
+// ReceiveStruct
+struct ReceiveStruct
+{
+// chunking
+	bool isChunked;
+	std::string tempTarget; // rethink this!!!!!!
+	size_t chunkedLeft; // rethink the use of this!!!!!!!
+// general
+	std::string target;
+	size_t total;
+	size_t bytesLeft;
+	int bufferSize;
+};
+
 // ConfigStruct
 struct ConfigStruct
 {
@@ -61,11 +97,13 @@ struct ConfigStruct
 	std::string								serverName;
 	std::map<std::string, unsigned short>	listen;
 	std::string								root;
+
+// not sure about these two???????????
 	std::map<std::string, std::string>		cgi;
-	std::string								cgiBin;
-	size_t									clientBodyBufferSize;
+	std::string								cgiBin; // is this still needed???????????
 
 // these variables have default values if not set in the .conf file
+	size_t									clientBodyBufferSize;
 	size_t									clientMaxBodySize;
 	std::string								indexPage;
 	std::map<std::string, LocationStruct>	location;
@@ -74,3 +112,7 @@ struct ConfigStruct
 };
 
 #endif // BASE_HPP
+
+// LEGACY from ResponseStruct
+	// std::string buffer; // LEGACY for when less than sendChunk() only sends part of the chunk
+	// std::string header; // LEGACY for chunked response only, was used in sendResponse()->sendChunk() not sure if still used????

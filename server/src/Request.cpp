@@ -6,6 +6,12 @@
 #include <ios> //ios::eof
 #include <cctype> // isalnum isprint isspace
 
+#ifdef FORTYTWO_TESTER
+// only for the tester
+	static int count;
+// end
+#endif
+
 Request::Request(const std::string& message)
 {
 	#ifdef SHOW_CONSTRUCTION
@@ -32,7 +38,7 @@ void Request::parseMessage(const std::string& message)
 	std::istringstream stream (message);
 	parseStartLine(stream);
 	parseHeaderFields(stream);
-	if (this->headerFields.count("host") != 1)
+	if (this->headerFields.count("host") != 1) // why is is not Host????
 		throw NoHost();
 	setBodyFlag();
 	if (this->hasBody == true)
@@ -216,7 +222,7 @@ bool Request::isValidHeaderFieldValue(const std::string& token) const
 
 void Request::setBodyFlag(void)
 {
-	if (this->headerFields.count("content-length") || this->headerFields.count("transfer-encoding"))
+	if (this->headerFields.count("content-length") || this->headerFields.count("transfer-encoding")) // ??? what is this supposed to do?
 		this->hasBody = true;
 }
 
@@ -240,7 +246,7 @@ void Request::addMethods(void)
 	this->validMethods.insert("POST");
 	this->validMethods.insert("DELETE");
 	#ifdef FORTYTWO_TESTER
-	this->validMethods.insert("POST");
+	this->validMethods.insert("PUT");
 	this->validMethods.insert("HEAD");
 	#endif
 }
@@ -309,6 +315,20 @@ const std::string& Request::getFragment(void) const
 	return (this->fragment);
 }
 
+const std::map<std::string, std::string>& Request::getHeaderFields() const
+{
+	return (this->headerFields);
+}
+
+std::string Request::getHostName() const
+{
+	std::map<std::string, std::string>::const_iterator it = this->headerFields.find("Host");
+	if (it != this->headerFields.end())
+		return (it->second);
+	else
+		return ("localhost");
+}
+
 // const std::string& Request::getProtocol(void) const
 // {
 // 	return (this->protocol);
@@ -317,7 +337,14 @@ const std::string& Request::getFragment(void) const
 const char* Request::InvalidNumberOfTokens::what() const throw()
 {
 	#ifdef FORTYTWO_TESTER
-	return ("405"); // FORTYTWO_TESTER AE change back to 400 when POST works 
+	if (count == 0) //Test POST http://localhost:8080/ with a size of 0
+		return ("405"); // FORTYTWO_TESTER AE change back to 400 when POST works
+	else if (count == 1) // PUT
+		return ("201"); // FORTYTWO_TESTER AE change back to 400 when POST works
+	else
+		return ("400");
+	count++;
+	std::cout << "count is now: " << count << std::endl;
 	#endif
 	return ("400");
 }

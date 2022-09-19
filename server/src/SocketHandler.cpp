@@ -253,7 +253,7 @@ bool SocketHandler::writeToClient(int i)
 
 int SocketHandler::_getClient(int fd)
 {
-	for (size_t i = 0; i < this->_clients.size(); i++)
+	for (size_t i = 0; i < this->_clients.size(); ++i)
 	{
 		if (this->_clients[i].fd == fd)
 			return (i);
@@ -274,14 +274,21 @@ SocketHandler::SocketHandler(Config *config)
 	this->_initEventLoop();
 }
 
-void SocketHandler::removeInactiveClients()
+void SocketHandler::removeInactiveClients() // @@@
 {
 	#ifdef SHOW_LOG
-		std::cout << RED << "Clear all connections" << RESET << std::endl;
+		LOG_RED("Clear all timeout connections");
 	#endif
-	for (size_t i = 0; i < this->_clients.size(); i++)
+	for (size_t i = 0; i < this->_clients.size(); ++i)
 	{
-		close(this->_clients[i].fd);
+		if (difftime(time(NULL), this->_clients[i].timeout) >= CLIENT_TIMEOUT)
+		{
+			std::stringstream message;
+			message << "cleared socket " << this->_clients[i].fd << " because of " << CLIENT_TIMEOUT << " seconds of inactivity";
+			LOG_RED(message.str());
+			// send 408 to client first!!!!
+			close(this->_clients[i].fd);
+		}
 	}
 	this->_clients.clear();
 }

@@ -346,7 +346,7 @@ void SingleServerConfig::_handleCgi(std::string line)
 			std::cout << RED << key << RESET << std::endl;
 			throw SingleServerConfig::DuplicateCgiExtensionException();
 		}
-		// else if (value[0] == '.')
+		// else if (value[0] == '.') // why?????????
 		// {
 		// 	std::cout << RED << value << RESET << std::endl;
 		// 	throw SingleServerConfig::InvalidCgiHandlerException();

@@ -45,8 +45,6 @@ struct client
 	struct sockaddr_in addr;
 };
 
-void cgi_handle(Request& request, std::string buf, int fd); // what tf is this @Tam
-
 static volatile int keep_running = 1;
 
 class Server
@@ -67,7 +65,7 @@ class Server
 
 		// void run(void);
 
-		void handleRequest(int);
+		void handleRequest(int clientFd);
 	private:
 	// defines only to not have undefined behaviour
 		Server(const Server&);
@@ -83,6 +81,7 @@ class Server
 		ConfigStruct _currentConfig;
 		std::string _currentLocationKey;
 		bool loopDetected;
+		std::vector<int> _cgiSockets;
 
 	// private Methods
 		static void handle_signal(int sig);
@@ -92,6 +91,7 @@ class Server
 		void _readRequestHead(int fd);
 
 		void applyCurrentConfig(const Request&);
+		void removeClientTraces(int clientFd);
 		void matchLocation(Request&);
 		int routeFile(Request&, std::map<std::string, LocationStruct>::const_iterator, const std::string&);
 		void routeDir(Request&, std::map<std::string, LocationStruct>::const_iterator, const std::string&, int&);
@@ -99,17 +99,22 @@ class Server
 		std::string percentDecoding(const std::string&);
 		void checkLocationMethod(const Request& request) const;
 		void handleGET(const Request&);
-		void handlePOST(const Request&);
-		void handleDELETE(const Request&);
+		void handlePOST(int clientFd, const Request&); // maybe passs fd to this function
 		void handleERROR(const std::string&);
+		void handleDELETE(const Request& request);
 		void _handleResponse(int i);
 
 		bool _isCgiRequest(std::string requestHead);
+		void cgi_handle(Request& request, int fd, ConfigStruct configStruct);
 
 	public:
 
 	// Exceptions
-		class InternatServerErrorException : public std::exception
+		class ClientDisconnect: public  std::exception {
+			public:
+				virtual const char* what() const throw();
+		};
+		class InternalServerErrorException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();
@@ -136,8 +141,19 @@ class Server
 		{
 			const char* what() const throw();
 		};
+
+		class LengthRequiredException : public std::exception
+		{
+			const char* what() const throw();
+		};
+
+		class ContentTooLargeException : public std::exception
+		{
+			const char* what() const throw();
+		};
 };
 
-void cgi_handle(Request& request, int fd, ConfigStruct configStruct);
+std::string staticPercentDecodingFix(std::string target);
+std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace);
 
 #endif

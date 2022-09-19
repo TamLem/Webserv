@@ -1,17 +1,10 @@
 #include "Response.hpp"
-
-#include "Base.hpp"
-#include <string> //std::string
-#include <map> //std::map
-#include <sstream> //std::stringstream
-#include <iostream> //std::ios
-#include <fstream> //std::ifstream
-#include <sys/socket.h> // send
-#include <dirent.h> // dirent, opendir
-// #include <sys/types.h>  // opendir
-#include <unistd.h> // access
-#include <sys/stat.h> // stat
-
+//// might be temporary
+	bool Response::isInResponseMap(int clientFd)
+	{
+		return (this->_responseMap.count(clientFd));
+	}
+////
 bool Response::isValidStatus(const std::string& status)
 {
 	if (this->messageMap.count(status))
@@ -27,6 +20,17 @@ Response::Response(void)
 	this->createMessageMap();
 }
 
+void Response::setRequestMethod(const std::string& method)
+{
+	this->_requestMethod = method;
+}
+
+std::string Response::getRequestMethod(void) const
+{
+	return this->_requestMethod;
+}
+
+
 void Response::clear(void)
 {
 	this->protocol = "";
@@ -35,6 +39,7 @@ void Response::clear(void)
 	this->headerFields.clear();
 	this->status = "";
 	this->statusMessage = "";
+	this->_requestMethod = "";
 	target = "";
 }
 
@@ -45,7 +50,7 @@ void Response::clearResponseMap()
 
 void Response::removeFromResponseMap(int fd)
 {
-	if (this->_responseMap.count(fd) == 1)
+	if (this->_responseMap.count(fd) == true)
 		this->_responseMap.erase(fd);
 }
 
@@ -69,16 +74,21 @@ void Response::setBody(const std::string& body)
 	this->body = body;
 }
 
-// void Response::setTarget(const std::string& target)
-// {
-// 	this->target = target;
-// }
-
 void Response::setProtocol(const std::string& protocol)
 {
 	if (!isValidProtocol(protocol))
 		throw Response::InvalidProtocol();
 	this->protocol = protocol;
+}
+
+bool Response::was3XXCode(int clientFd)
+{
+	(void)clientFd;
+	// if (this->_responseMap.count(clientFd))
+		// return (this->_responseMap[clientFd].status[0] == '3');
+		return (this->status[0] == '3');
+	// else
+	// 	return (false);
 }
 
 const std::string& Response::getStatus(void) const
@@ -96,6 +106,39 @@ const std::map<std::string, std::string>& Response::getMessageMap(void) const
 	return (this->messageMap);
 }
 
+std::string Response::getResponse()
+{
+	std::cout << "Request Method: " << this->_requestMethod << std::endl;
+	std::stringstream buffer;
+	buffer << this->constructHeader();
+	if (this->_requestMethod != "HEAD")
+		buffer << this->getBody();
+	buffer << CRLFTWO;
+
+	return (buffer.str());
+}
+
+void Response::putToResponseMap(int fd)
+{
+	// i purposly do not check for existance before writing to it so that everything would be overridden if it existed
+
+	// this->_responseMap[fd].buffer = ""; // LEGACY
+	// this->_responseMap[fd].header = ""; // LEGACY
+	this->_responseMap[fd].response = this->getResponse();
+	this->_responseMap[fd].total = this->_responseMap[fd].response.length();
+	this->_responseMap[fd].bytesLeft = this->_responseMap[fd].total;
+}
+
+// std::string Response::constructHeader(void) // not sure where the other construct header came from, check this!!!!
+// {
+// 	std::stringstream buffer;
+// 	// buffer << this->constructHeader();
+// 	buffer << this->getBody();
+// 	buffer << CRLFTWO;
+
+// 	return (buffer.str());
+// }
+
 std::string Response::constructHeader(void)
 {
 	std::stringstream stream;
@@ -108,44 +151,6 @@ std::string Response::constructHeader(void)
 	}
 	stream << CRLF;
 	return (stream.str());
-}
-
-std::string Response::constructChunkedHeader(void)
-{
-	std::stringstream stream;
-
-	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
-	// stream << "Content-Type: " << "image/jpg" << CRLF;
-	stream << "Transfer-Encoding: chunked" << CRLFTWO;
-
-	return (stream.str());
-}
-
-int Response::sendall(const int sock_fd, char *buffer, const int len) const
-{
-	int total;
-	int bytesleft;
-	int n;
-
-	total = len;
-	bytesleft = len;
-	while (total > 0)
-	{
-		n = send(sock_fd, buffer, bytesleft, 0);
-		if (n == -1)
-		{
-			perror("send");
-			return (-1);
-		}
-		total -= n;
-		bytesleft -= n;
-		buffer += n;
-	}
-	close(sock_fd);
-	#ifdef SHOW_LOG
-		std::cout << RED << "fd: " << sock_fd << " was closed after sending response" << RESET << std::endl;
-	#endif
-	return (0);
 }
 
 void Response::createErrorBody(void)
@@ -259,15 +264,15 @@ void Response::createBodyFromFile(const std::string& target)
 	}
 }
 
-void Response::addDefaultHeaderFields(void)
+void Response::addContentLengthHeaderField(void)
 {
 	std::stringstream contentLength;
 	// addHeaderField("Server", "localhost:8080");
-	if (headerFields.count("Transfer-Encoding") == 0)
-	{
+	// if (headerFields.count("transfer-encoding") == 0)
+	// {
 		contentLength << this->body.length();
-		addHeaderField("Content-Length", contentLength.str());
-	}
+		addHeaderField("content-length", contentLength.str());
+	// }
 }
 
 void Response::createMessageMap(void)
@@ -371,12 +376,17 @@ const char* Response::ERROR_403::what() const throw()
 	return ("403");
 }
 
-const char* Response::InvalidProtocol::what() const throw() //AE is it good to have different codes for request/response?
+const char* Response::ERROR_423::what() const throw()
 {
-	return ("500");
+	return ("423");
 }
 
-const char* Response::InternalServerErrorException::what() const throw()
+const char* Response::InvalidProtocol::what() const throw() //AE is it good to have different codes for request/response?
+{
+	return ("500"); // is Invalid Protocoll really a 500????
+}
+
+const char* Response::InternalServerErrorException::what() const throw() // think to unify the Exceptions for errors to be ERROR_XXX
 {
 	return ("500");
 }
@@ -398,3 +408,60 @@ bool targetExists(const std::string& target)
 			return (true);
 	return (false);
 }
+
+const char* Response::SizeTOverflowException::what(void) const throw()
+{
+	return ("413");
+}
+
+const char* Response::NegativeDecimalsNotAllowedException::what(void) const throw()
+{
+	return ("400");
+}
+
+const char* Response::ClientDisconnect::what(void) const throw()
+{
+	return ("client disconnected");
+}
+
+
+
+/********** LEGACY CODE BELOW **********/
+
+// int Response::sendall(const int sock_fd, char *buffer, const int len) const
+// {
+// 	int total;
+// 	int bytesleft;
+// 	int n;
+
+// 	total = len;
+// 	bytesleft = len;
+// 	while (total > 0)
+// 	{
+// 		n = send(sock_fd, buffer, bytesleft, 0);
+// 		if (n == -1)
+// 		{
+// 			perror("send");
+// 			return (-1);
+// 		}
+// 		total -= n;
+// 		bytesleft -= n;
+// 		buffer += n;
+// 	}
+// 	close(sock_fd);
+// 	#ifdef SHOW_LOG
+// 		std::cout << RED << "fd: " << sock_fd << " was closed after sending response" << RESET << std::endl;
+// 	#endif
+// 	return (0);
+// }
+
+// std::string Response::constructChunkedHeader(void)
+// {
+// 	std::stringstream stream;
+
+// 	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
+// 	// stream << "Content-Type: " << "image/jpg" << CRLF;
+// 	stream << "Transfer-Encoding: chunked" << CRLFTWO;
+
+// 	return (stream.str());
+// }

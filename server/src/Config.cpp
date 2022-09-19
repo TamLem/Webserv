@@ -182,8 +182,8 @@ ConfigStruct Config::_initConfigStruct() // think about using defines in the Bas
 	confStruct.root = "";
 	confStruct.cgiBin = "";
 	confStruct.indexPage = "";
-	confStruct.clientBodyBufferSize = (4 * 1024);
-	confStruct.clientMaxBodySize = (100 * 1024 * 1024);
+	confStruct.clientBodyBufferSize = (64 * 1024); // 64kb
+	confStruct.clientMaxBodySize = (1024 * 1024 * 1024); // 1gb
 	confStruct.autoIndex = false;
 
 	return (confStruct);
@@ -271,12 +271,15 @@ void Config::printCluster()
 }
 
 // Getter
+
+// gives you the whole _cluster which contains all ConfigStructs in a map with the serverName as key
 std::map<std::string, ConfigStruct> Config::getCluster()
 {
 	return (this->_cluster);
 }
 
-const ConfigStruct& Config::getConfigStruct(std::string hostName) // use this function if you want to have access to the ConfigStruct of a server
+// returns the correct ConfigStruct for the supplied hostName, returns default if hostName was not found
+const ConfigStruct& Config::getConfigStruct(std::string hostName)
 {
 	std::string defaultConfig = "default";
 	if (this->applyConfig(hostName) == true)

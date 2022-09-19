@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-Cgi::Cgi(Request &request, ConfigStruct configStruct): _scriptExists(true), _confStruct(configStruct)
+Cgi::Cgi(Request &request, ConfigStruct configStruct): _selfExecuting(false), _confStruct(configStruct)
 {
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Cgi Constructor called for " << this << RESET << std::endl;
@@ -15,13 +15,12 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct): _scriptExists(true), _con
 	_method = request.getMethod();
 	string url = request.getDecodedTarget();
 	string extension = url.substr(url.find_last_of("."));
-	cout << "extension: " << extension << endl;
 
-	if (url.find("/cgi/") == string::npos)
-		_scriptExists = false;
-	
+	if (url.find("/cgi/") != string::npos)
+		_selfExecuting = true;
+
 	int queryStart = url.find("?");
-	if (_scriptExists)
+	if (_selfExecuting)
 	{
 		int scriptNameStart = url.find("/cgi/") + 5;
 		int scriptNameEnd = url.find("/", scriptNameStart);
@@ -29,8 +28,8 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct): _scriptExists(true), _con
 			scriptNameEnd = url.find("?", scriptNameStart);
 		_scriptName = url.substr(scriptNameStart, scriptNameEnd - scriptNameStart);
 		_scriptName = "." + _docRoot + "cgi-bin/" + _scriptName;
-		_pathInfo = (scriptNameEnd != (int)string::npos ) ? 
-			url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";	
+		_pathInfo = (scriptNameEnd != (int)string::npos ) ?
+			url.substr(scriptNameEnd + 1, queryStart - scriptNameEnd - 1) : "";
 	}
 	else
 	{
@@ -39,7 +38,7 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct): _scriptExists(true), _con
 			_scriptName = _confStruct.cgi[extension];
 		}
 		_pathInfo = url;
-		_pathTranslated = "." + _docRoot + _pathInfo.substr(1);	
+		_pathTranslated = "." + _docRoot + _pathInfo.substr(1);
 	}
 	_queryString = request.getQuery().length() > 1 ? request.getQuery().substr(1) : "";
 	setEnv(request);
@@ -98,6 +97,20 @@ void Cgi::printEnv()
 	}
 }
 
+void Cgi::passAsInput(void)
+{
+	#ifdef FORTYTWO_TESTER
+		int fileFd = open("./42tester/YoupiBanane/youpi.bla", O_RDONLY);
+		if (fileFd == -1)
+		{
+			cout << "path not found" << endl;
+			return;
+		}
+		dup2(fileFd, STDIN_FILENO);
+		close(fileFd);
+	#endif
+}
+
 void Cgi::cgi_response(int fd)
 {
 	std::string file;
@@ -107,16 +120,9 @@ void Cgi::cgi_response(int fd)
 
 	args = NULL;
 	executable = _scriptName;
-	#ifdef FORTYTWO_TESTER
-		int fileFd = open("./42tester/YoupiBanane/youpi.bla", O_RDONLY);
-		if (fileFd == -1)
-		{
-			cout << "path not found" << endl;
-			return ;
-		}
-		dup2(fileFd, STDIN_FILENO);
-		close(fileFd);
-	#endif
+	cout << "executable: " << executable << endl;
+	if (!_selfExecuting)
+		passAsInput();
 	std::cout << GREEN << "Executing CGI..." << std::endl;
 	file = _pathInfo;
 	int stdout_init = dup(STDOUT_FILENO);
@@ -130,6 +136,7 @@ void Cgi::cgi_response(int fd)
 		{
 			std::cerr << "error executing cgi" << std::endl;
 		}
+
 		exit(0);
 	}
 	wait(NULL);
@@ -141,7 +148,9 @@ void Cgi::cgi_response(int fd)
 	int n;
 	while((n = read(pipefd[0], buf, 1023)) > 0)
 	{
-		cout << "cgi output: " << buf << endl;
+		#ifdef SHOW_LOG
+			cout << "cgi output: " << buf << endl;
+		#endif
 		send(fd, buf, n, 0);
 	}
 	close(pipefd[0]);

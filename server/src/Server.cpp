@@ -57,65 +57,80 @@ void Server::runEventLoop()
 			std::cout << "server running " << std::endl;
 		#endif
 		int numEvents = this->_socketHandler->getEvents();
-		// if (numEvents == 0)
-		// {
-			// this->_socketHandler->removeInactiveClients();	// remove inactive clients
-		// 	this->_response.clearResponseMap();
-		// }
-		// for (int i = 0; i < numEvents; ++i)
-		// {
-		// 	this->_clients[i].timeout
-		// } @@@
+		int clientFd = -1;
+		if (numEvents == 0)
+		{
+			tryRemove:
+			clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
+			if (clientFd != -1)
+			{
+				this->removeClientTraces(clientFd);
+				#ifdef SHOW_LOG
+					std::cout << RED << "Client " << clientFd << " was timed-out" << RESET << std::endl;
+				#endif
+				close(clientFd);
+				goto tryRemove;
+			}
+		}
 		for (int i = 0; i < numEvents; ++i)
 		{
+			clientFd = this->_socketHandler->getFD(i);
 			#ifdef SHOW_LOG_2
 				std::cout << "no. events: " << numEvents << " ev:" << i << std::endl;
 			#endif
 			if (this->_socketHandler->acceptConnection(i))
+			{
+				this->_socketHandler->setTimeout(clientFd);
 				continue ;
+			}
 			else if (this->_socketHandler->readFromClient(i) == true /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false */)
 			{
 				#ifdef SHOW_LOG_2
-					std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+					std::cout << BLUE << "read from client" << clientFd << RESET << std::endl;
 				#endif
+				this->_socketHandler->setTimeout(clientFd);
 				try
 				{
-					handleRequest(this->_socketHandler->getFD(i));
-					if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == false)
+					handleRequest(clientFd);
+					if (this->_response.isInReceiveMap(clientFd) == false)
 					{
 						this->_socketHandler->setWriteable(i);
-						this->_socketHandler->setEvent(this->_socketHandler->getFD(i), EV_DELETE, EVFILT_READ); // removes any possible read event that is still left
+						this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_READ); // removes any possible read event that is still left
 					}
 				}
 				catch(const std::exception& e)
 				{
-					// this->_socketHandler->removeKeepAlive(this->_socketHandler->getFD(i)); // already in remove client traces
+					// this->_socketHandler->removeKeepAlive(clientFd); // already in remove client traces
 					std::cerr << YELLOW << e.what() << RESET << '\n';
 					this->_socketHandler->removeClient(i, true);
-					removeClientTraces(this->_socketHandler->getFD(i));
+					removeClientTraces(clientFd);
 				}
 			}
-			else if (this->_socketHandler->writeToClient(i) == true /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) */) // this commented part is a dirty workaround, only use it for testing!!!!
+			else if (this->_socketHandler->writeToClient(i) == true /* && this->_response.isInResponseMap(clientFd) */) // this commented part is a dirty workaround, only use it for testing!!!!
 			{
 				#ifdef SHOW_LOG_2
-					std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+					std::cout << BLUE << "write to client" << clientFd << RESET << std::endl;
 				#endif
-				if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true)
+				this->_socketHandler->setTimeout(clientFd);
+				if (this->_response.sendRes(clientFd) == true)
 				{
-					if (this->_response.was3XXCode(this->_socketHandler->getFD(i)) == false)
-						this->_socketHandler->removeKeepAlive(this->_socketHandler->getFD(i));
+					if (this->_response.was3XXCode(clientFd) == false)
+						this->_socketHandler->removeKeepAlive(clientFd);
 					// else
 					// 	this->_socketHandler->setEvent(this->_socketHandler->getFD(i), EV_ADD, EVFILT_READ); // tried to reuse the same socket for the keepalive answer, did not work for some reason.... try implementing the timeout we talked about instead
 					if (this->_socketHandler->removeClient(i, true) == true)
 					{
-						removeClientTraces(this->_socketHandler->getFD(i));
+						removeClientTraces(clientFd);
 					}
-					else if (this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false)
-						this->_socketHandler->setEvent(this->_socketHandler->getFD(i), EV_DELETE, EVFILT_WRITE);
+					else if (this->_response.isInResponseMap(clientFd) == false)
+						this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_WRITE);
 				}
 			}
-			if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients
-				removeClientTraces(this->_socketHandler->getFD(i));
+			if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients ???? really?
+			{
+				// close(clientFd); // check if it breaks anything
+				removeClientTraces(clientFd);
+			}
 		}
 	}
 }

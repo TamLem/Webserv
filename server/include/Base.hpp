@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <istream>
 #include <ios>
+#include <netinet/in.h>
 
 /* put here includes and defines that are needed for the whole project only */
 // Colors and Printing
@@ -50,6 +51,14 @@
 #define MAX_EVENTS 128
 #define MAX_SEND_CHUNK_SIZE (1024 * 1024) // this controlls the size of the chunks we are sending back to the client
 #define CLIENT_TIMEOUT 30 // this will kick clients after X amount of inactivity
+
+// ClientStruct
+struct ClientStruct
+{
+	int fd;
+	struct sockaddr_in addr;
+	time_t timeout;
+};
 
 // ResponseStruct
 struct ResponseStruct

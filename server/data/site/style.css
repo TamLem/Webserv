@@ -15,12 +15,13 @@ body {
 	background-color: #2E1C54;
 }
 
-.form-container {
-	width: 30vw;
-	color: #000;
+.form-div {
+	width: 50%;
+	margin: auto;
 	background-color: #fff;
-	margin: 0 auto;
-	padding: 20px;
+	color: #000;
+	padding: 10px;
+	border-radius: 10px;
 }
 
 .nav {

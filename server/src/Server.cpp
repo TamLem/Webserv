@@ -417,7 +417,8 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
 			// request.setRoutedTarget("." + request.getRoutedTarget());
 			//check method
-			checkLocationMethod(request);
+			if (isCgi == false)
+				checkLocationMethod(request);
 
 			if (request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive")
 				this->_socketHandler->addKeepAlive(clientFd);

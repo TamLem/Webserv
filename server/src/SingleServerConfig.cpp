@@ -23,7 +23,7 @@ SingleServerConfig::~SingleServerConfig()
 
 enum
 {
-	listen,
+	listen_,
 	root,
 	server_name,
 	autoindex,
@@ -119,7 +119,7 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 	}
 	switch (nKey)
 	{
-	case (listen):
+	case (listen_):
 	{
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{

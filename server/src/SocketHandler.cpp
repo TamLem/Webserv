@@ -113,6 +113,7 @@ bool SocketHandler::acceptConnection(int i)
 		if (this->_getClient(fd) == -1)
 		{
 			this->_addClient(fd, *(struct sockaddr_in *)&addr);
+			this->setTimeout(fd);
 		}
 		else
 		{
@@ -173,6 +174,7 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	struct ClientStruct c;
 	c.fd = fd;
 	c.addr = addr;
+	// c.timeout = time(NULL);
 	this->_clients.push_back(c);
 	return (this->_clients.size() - 1);
 }
@@ -180,32 +182,39 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 // removes client from _clients and closes the connection if !keep-alive and only if EV_EOF | EV_ERROR is set
 bool SocketHandler::removeClient(int i, bool force)
 {
-	int clientFd = this->_evList[i].ident;
-	if ((this->_evList[i].flags == EV_EOF )  || (this->_evList[i].flags == EV_ERROR )/* || (this->_evList[i].flags & EV_CLEAR) */ || force)
-	{
-		if (this->_keepalive.count(clientFd))
-			return (false);
-		#ifdef SHOW_LOG_2
-			std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
-		#endif
-		close(clientFd);
-		int index = this->_getClient(this->_evList[i].ident);
-		if (index != -1)
+	// if (clientFd != -1 && force && !this->_keepalive.count(clientFd))
+	// {
+	// 	close(clientFd);
+	// }
+	// else
+	// {
+		int clientFd = this->_evList[i].ident;
+		if ((this->_evList[i].flags == EV_EOF )  || (this->_evList[i].flags == EV_ERROR )/* || (this->_evList[i].flags & EV_CLEAR) */ || force)
 		{
-
-			// this->setEvent(this->_evList[i].ident, EV_DELETE, EVFILT_WRITE); //event will be removed automatically when the fd is closed
-			this->_clients.erase(this->_clients.begin() + index);
-			#ifdef SHOW_LOG
-				std::cout << RED << "Client " << clientFd << " disconnected" << RESET << std::endl;
+			if (this->_keepalive.count(clientFd))
+				return (false);
+			#ifdef SHOW_LOG_2
+				std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
 			#endif
-			return (true);
+			close(clientFd);
+			int index = this->_getClient(this->_evList[i].ident);
+			if (index != -1)
+			{
+
+				// this->setEvent(this->_evList[i].ident, EV_DELETE, EVFILT_WRITE); //event will be removed automatically when the fd is closed
+				this->_clients.erase(this->_clients.begin() + index);
+				#ifdef SHOW_LOG
+					std::cout << RED << "Client " << clientFd << " disconnected" << RESET << std::endl;
+				#endif
+				return (true);
+			}
+			else
+			{
+				std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl;
+				exit(112); // carefull with exit please!!!!
+			}
 		}
-		else
-		{
-			std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl;
-			exit(112); // carefull with exit please!!!!
-		}
-	}
+	// }
 	return (false);
 }
 
@@ -274,23 +283,32 @@ SocketHandler::SocketHandler(Config *config)
 	this->_initEventLoop();
 }
 
-void SocketHandler::removeInactiveClients() // @@@
+int SocketHandler::removeInactiveClients() // @@@
 {
 	#ifdef SHOW_LOG
-		LOG_RED("Clear all timeout connections");
+		if (this->_clients.size())
+			LOG_BLUE("checking for timeout connections...");
 	#endif
 	for (size_t i = 0; i < this->_clients.size(); ++i)
 	{
-		if (difftime(time(NULL), this->_clients[i].timeout) >= CLIENT_TIMEOUT)
+		time_t now = time(NULL);
+		double diffTime = difftime(now, this->_clients[i].timeout);
+		if (diffTime >= CLIENT_TIMEOUT)
 		{
 			std::stringstream message;
-			message << "cleared socket " << this->_clients[i].fd << " because of " << CLIENT_TIMEOUT << " seconds of inactivity";
+			std::string timeStamp = ctime(&now);
+			timeStamp.resize(timeStamp.length() - 1);
+			message << timeStamp << ": now removing client with fd " << this->_clients[i].fd << " because of " << diffTime << " seconds of inactivity (start: " << ctime(&this->_clients[i].timeout) << ")";
 			LOG_RED(message.str());
 			// send 408 to client first!!!!
-			close(this->_clients[i].fd);
+			// close(this->_clients[i].fd);
+			int clientFd = this->_clients[i].fd;
+			this->_clients.erase(this->_clients.begin() + i);
+			return (clientFd);
 		}
 	}
-	this->_clients.clear();
+	return (-1);
+	// this->_clients.clear();
 }
 
 void SocketHandler::addKeepAlive(int clientFd)
@@ -321,9 +339,9 @@ void SocketHandler::removeKeepAlive(int clientFd)
 			LOG_YELLOW(buffer.str());
 		#endif
 	}
-	#ifdef SHOW_LOG
+	#ifdef SHOW_LOG_2
 		else
-			LOG_RED("Client to remove was NOT part of keep-alive");
+			LOG_RED("Client to remove was NOT part of keep-alive"); // might now be needed!!!!
 	#endif
 }
 
@@ -368,6 +386,25 @@ int SocketHandler::getPort(int i)
 }
 
 // Setter
+
+// sets the timeout value of a client
+void SocketHandler::setTimeout(int clientFd)
+{
+	std::vector<ClientStruct>::iterator it = this->_clients.begin();
+	for (; it != this->_clients.end(); ++it)
+	{
+		if (it->fd == clientFd)
+		{
+			it->timeout = time(NULL);
+			#ifdef SHOW_LOG_2
+				std::stringstream message;
+				message << "set start time of " << it->fd << " to " << ctime(&it->timeout) << "\033[A";
+				LOG_BLUE(message.str());
+			#endif
+		}
+	}
+}
+
 void SocketHandler::setWriteable(int i)
 {
 	int fd = this->_evList[i].ident;

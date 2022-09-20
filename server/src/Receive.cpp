@@ -195,22 +195,22 @@ void Response::setPostChunked(int clientFd, std::string target, std::map<std::st
 	if (this->_receiveMap.count(clientFd) && headerFields.count("transfer-encoding") && headerFields["transfer-encoding"] == "chunked")
 		this->_receiveMap[clientFd].isChunked = true;
 
-	if (this->_receiveMap.count(clientFd) && this->_receiveMap[clientFd].isChunked == true)
-	{
-		std::stringstream fileName;
-		fileName << target << "." << clientFd << ".temp"; // will result in a filename like: 7_larger.jpg.temp
-		std::ofstream tempFile;
-		tempFile.open(fileName.str(), std ::ios::out | std::ios_base::trunc | std::ios::binary);
-		if (!tempFile.is_open())
-		{
-			LOG_RED("failed to create/open the temp file");
-			throw Response::ERROR_423();
-		}
-		else
-		{
-			tempFile.close();
-		}
-	}
+	// if (this->_receiveMap.count(clientFd) && this->_receiveMap[clientFd].isChunked == true)
+	// {
+	// 	std::stringstream fileName;
+	// 	fileName << target << "." << clientFd << ".temp"; // will result in a filename like: 7_larger.jpg.temp
+	// 	std::ofstream tempFile;
+	// 	tempFile.open(fileName.str(), std ::ios::out | std::ios_base::trunc | std::ios::binary);
+	// 	if (!tempFile.is_open())
+	// 	{
+	// 		LOG_RED("failed to create/open the temp file");
+	// 		throw Response::ERROR_423();
+	// 	}
+	// 	else
+	// 	{
+	// 		tempFile.close();
+	// 	}
+	// }
 }
 
 void Response::_createFileExistingHeader(int clientFd, const Request &request, int port)

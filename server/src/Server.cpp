@@ -203,7 +203,7 @@ void Server::handlePOST(int clientFd, const Request& request)
 		// this->_response.addHeaderField("connection", "close");
 		this->_response.setStatus("201");
 		this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
-		this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
+		this->_response.setPostBufferSize(clientFd, 100000);
 		this->_response.setPostChunked(clientFd, request.getRoutedTarget(), tempHeaderFields);
 		return ;
 	}

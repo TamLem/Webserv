@@ -90,8 +90,6 @@ struct ReceiveStruct
 {
 // chunking
 	bool isChunked;
-	std::string tempTarget; // rethink this!!!!!!
-	size_t chunkedLeft; // rethink the use of this!!!!!!!
 // general
 	std::string target;
 	size_t total;

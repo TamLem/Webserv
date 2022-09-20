@@ -36,7 +36,7 @@ class Response : public Message
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
 		void _createFileExistingHeader(int clientFd, const Request &request, int port);
-		void _fillTempFile(int i); // rethink this
+		size_t _handleChunked(int i);
 	public:
 		Response(void);
 		~Response(void);
@@ -144,6 +144,18 @@ class Response : public Message
 	};
 
 	class ClientDisconnect : public std::exception
+	{
+		public:
+			virtual const char* what() const throw();
+	};
+
+	class MissingChunkContentLengthException : public std::exception
+	{
+		public:
+			virtual const char* what() const throw();
+	};
+	
+	class BadRequestException : public std::exception
 	{
 		public:
 			virtual const char* what() const throw();

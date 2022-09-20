@@ -424,6 +424,16 @@ const char* Response::ClientDisconnect::what(void) const throw()
 	return ("client disconnected");
 }
 
+const char* Response::MissingChunkContentLengthException::what(void) const throw()
+{
+	return ("411");
+}
+
+const char* Response::BadRequestException::what(void) const throw()
+{
+	return ("400");
+}
+
 
 
 /********** LEGACY CODE BELOW **********/

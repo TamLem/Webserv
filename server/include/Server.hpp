@@ -39,13 +39,11 @@
 // Forbidden includes maybe??????
 #include <errno.h>
 
-struct client
-{
-	int fd;
-	struct sockaddr_in addr;
-};
-
-void cgi_handle(Request& request, std::string buf, int fd); // what tf is this @Tam
+// struct client
+// {
+// 	int fd;
+// 	struct sockaddr_in addr;
+// };
 
 static volatile int keep_running = 1;
 
@@ -77,7 +75,7 @@ class Server
 		Config *_config;
 		SocketHandler *_socketHandler;
 
-		std::vector <client> _clients;
+		// std::vector <ClientStruct> _clients;
 		Response _response;// needs to go away
 		std::string _requestHead;
 		ConfigStruct _currentConfig;
@@ -155,7 +153,7 @@ class Server
 		};
 };
 
-std::string staticPercentDecodingFix(std::string target);
+// std::string percentDecodingFix(std::string target);
 std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace);
 
 #endif

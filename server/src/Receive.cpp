@@ -4,81 +4,121 @@
 
 void Response::receiveChunk(int i)
 {
+	const int clientFd = i;
+	size_t total;
+	size_t bytesLeft;
+	size_t bufferSize;
+
 	if (this->_receiveMap[i].isChunked == true)
 	{
-		this->_fillTempFile(i);
+		if (this->_receiveMap[i].total == 0 || (this->_receiveMap[i].total != 0 && this->_receiveMap[i].bytesLeft == 0))
+		{
+			this->_receiveMap[i].total = this->_handleChunked(i);
+			if (this->_receiveMap[i].total == 0)
+			{
+				char endBuffer[3];
+				int endReturn = read(clientFd, endBuffer, 3);
+				if (endReturn != 2)
+					throw Response::BadRequestException();
+				if (endBuffer[0] != '\r' || endBuffer[1] != '\n')
+					throw Response::BadRequestException();
+				this->_receiveMap.erase(i);
+				this->_responseMap[clientFd].response = this->constructPostResponse();
+				this->_responseMap[clientFd].total = this->_responseMap[clientFd].response.length();
+				this->_responseMap[clientFd].bytesLeft = this->_responseMap[clientFd].response.length();
+				return ;
+			}
+			this->_receiveMap[i].bytesLeft = this->_receiveMap[i].total;
+			// bufferSize = this->_receiveMap[i].bufferSize;
+		}
+		// else
+		// {	
+		// 	total = this->_receiveMap[i].total;
+		// 	bytesLeft = this->_receiveMap[i].bytesLeft;
+		// 	bufferSize = this->_receiveMap[i].bufferSize;
+		// }
+	}
+	// else
+	// {
+		total = this->_receiveMap[i].total;
+		bytesLeft = this->_receiveMap[i].bytesLeft;
+		bufferSize = this->_receiveMap[i].bufferSize;
+	// }
+	int n = 0;
+	std::ofstream buffer;
+	char chunk[bufferSize];
+// opening the file and checking if its open
+	buffer.open(this->_receiveMap[i].target.c_str(), std ::ios::out | std::ios_base::app | std::ios::binary);
+
+	if (buffer.is_open() == false)
+		throw Response::ERROR_423(); // check if this makes sense, maybe 500 is more appropriate ????????
+// reading part
+	else if (total > bufferSize && bytesLeft > bufferSize)
+	{
+		#ifdef SHOW_LOG_2
+			std::cout << YELLOW << "bytesLeft: " << bytesLeft << RESET << std::endl;
+		#endif
+		n = read(clientFd, chunk, bufferSize);
 	}
 	else
 	{
-		const int clientFd = i;
-		size_t total = this->_receiveMap[i].total;
-		size_t bytesLeft = this->_receiveMap[i].bytesLeft;
-		size_t bufferSize = this->_receiveMap[i].bufferSize;
-
-		int n = 0;
-		std::ofstream buffer;
-		char chunk[bufferSize];
-	// opening the file and checking if its open
-		buffer.open(this->_receiveMap[i].target.c_str(), std ::ios::out | std::ios_base::app | std::ios::binary);
-
-		if (buffer.is_open() == false)
-			throw Response::ERROR_423(); // check if this makes sense, maybe 500 is more appropriate ????????
-	// reading part
-		else if (total > bufferSize && bytesLeft > bufferSize)
-		{
-			#ifdef SHOW_LOG_2
-				std::cout << YELLOW << "bytesLeft: " << bytesLeft << RESET << std::endl;
-			#endif
-			n = read(clientFd, chunk, bufferSize);
-		}
-		else
-		{
-			#ifdef SHOW_LOG_2
-				std::cout << YELLOW << "last bytesLeft: " << bytesLeft << RESET << std::endl;
-			#endif
-			n = read(clientFd, chunk, bytesLeft);
-		}
-
 		#ifdef SHOW_LOG_2
-			std::cout << BOLD << GREEN << "Bytes received from " << clientFd << ": " << n << RESET << std::endl;
+			std::cout << YELLOW << "last bytesLeft: " << bytesLeft << RESET << std::endl;
 		#endif
-	// checking for errors of read
-		if (n > 0)
-		{
-			bytesLeft -= n;
-			#ifdef SHOW_LOG_2
-				std::cout << BOLD << YELLOW << "Bytes left to read from " << clientFd << ": " << bytesLeft << RESET << std::endl;
-			#endif
-		}
-		else if (n == -1)
-		{
-			#ifdef SHOW_LOG
-				std::cout << RED << "reading for POST on fd " << clientFd << " failed" << RESET << std::endl;
-			#endif
-			this->_receiveMap.erase(i);
-			bytesLeft = 0;
-			buffer.close();
-			throw Response::ClientDisconnect();
-		}
-	// writing the read contents to the file
-		// buffer[n] = '\0' // this would be needed for the next line
-		// buffer << chunk; // this will stop writing if encounters a '\0', wich can happen in binary data!
-		buffer.write(chunk, n); // with this there can even be a '\0' in there, it wont stop writing
+		n = read(clientFd, chunk, bytesLeft);
+	}
 
-	// setting the bytesLeft and checking if all content was read
-		if (bytesLeft)
-		{
-			this->_receiveMap[i].bytesLeft = bytesLeft;
-			buffer.close();
-		}
-		else
-		{
-			buffer.close();
-			this->_receiveMap.erase(i);
-			this->_responseMap[clientFd].response = this->constructPostResponse();
-			this->_responseMap[clientFd].total = this->_responseMap[clientFd].response.length();
-			this->_responseMap[clientFd].bytesLeft = this->_responseMap[clientFd].response.length();
-		}
+	#ifdef SHOW_LOG_2
+		std::cout << BOLD << GREEN << "Bytes received from " << clientFd << ": " << n << RESET << std::endl;
+		LOG_YELLOW(chunk);
+	#endif
+// checking for errors of read
+	if (n > 0)
+	{
+		bytesLeft -= n;
+		#ifdef SHOW_LOG_2
+			std::cout << BOLD << YELLOW << "Bytes left to read from " << clientFd << ": " << bytesLeft << RESET << std::endl;
+		#endif
+	}
+	else if (n == -1)
+	{
+		#ifdef SHOW_LOG
+			std::cout << RED << "reading for POST on fd " << clientFd << " failed" << RESET << std::endl;
+		#endif
+		this->_receiveMap.erase(i);
+		bytesLeft = 0;
+		buffer.close();
+		throw Response::ClientDisconnect();
+	}
+// writing the read contents to the file
+	// buffer[n] = '\0' // this would be needed for the next line
+	// buffer << chunk; // this will stop writing if encounters a '\0', wich can happen in binary data!
+	buffer.write(chunk, n); // with this there can even be a '\0' in there, it wont stop writing
+
+// setting the bytesLeft and checking if all content was read
+	if (bytesLeft)
+	{
+		this->_receiveMap[i].bytesLeft = bytesLeft;
+		buffer.close();
+	}
+	else if (this->_receiveMap[i].isChunked)
+	{
+		char endBuffer[2];
+		int endReturn = read(clientFd, endBuffer, 2);
+		if (endReturn != 2)
+			throw Response::BadRequestException();
+		if (endBuffer[0] != '\r' || endBuffer[1] != '\n')
+			throw Response::BadRequestException();
+		this->_receiveMap[i].bytesLeft = bytesLeft;
+		buffer.close();
+	}
+	else if (this->_receiveMap[i].isChunked == false)
+	{
+		buffer.close();
+		this->_receiveMap.erase(i);
+		this->_responseMap[clientFd].response = this->constructPostResponse();
+		this->_responseMap[clientFd].total = this->_responseMap[clientFd].response.length();
+		this->_responseMap[clientFd].bytesLeft = this->_responseMap[clientFd].response.length();
 	}
 }
 
@@ -87,7 +127,7 @@ void Response::receiveChunk(int i)
 std::string Response::constructPostResponse() // this needs to be worked on !!!!!!
 {
 	std::ifstream postBody;
-	postBody.open("./server/data/pages/post_success.html");
+	postBody.open("./server/data/pages/post_success.html"); // do not do it like that maybe unsafe if file gets deleted, or build failsafety to keep it from failing if file does not exist
 
 	std::stringstream buffer;
 	buffer << "HTTP/1.1 201 Created";
@@ -109,38 +149,38 @@ void Response::removeFromReceiveMap(int fd)
 		this->_receiveMap.erase(fd);
 }
 
-void Response::_fillTempFile(int clientFd) // rethink this
+size_t Response::_handleChunked(int clientFd)
 {
-	std::ofstream buffer;
-	buffer.open(this->_receiveMap[clientFd].tempTarget);
-
-	if (buffer.is_open() == false)
+	// read the line until /r/n is read
+	char buffer[2];
+	std::string hex = "";
+	while (hex.find("\r\n") == std::string::npos)
 	{
-		throw Response::ERROR_423(); // check if this makes sense, maybe 500 is more appropriate ???????
+		int returnvalue = read(clientFd, buffer, 1);
+		buffer[1] = '\0';
+		if (returnvalue < 1)
+			throw Response::MissingChunkContentLengthException();
+		hex.append(buffer);
 	}
+	hex.resize(hex.size() - 2);
 
+	std::stringstream hexadecimal;
+	hexadecimal << hex;
 
+	size_t length = 0;
+	// int length2 = 0;
+	// length << std::hex << hexadecimal.str();
+	hexadecimal >> std::hex >> length;
 
-// implement reading of chunks
-
-
-			LOG_RED("_fillTempFile is not yet implemented");
-			this->_receiveMap[clientFd].bytesLeft = 0;
-
-
-
-
-
-
-
+	return (length);
 }
 
 void Response::setPostTarget(int clientFd, std::string target)
 {
 	this->_receiveMap[clientFd].target = target;
-	std::stringstream buffer;
-	buffer << target << "." << clientFd << ".temp";
-	this->_receiveMap[clientFd].tempTarget = buffer.str();
+	// std::stringstream buffer;
+	// buffer << target << "." << clientFd << ".temp";
+	// this->_receiveMap[clientFd].tempTarget = buffer.str();
 }
 
 void Response::checkPostTarget(int clientFd, const Request &request, int port)
@@ -149,7 +189,11 @@ void Response::checkPostTarget(int clientFd, const Request &request, int port)
 	if (access(target.c_str(), F_OK ) != -1)
 	{
 		this->removeFromReceiveMap(clientFd);
-		std::cout << "file is already existing" << std::endl; // instead create a response that makes sense
+		#ifdef SHOW_LOG_2
+			std::stringstream message;
+			message << "file " << target << " is already existing";
+			LOG_RED(message.str());
+		#endif
 		this->_createFileExistingHeader(clientFd, request, port);
 	}
 }
@@ -185,7 +229,7 @@ static size_t _strToSizeT(std::string str)
 	return (out);
 }
 
-void Response::setPostChunked(int clientFd, std::string target, std::map<std::string, std::string> &headerFields)
+void Response::setPostChunked(int clientFd, std::string target, std::map<std::string, std::string> &headerFields) // don't do it with a temp file, just create it as normal file
 {
 	if (this->_receiveMap.count(clientFd) && headerFields.count("transfer-encoding") && headerFields["transfer-encoding"] == "chunked")
 		this->_receiveMap[clientFd].isChunked = true;

@@ -26,7 +26,7 @@ std::string staticReplaceInString(std::string str, std::string tofind, std::stri
 		return(str);
 }
 
-std::string staticPercentDecodingFix(std::string target)
+std::string percentDecodingFix(std::string target)
 {
 	std::string accent;
 	accent += (const char)204;
@@ -73,15 +73,13 @@ std::string Server::percentDecoding(const std::string& str)
 			i++;
 		}
 	}
-	return (staticPercentDecodingFix(tmp.str()));
+	return (percentDecodingFix(tmp.str()));
 }
 
 void Server::checkLocationMethod(const Request& request) const
 {
 	if (this->_currentLocationKey.empty() == true)
 		return ;
-	//print  the request method
-	std::cout << BLUE << "In check method " << request.getMethod() << RESET << std::endl;
 	if (this->_currentConfig.location.find(_currentLocationKey)->second.allowedMethods.count(request.getMethod()) != 1)
 		throw MethodNotAllowed();
 }

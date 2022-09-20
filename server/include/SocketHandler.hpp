@@ -31,13 +31,6 @@
 // 	struct sockaddr_in serv_addr;
 // };
 
-struct ClientStruct
-{
-	int fd;
-	struct sockaddr_in addr;
-	time_t timeout;
-};
-
 // classes
 class SocketHandler
 {
@@ -90,7 +83,7 @@ class SocketHandler
 		bool writeToClient(int i);
 
 		bool removeClient(int fd, bool force = false);
-		void removeInactiveClients();
+		int removeInactiveClients();
 
 		void addKeepAlive(int clientFd);
 		void removeKeepAlive(int clientFd);
@@ -101,6 +94,7 @@ class SocketHandler
 		int getPort(int i);
 
 	// Setter
+		void setTimeout(int clientFd);
 		void setWriteable(int i);
 		void setEvent(int ident, int flags, int filter);
 

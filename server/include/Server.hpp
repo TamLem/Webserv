@@ -153,7 +153,7 @@ class Server
 		};
 };
 
-std::string staticPercentDecodingFix(std::string target);
+// std::string percentDecodingFix(std::string target);
 std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace);
 
 #endif

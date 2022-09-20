@@ -26,7 +26,7 @@ std::string staticReplaceInString(std::string str, std::string tofind, std::stri
 		return(str);
 }
 
-std::string staticPercentDecodingFix(std::string target)
+std::string percentDecodingFix(std::string target)
 {
 	std::string accent;
 	accent += (const char)204;
@@ -73,7 +73,7 @@ std::string Server::percentDecoding(const std::string& str)
 			i++;
 		}
 	}
-	return (staticPercentDecodingFix(tmp.str()));
+	return (percentDecodingFix(tmp.str()));
 }
 
 void Server::checkLocationMethod(const Request& request) const

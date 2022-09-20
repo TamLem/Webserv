@@ -59,9 +59,13 @@ void Server::runEventLoop()
 		int numEvents = this->_socketHandler->getEvents();
 		// if (numEvents == 0)
 		// {
-		// 	this->_socketHandler->removeInactiveClients();	// remove inactive clients
+			// this->_socketHandler->removeInactiveClients();	// remove inactive clients
 		// 	this->_response.clearResponseMap();
 		// }
+		// for (int i = 0; i < numEvents; ++i)
+		// {
+		// 	this->_clients[i].timeout
+		// } @@@
 		for (int i = 0; i < numEvents; ++i)
 		{
 			#ifdef SHOW_LOG_2

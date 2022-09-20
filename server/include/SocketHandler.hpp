@@ -35,6 +35,7 @@ struct ClientStruct
 {
 	int fd;
 	struct sockaddr_in addr;
+	time_t timeout;
 };
 
 // classes

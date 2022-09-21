@@ -302,6 +302,8 @@ int SocketHandler::removeInactiveClients() // @@@
 			message << timeStamp << ": now removing client with fd " << this->_clients[i].fd << " because of " << diffTime << " seconds of inactivity (start: " << ctime(&this->_clients[i].timeout) << ")";
 			LOG_RED(message.str());
 			// send 408 to client first!!!!
+			std::string body = createTimeoutResponse();
+			send(this->_clients[i].fd, body.c_str(), body.length(), 0);
 			// close(this->_clients[i].fd);
 			int clientFd = this->_clients[i].fd;
 			this->_clients.erase(this->_clients.begin() + i);
@@ -316,8 +318,7 @@ std::string SocketHandler::createTimeoutResponse()
 {
 	std::stringstream message;
 
-	message << "HTTP/1.1 408 Request Timeout" << CRLF\
-	<< createErrorString("408", "Request Timeout") << CRLFTWO;
+	message << "HTTP/1.1 408 Request Timeout" << CRLF << createErrorString("408", "Request Timeout") << CRLFTWO;
 
 	return (message.str());
 }

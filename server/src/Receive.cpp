@@ -293,6 +293,7 @@ void Response::_createFileExistingHeader(int clientFd, const Request &request, i
 	this->setStatus("303");
 	std::string location = "http://" + serverNamePort.str() + request.getRawTarget();
 	this->addHeaderField("location", location);
+	// this->addHeaderField("Connection", "close");
 
 	this->putToResponseMap(clientFd);
 }

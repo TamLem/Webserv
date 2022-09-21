@@ -157,9 +157,7 @@ std::string Response::constructHeader(void)
 
 void Response::createErrorBody(void)
 {
-	std::stringstream body;
-	body << createErrorString(this->status, this->statusMessage);
-	this->body = body.str();
+	this->body = createErrorString(this->status, this->statusMessage);
 }
 
 void Response::createIndex(const Request& request)

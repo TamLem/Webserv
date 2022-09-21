@@ -2,6 +2,12 @@
 
 /********** handle POST *********/
 
+/**
+ * @brief  Will read a chunk of data from a POST request and write it to the appropriate file
+ * @note  will work on chunked and not chunked requests
+ * @param  i: clients filedescriptor
+ * @retval None
+ */
 void Response::receiveChunk(int i)
 {
 	const int clientFd = i;
@@ -9,6 +15,7 @@ void Response::receiveChunk(int i)
 	size_t bytesLeft;
 	size_t bufferSize;
 
+// for the case where it is chunked by the client
 	if (this->_receiveMap[i].isChunked == true)
 	{
 		total = this->_handleChunked(i);
@@ -89,6 +96,11 @@ void Response::receiveChunk(int i)
 
 // helper functions for POST
 
+/**
+ * @brief  this will create the responses content for a successfull POST
+ * @note
+ * @retval the response as a string with head and body that needs to be sent to the client
+ */
 std::string Response::constructPostResponse() // this needs to be worked on !!!!!!
 {
 	std::ifstream postBody;
@@ -103,20 +115,37 @@ std::string Response::constructPostResponse() // this needs to be worked on !!!!
 	return (buffer.str());
 }
 
+/**
+ * @brief  checks if a clients filedescriptor is already part of our receiveMap
+ * @note
+ * @param  clientFd: clients filedescriptor
+ * @retval bool of the state
+ */
 bool Response::isInReceiveMap(int clientFd)
 {
 	return (this->_receiveMap.count(clientFd));
 }
 
+/**
+ * @brief  will remove a client from the receiveMap if existant
+ * @note
+ * @param  fd: clients filedescriptor
+ * @retval None
+ */
 void Response::removeFromReceiveMap(int fd)
 {
 	if (this->_receiveMap.count(fd) == true)
 		this->_receiveMap.erase(fd);
 }
 
+/**
+ * @brief  read the first line of a chunked message including the \r\n and translate the hexadecimal number to size_t
+ * @note
+ * @param  clientFd: clients filedescriptor
+ * @retval the translated to size_t hexadecimal
+ */
 size_t Response::_handleChunked(int clientFd)
 {
-	// read the line until /r/n is read
 	char *buffer = NULL;
 	std::string hex = "";
 	while (hex.find("\r\n") != std::string::npos)
@@ -136,6 +165,13 @@ size_t Response::_handleChunked(int clientFd)
 	return (length);
 }
 
+/**
+ * @brief  will set the target for the post
+ * @note   was previously also setting the temp file, might be used again
+ * @param  clientFd: clients filedescriptor
+ * @param  target: the target specified in the request, but with the routed path
+ * @retval None
+ */
 void Response::setPostTarget(int clientFd, std::string target)
 {
 	this->_receiveMap[clientFd].target = target;
@@ -144,6 +180,14 @@ void Response::setPostTarget(int clientFd, std::string target)
 	// this->_receiveMap[clientFd].tempTarget = buffer.str();
 }
 
+/**
+ * @brief  checks existance of the target specified by the request
+ * @note   POST can not write to a file that already is existing
+ * @param  clientFd: clients filedescriptor
+ * @param  &request: the request object
+ * @param  port: the port that was used for the request
+ * @retval None
+ */
 void Response::checkPostTarget(int clientFd, const Request &request, int port)
 {
 	std::string target = request.getRoutedTarget();
@@ -159,6 +203,12 @@ void Response::checkPostTarget(int clientFd, const Request &request, int port)
 	}
 }
 
+/**
+ * @brief  converts a string to a size_t, similar to atoi
+ * @note
+ * @param  str: the string that contains the number you want to convert
+ * @retval the found number or an exception
+ */
 static size_t _strToSizeT(std::string str)
 {
 	size_t out = 0;
@@ -190,7 +240,15 @@ static size_t _strToSizeT(std::string str)
 	return (out);
 }
 
-void Response::setPostChunked(int clientFd, std::string target, std::map<std::string, std::string> &headerFields) // don't do it with a temp file, just create it as normal file
+/**
+ * @brief  checks if a POST request is chunked or not
+ * @note
+ * @param  clientFd: clients filedescriptor
+ * @param  target: the target specified by the request, is outdated because temp files are currently not in use!!!!!!!!
+ * @param  &headerFields: the header fields of the request
+ * @retval None
+ */
+void Response::setPostChunked(int clientFd/* , std::string target */, std::map<std::string, std::string> &headerFields) // don't do it with a temp file, just create it as normal file
 {
 	if (this->_receiveMap.count(clientFd) && headerFields.count("transfer-encoding") && headerFields["transfer-encoding"] == "chunked")
 		this->_receiveMap[clientFd].isChunked = true;
@@ -213,6 +271,14 @@ void Response::setPostChunked(int clientFd, std::string target, std::map<std::st
 	// }
 }
 
+/**
+ * @brief  creates a 303 response header for POST requests if the file is already existing
+ * @note
+ * @param  clientFd: clients filedescriptor
+ * @param  &request: the request object
+ * @param  port: the port on which the request came
+ * @retval None
+ */
 void Response::_createFileExistingHeader(int clientFd, const Request &request, int port)
 {
 	std::stringstream serverNamePort;
@@ -228,11 +294,16 @@ void Response::_createFileExistingHeader(int clientFd, const Request &request, i
 	std::string location = "http://" + serverNamePort.str() + request.getRawTarget();
 	this->addHeaderField("location", location);
 
-	// set fd to eof
-
 	this->putToResponseMap(clientFd);
 }
 
+/**
+ * @brief  sets the total and bytesleft for the request, only for non chunked requests
+ * @note
+ * @param  clientFd: clients filedescriptor
+ * @param  &headerFields: header fields of the request
+ * @retval None
+ */
 void Response::setPostLength(int clientFd, std::map<std::string, std::string> &headerFields)
 {
 	size_t length = 0;
@@ -251,6 +322,13 @@ void Response::setPostLength(int clientFd, std::map<std::string, std::string> &h
 	this->_receiveMap[clientFd].bytesLeft = length;
 }
 
+/**
+ * @brief  sets the buffersize defined in the config file for each POST request
+ * @note
+ * @param  clientFd: clients filedescriptor
+ * @param  bufferSize: buffer size specified in the config
+ * @retval None
+ */
 void Response::setPostBufferSize(int clientFd, size_t bufferSize)
 {
 	this->_receiveMap[clientFd].bufferSize = bufferSize;

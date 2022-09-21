@@ -1,6 +1,7 @@
 #include "Server.hpp"
 #include "Config.hpp"
 #include "Cgi/Cgi.hpp"
+#include "Utils.hpp"
 #include <dirent.h> // dirent, opendir
 #include <cstdio> // remove
 
@@ -62,13 +63,18 @@ void Server::runEventLoop()
 		{
 			tryRemove:
 			clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
-			if (clientFd != -1)
+			if (clientFd != -1 && this->_response.isInResponseMap(clientFd) == false)
 			{
 				this->removeClientTraces(clientFd);
 				#ifdef SHOW_LOG
 					std::cout << RED << "Client " << clientFd << " was timed-out" << RESET << std::endl;
 				#endif
-				close(clientFd);
+				this->_response.clear();
+				this->_response.setProtocol("HTTP/1.1");
+				this->_response.setStatus("408");
+				this->_response.createErrorBody();
+				this->_response.putToResponseMap(clientFd);
+				this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
 				goto tryRemove;
 			}
 		}

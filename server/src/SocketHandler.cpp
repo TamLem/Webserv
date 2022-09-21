@@ -284,7 +284,7 @@ SocketHandler::SocketHandler(Config *config)
 	this->_initEventLoop();
 }
 
-int SocketHandler::removeInactiveClients() // @@@
+int SocketHandler::removeInactiveClients()
 {
 	#ifdef SHOW_LOG
 		if (this->_clients.size())
@@ -299,15 +299,16 @@ int SocketHandler::removeInactiveClients() // @@@
 			std::stringstream message;
 			std::string timeStamp = ctime(&now);
 			timeStamp.resize(timeStamp.length() - 1);
-			message << timeStamp << ": now removing client with fd " << this->_clients[i].fd << " because of " << diffTime << " seconds of inactivity (start: " << ctime(&this->_clients[i].timeout) << ")";
+			message << timeStamp << ": now removing client with fd " << this->_clients[i].fd << " because of " << diffTime << " seconds of inactivity (start: ";
+			timeStamp = ctime(&this->_clients[i].timeout);
+			timeStamp.resize(timeStamp.length() - 1);
+			message << timeStamp << ")";
 			LOG_RED(message.str());
-			// send 408 to client first!!!!
-			std::string body = createTimeoutResponse();
-			send(this->_clients[i].fd, body.c_str(), body.length(), 0);
-			// close(this->_clients[i].fd);
-			int clientFd = this->_clients[i].fd;
-			this->_clients.erase(this->_clients.begin() + i);
-			return (clientFd);
+			// std::string body = createTimeoutResponse(); // was moved to server.cpp
+			// send(this->_clients[i].fd, body.c_str(), body.length(), 0); // maybe put it into the ResponseMap instead
+			// int clientFd = this->_clients[i].fd;
+			// this->_clients.erase(this->_clients.begin() + i);
+			return (this->_clients[i].fd);
 		}
 	}
 	return (-1);

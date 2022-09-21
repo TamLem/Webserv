@@ -1,3 +1,4 @@
+#include "Utils.hpp"
 #include "Server.hpp"
 
 bool Server::_crlftwoFound()
@@ -103,4 +104,27 @@ bool Server::_isCgiRequest(std::string requestHead) // AE this function ahs to b
 		}
 	}
 	return (false);
+}
+
+std::string createErrorString(std::string statusCode, std::string statusMessage)
+{
+	std::stringstream message;
+
+	message << \
+	"<html>\n\
+	<head>\n\
+	<title>Error " << statusCode << "</title>\n\
+	<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"images/favicon.ico\">\n\
+	</head>\n\
+	<body bgcolor=\"000000\">\n\
+	<center>\n\
+	<h1 style=\"color:white\">Error " << statusCode << "</h1>\n\
+	<p style=\"color:white\">" << statusMessage << "!\n\
+	<br><br>\n\
+	<img src=\"/images/error.jpg\" align=\"TOP\">\n\
+	</center>\n\
+	</body>\n\
+	</html>";
+
+	return (message.str());
 }

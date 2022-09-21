@@ -244,7 +244,7 @@ static size_t _strToSizeT(std::string str)
  * @brief  checks if a POST request is chunked or not
  * @note
  * @param  clientFd: clients filedescriptor
- * @param  target: the target specified by the request, is outdated because temp files are currently not in use!!!!!!!!
+ * @param  target: the target specified by the request, is outdated because temp files are currently not in use
  * @param  &headerFields: the header fields of the request
  * @retval None
  */

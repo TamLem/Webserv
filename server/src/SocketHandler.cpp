@@ -1,5 +1,6 @@
 #include "SocketHandler.hpp"
 #include "Response.hpp"
+#include "Utils.hpp"
 
 // Private Members
 void SocketHandler::_initPorts()
@@ -211,7 +212,7 @@ bool SocketHandler::removeClient(int i, bool force)
 			else
 			{
 				std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl;
-				exit(112); // carefull with exit please!!!!
+				exit(112); // carefull with exit please!!!! THIS IS BAD, NEVER EXIT!!!!
 			}
 		}
 	// }
@@ -309,6 +310,16 @@ int SocketHandler::removeInactiveClients() // @@@
 	}
 	return (-1);
 	// this->_clients.clear();
+}
+
+std::string SocketHandler::createTimeoutResponse()
+{
+	std::stringstream message;
+
+	message << "HTTP/1.1 408 Request Timeout" << CRLF\
+	<< createErrorString("408", "Request Timeout") << CRLFTWO;
+
+	return (message.str());
 }
 
 void SocketHandler::addKeepAlive(int clientFd)

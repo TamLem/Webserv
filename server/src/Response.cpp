@@ -1,4 +1,6 @@
 #include "Response.hpp"
+#include "Utils.hpp"
+
 //// might be temporary
 	bool Response::isInResponseMap(int clientFd)
 	{
@@ -156,21 +158,7 @@ std::string Response::constructHeader(void)
 void Response::createErrorBody(void)
 {
 	std::stringstream body;
-	body <<
-	"<html>\n\
-	<head>\n\
-	<title>Error " << this->status << "</title>\n\
-	<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"images/favicon.ico\">\n\
-	</head>\n\
-	<body bgcolor=\"000000\">\n\
-	<center>\n\
-	<h1 style=\"color:white\">Error " << this->status << "</h1>\n\
-	<p style=\"color:white\">" << this->statusMessage << "!\n\
-	<br><br>\n\
-	<img src=\"/images/error.jpg\" align=\"TOP\">\n\
-	</center>\n\
-	</body>\n\
-	</html>";
+	body << createErrorString(this->status, this->statusMessage);
 	this->body = body.str();
 }
 

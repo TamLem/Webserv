@@ -116,8 +116,6 @@ void Server::runEventLoop()
 				{
 					if (this->_response.was3XXCode(clientFd) == false)
 						this->_socketHandler->removeKeepAlive(clientFd);
-					// else
-					// 	this->_socketHandler->setEvent(this->_socketHandler->getFD(i), EV_ADD, EVFILT_READ); // tried to reuse the same socket for the keepalive answer, did not work for some reason.... try implementing the timeout we talked about instead
 					if (this->_socketHandler->removeClient(i, true) == true)
 					{
 						removeClientTraces(clientFd);
@@ -128,7 +126,6 @@ void Server::runEventLoop()
 			}
 			if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients ???? really?
 			{
-				// close(clientFd); // check if it breaks anything
 				removeClientTraces(clientFd);
 			}
 		}
@@ -211,7 +208,7 @@ void Server::handlePOST(int clientFd, const Request& request)
 	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
 
 	this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
-	this->_response.setPostChunked(clientFd, request.getRoutedTarget(), tempHeaderFields); // this should set bool to true and create the tempTarget
+	this->_response.setPostChunked(clientFd/* , request.getRoutedTarget() */, tempHeaderFields);
 }
 
 static void staticRemoveTarget(const std::string& path)
@@ -288,8 +285,8 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			//compression (merge slashes)
 			//resolve relative paths
 			//determine location
-			request.setDecodedTarget(this->percentDecoding(request.getRawTarget()));
-			request.setQuery(this->percentDecoding(request.getQuery()));
+			request.setDecodedTarget(percentDecoding(request.getRawTarget()));
+			request.setQuery(percentDecoding(request.getQuery()));
 			isCgi = this->_isCgiRequest(this->_requestHead);
 			#ifdef SHOW_LOG
 				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
@@ -372,7 +369,7 @@ void Server::_readRequestHead(int clientFd)
 		else // append one character from client request if it is an ascii-char
 		{
 			buffer[1] = '\0';
-			if (!this->_isPrintableAscii(buffer[0]))
+			if (!_isPrintableAscii(buffer[0]))
 			{
 				#ifdef SHOW_LOG
 					std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;

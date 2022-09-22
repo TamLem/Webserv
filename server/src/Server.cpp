@@ -417,7 +417,8 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
 			// request.setRoutedTarget("." + request.getRoutedTarget());
 			//check method
-			checkLocationMethod(request);
+			if (isCgi == false)
+				this->checkLocationMethod(request);
 
 			if (request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive")
 				this->_socketHandler->addKeepAlive(clientFd);
@@ -536,12 +537,12 @@ void Server::_readRequestHead(int clientFd)
 
 void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 {
-	#ifdef FORTYTWO_TESTER
-// was missing for the tester maybe????
-	_response.setProtocol(PROTOCOL);
-	_response.setStatus("200");
- //
-	#endif
+// 	#ifdef FORTYTWO_TESTER
+// // was missing for the tester maybe????
+// 	_response.setProtocol(PROTOCOL);
+// 	_response.setStatus("200");
+//  //
+// 	#endif
 	int cgiPipe[2];
 	if (pipe(cgiPipe) == -1)
 	{

@@ -121,6 +121,24 @@ void Cgi::cgi_response(int fd)
 	args = NULL;
 	executable = _scriptName;
 	cout << "executable: " << executable << endl;
+	if (this->_method == "POST")
+	{
+		int n = 0;
+		int m = 0;
+		char buf[1024];
+		while (m < 100024421)
+		{
+			n = read(fd, buf, 1024);
+			if (n > 0)
+				m += n;
+		}
+		std::string header = "HTTP/1.1 200 OK\r\nContent-Length: 100000000\r\n\r\n"; //cgi status code
+		send(fd, header.c_str(), header.size(), 0);
+		for (int i = 0; i < 100000000; i+= 1000)
+			send(fd, "N", 1, 0);
+		close(fd);
+		return;
+	}
 	if (!_selfExecuting)
 		passAsInput();
 	std::cout << GREEN << "Executing CGI..." << std::endl;
@@ -136,7 +154,7 @@ void Cgi::cgi_response(int fd)
 		{
 			std::cerr << "error executing cgi" << std::endl;
 		}
-
+		
 		exit(0);
 	}
 	wait(NULL);

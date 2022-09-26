@@ -121,7 +121,10 @@ std::string Response::getResponse()
 	if (this->_requestMethod != "HEAD")
 	#endif
 		buffer << this->getBody();
-	buffer << CRLFTWO;
+	if (this->getBody().length() > 0)
+		buffer << CRLFTWO;
+	else
+		buffer << CRLF;
 
 	return (buffer.str());
 }

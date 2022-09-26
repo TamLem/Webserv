@@ -293,9 +293,19 @@ void Response::_createFileExistingHeader(int clientFd, const Request &request, i
 	this->setStatus("303");
 	std::string location = "http://" + serverNamePort.str() + request.getRawTarget();
 	this->addHeaderField("location", location);
-	// this->addHeaderField("Connection", "close");
+	this->addHeaderField("Connection", "close");
+	this->addHeaderField("Host", serverNamePort.str());
+	// this->setBody("http://" + serverNamePort.str() + request.getRawTarget()); // for testing only!!!
 
 	this->putToResponseMap(clientFd);
+// only for testing !!!!!! removes all leftover contents from the clientFd // ILLEGAL READ !!!!!!
+	// char buffer[2];
+	// while (read(clientFd, buffer, 1) > 0)
+	// {
+	// 	buffer[1] = '\0';
+	// 	LOG_YELLOW(buffer);
+	// }
+//
 }
 
 /**

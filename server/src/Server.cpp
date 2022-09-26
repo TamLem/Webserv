@@ -72,9 +72,10 @@ void Server::runEventLoop()
 					LOG_RED(message.str());
 				#endif
 				this->_response.clear();
-				this->_response.setProtocol("HTTP/1.1");
+				this->_response.setProtocol(PROTOCOL);
 				this->_response.setStatus("408");
 				this->_response.setRequestMethod("TIMEOUT");
+				this->_response.addHeaderField("Connection", "close");
 				this->_response.createErrorBody();
 				this->_response.putToResponseMap(clientFd);
 				this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
@@ -128,6 +129,12 @@ void Server::runEventLoop()
 					std::cout << BLUE << "write to client" << clientFd << RESET << std::endl;
 				#endif
 				this->_socketHandler->setTimeout(clientFd);
+				// if (this->_socketHandler->isKeepAlive(clientFd) == true) // tried to fix keep-alive connections!!! did not work, might be completely wrong!!!!
+				// {
+				// 	bool val = true;
+				// 	setsockopt(clientFd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+				// 	LOG_GREEN("socket set to keepalive!!!!!");
+				// }
 				if (this->_response.sendRes(clientFd) == true)
 				{
 					if (this->_response.was3XXCode(clientFd) == false)
@@ -224,6 +231,8 @@ void Server::handlePOST(int clientFd, const Request& request)
 	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
 
 	this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
+	// if (this->_response.getStatus() == "303")
+	// 	this->_socketHandler->removeKeepAlive(clientFd); // just for testing !!!!!!!!
 	this->_response.setPostChunked(clientFd/* , request.getRoutedTarget() */, tempHeaderFields);
 }
 

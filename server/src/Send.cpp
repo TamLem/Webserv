@@ -15,9 +15,9 @@
 //optional one for the server to send the response to the client
 bool Response::sendRes(int fd)
 {
-	std::cout << "In SENDRES Request Method: " << this->_requestMethod << std::endl;
+	// std::cout << "In SENDRES Request Method: " << this->_requestMethod << std::endl;
 
-	std::cout << GREEN << "Sending response to client" << RESET << std::endl;
+	std::cout << GREEN << "Sending response to client " << fd << RESET << std::endl;
 	if (this->_responseMap.count(fd) == 0)
 	{
 		if (this->_requestMethod != "HEAD")
@@ -28,6 +28,7 @@ bool Response::sendRes(int fd)
 	int sendSize = MAX_SEND_CHUNK_SIZE;
 	if (this->_responseMap[fd].response.size() < MAX_SEND_CHUNK_SIZE)
 		sendSize = this->_responseMap[fd].response.size();
+	// LOG_BLUE(this->_responseMap[fd].response); // use this to see what was send as response, carefull with images/videos!!!!!
 	int n = send(fd, this->_responseMap[fd].response.c_str(), sendSize, 0);
 	if (n == -1)
 	{

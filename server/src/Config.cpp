@@ -462,7 +462,7 @@ const char* Config::InvalidBracketsException::what(void) const throw()
 
 const char* Config::FileOpenException::what(void) const throw()
 {
-	return ("Failed to read from .conf file, check file existance and readrights");
+	return ("Failed to read from .conf file, check file existence and readrights");
 }
 
 const char* Config::ServerInsideServerException::what(void) const throw()

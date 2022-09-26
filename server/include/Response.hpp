@@ -64,7 +64,7 @@ class Response : public Message
 		void setPostLength(int clientFd, std::map<std::string, std::string> &headerFields);
 		void setPostBufferSize(int clientFd, size_t bufferSize);
 		void checkPostTarget(int clientFd, const Request &request, int port);
-		void setPostChunked(int clientFd, std::string target, std::map<std::string, std::string> &headerFields);
+		void setPostChunked(int clientFd/* , std::string target */, std::map<std::string, std::string> &headerFields);
 
 		const std::string& getStatus(void) const;
 		const std::string& getStatusMessage(void) const;

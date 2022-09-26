@@ -84,6 +84,7 @@ class SocketHandler
 
 		bool removeClient(int fd, bool force = false);
 		int removeInactiveClients();
+		std::string createTimeoutResponse();
 
 		void addKeepAlive(int clientFd);
 		void removeKeepAlive(int clientFd);

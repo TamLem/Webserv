@@ -45,8 +45,6 @@
 // 	struct sockaddr_in addr;
 // };
 
-void cgi_handle(Request& request, std::string buf, int fd); // what tf is this @Tam
-
 static volatile int keep_running = 1;
 
 class Server
@@ -155,7 +153,7 @@ class Server
 		};
 };
 
-std::string staticPercentDecodingFix(std::string target);
+// std::string percentDecodingFix(std::string target);
 std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace);
 
 #endif

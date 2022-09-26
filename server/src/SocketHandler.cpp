@@ -422,7 +422,13 @@ void SocketHandler::setWriteable(int i)
 	this->setNonBlocking(fd);
 }
 
-void SocketHandler::setEvent(int ident, int flags, int filter) // what is ident? is it the i from the evList or the fd? @Tam
+/**
+ * @brief adds events to the change list
+ * @param ident fd of the client
+ * @param flags event flag
+ * @param filter event filter
+ */
+void SocketHandler::setEvent(int ident, int flags, int filter)
 {
 	struct kevent ev;
 

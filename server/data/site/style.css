@@ -15,6 +15,14 @@ body {
 	background-color: #2E1C54;
 }
 
+.form-container {
+	width: 30vw;
+	color: #000;
+	background-color: #fff;
+	margin: 0 auto;
+	padding: 20px;
+}
+
 .nav {
 	padding: 0;
 	background-color: #4e4795;

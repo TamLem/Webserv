@@ -18,16 +18,39 @@ void Response::receiveChunk(int i)
 // for the case where it is chunked by the client
 	if (this->_receiveMap[i].isChunked == true)
 	{
-		total = this->_handleChunked(i);
-		bytesLeft = total;
-		bufferSize = this->_receiveMap[i].bufferSize;
+		if (this->_receiveMap[i].total == 0 || (this->_receiveMap[i].total != 0 && this->_receiveMap[i].bytesLeft == 0))
+		{
+			this->_receiveMap[i].total = this->_handleChunked(i);
+			if (this->_receiveMap[i].total == 0)
+			{
+				char endBuffer[3];
+				int endReturn = read(clientFd, endBuffer, 3);
+				if (endReturn != 2)
+					throw Response::BadRequestException();
+				if (endBuffer[0] != '\r' || endBuffer[1] != '\n')
+					throw Response::BadRequestException();
+				this->_receiveMap.erase(i);
+				this->_responseMap[clientFd].response = this->constructPostResponse();
+				this->_responseMap[clientFd].total = this->_responseMap[clientFd].response.length();
+				this->_responseMap[clientFd].bytesLeft = this->_responseMap[clientFd].response.length();
+				return ;
+			}
+			this->_receiveMap[i].bytesLeft = this->_receiveMap[i].total;
+			// bufferSize = this->_receiveMap[i].bufferSize;
+		}
+		// else
+		// {
+		// 	total = this->_receiveMap[i].total;
+		// 	bytesLeft = this->_receiveMap[i].bytesLeft;
+		// 	bufferSize = this->_receiveMap[i].bufferSize;
+		// }
 	}
-	else
-	{
+	// else
+	// {
 		total = this->_receiveMap[i].total;
 		bytesLeft = this->_receiveMap[i].bytesLeft;
 		bufferSize = this->_receiveMap[i].bufferSize;
-	}
+	// }
 	int n = 0;
 	std::ofstream buffer;
 	char chunk[bufferSize];
@@ -54,6 +77,7 @@ void Response::receiveChunk(int i)
 
 	#ifdef SHOW_LOG_2
 		std::cout << BOLD << GREEN << "Bytes received from " << clientFd << ": " << n << RESET << std::endl;
+		LOG_YELLOW(chunk);
 	#endif
 // checking for errors of read
 	if (n > 0)
@@ -84,7 +108,18 @@ void Response::receiveChunk(int i)
 		this->_receiveMap[i].bytesLeft = bytesLeft;
 		buffer.close();
 	}
-	else
+	else if (this->_receiveMap[i].isChunked)
+	{
+		char endBuffer[2];
+		int endReturn = read(clientFd, endBuffer, 2);
+		if (endReturn != 2)
+			throw Response::BadRequestException();
+		if (endBuffer[0] != '\r' || endBuffer[1] != '\n')
+			throw Response::BadRequestException();
+		this->_receiveMap[i].bytesLeft = bytesLeft;
+		buffer.close();
+	}
+	else if (this->_receiveMap[i].isChunked == false)
 	{
 		buffer.close();
 		this->_receiveMap.erase(i);
@@ -146,20 +181,25 @@ void Response::removeFromReceiveMap(int fd)
  */
 size_t Response::_handleChunked(int clientFd)
 {
-	char *buffer = NULL;
+	// read the line until /r/n is read
+	char buffer[2];
 	std::string hex = "";
-	while (hex.find("\r\n") != std::string::npos)
+	while (hex.find("\r\n") == std::string::npos)
 	{
-		if (read(clientFd, buffer, 1) < 1)
+		int returnvalue = read(clientFd, buffer, 1);
+		buffer[1] = '\0';
+		if (returnvalue < 1)
 			throw Response::MissingChunkContentLengthException();
 		hex.append(buffer);
 	}
-	hex.resize(hex.size() - 1);
+	hex.resize(hex.size() - 2);
 
 	std::stringstream hexadecimal;
-	hexadecimal << buffer;
+	hexadecimal << hex;
 
-	size_t length;
+	size_t length = 0;
+	// int length2 = 0;
+	// length << std::hex << hexadecimal.str();
 	hexadecimal >> std::hex >> length;
 
 	return (length);

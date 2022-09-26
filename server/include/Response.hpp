@@ -154,6 +154,12 @@ class Response : public Message
 		public:
 			virtual const char* what() const throw();
 	};
+	
+	class BadRequestException : public std::exception
+	{
+		public:
+			virtual const char* what() const throw();
+	};
 };
 
 

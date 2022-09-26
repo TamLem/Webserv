@@ -42,7 +42,7 @@ bool Response::sendRes(int fd)
 	#ifdef SHOW_LOG_2
 		else
 	// disable after testing!!!!!!!!!!
-		// std::cout << BLUE << "was send >" << RESET << this->_responseMap[fd].response << BLUE << "<" << RESET << std::endl;
+		std::cout << BLUE << "was send >" << RESET << this->_responseMap[fd].response << BLUE << "<" << RESET << std::endl;
 	//
 			std::cout << YELLOW << "sent " << n << " bytes to fd: " << fd  << RESET << std::endl;
 	#endif

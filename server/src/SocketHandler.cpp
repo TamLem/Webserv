@@ -3,9 +3,10 @@
 #include "Utils.hpp"
 
 // Private Members
+
+// inits this->_ports
 void SocketHandler::_initPorts()
 {
-	// inits this->_ports
 	std::map<std::string, ConfigStruct>::const_iterator confIt = this->_cluster.begin();
 	std::map<std::string, ConfigStruct>::const_iterator confEnd = this->_cluster.end();
 	for (; confIt != confEnd; ++confIt)
@@ -175,7 +176,7 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	struct ClientStruct c;
 	c.fd = fd;
 	c.addr = addr;
-	// c.timeout = time(NULL);
+	// c.timeout = time(NULL); // this is done later, not necessary here
 	this->_clients.push_back(c);
 	return (this->_clients.size() - 1);
 }
@@ -229,7 +230,7 @@ bool SocketHandler::readFromClient(int i)
 		{
 			close(fd);
 			std::cerr << RED << "read Error getting client for fd: " << fd << std::endl;
-			perror(NULL); // check if illegal
+			// perror(NULL); // check if illegal
 			std::cerr << RESET;
 			return (false); // throw exception
 		}
@@ -251,7 +252,7 @@ bool SocketHandler::writeToClient(int i)
 		{
 			close(fd);
 			std::cerr << RED << "write Error getting client for fd: " << fd << std::endl;
-			perror(NULL); // check if illegal
+			// perror(NULL); // check if illegal
 			std::cerr << RESET;
 			return (false); // throw exception
 		}
@@ -296,23 +297,20 @@ int SocketHandler::removeInactiveClients()
 		double diffTime = difftime(now, this->_clients[i].timeout);
 		if (diffTime >= CLIENT_TIMEOUT)
 		{
+			#ifdef SHOW_LOG_2
 			std::stringstream message;
 			std::string timeStamp = ctime(&now);
 			timeStamp.resize(timeStamp.length() - 1);
-			message << timeStamp << ": now removing client with fd " << this->_clients[i].fd << " because of " << diffTime << " seconds of inactivity (start: ";
+			message << timeStamp << ": kicking fd " << this->_clients[i].fd << " because of " << diffTime << " s of inactivity (start: ";
 			timeStamp = ctime(&this->_clients[i].timeout);
 			timeStamp.resize(timeStamp.length() - 1);
 			message << timeStamp << ")";
-			LOG_RED(message.str());
-			// std::string body = createTimeoutResponse(); // was moved to server.cpp
-			// send(this->_clients[i].fd, body.c_str(), body.length(), 0); // maybe put it into the ResponseMap instead
-			// int clientFd = this->_clients[i].fd;
-			// this->_clients.erase(this->_clients.begin() + i);
+				LOG_RED(message.str());
+			#endif
 			return (this->_clients[i].fd);
 		}
 	}
 	return (-1);
-	// this->_clients.clear();
 }
 
 std::string SocketHandler::createTimeoutResponse()
@@ -352,10 +350,6 @@ void SocketHandler::removeKeepAlive(int clientFd)
 			LOG_YELLOW(buffer.str());
 		#endif
 	}
-	#ifdef SHOW_LOG_2
-		else
-			LOG_RED("Client to remove was NOT part of keep-alive"); // might now be needed!!!!
-	#endif
 }
 
 bool SocketHandler::isKeepAlive(int clientFd)

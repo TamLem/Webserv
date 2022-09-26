@@ -65,18 +65,28 @@ void Server::runEventLoop()
 			clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
 			if (clientFd != -1 && this->_response.isInResponseMap(clientFd) == false)
 			{
-				this->removeClientTraces(clientFd);
+				this->_socketHandler->removeKeepAlive(clientFd);
 				#ifdef SHOW_LOG
-					std::cout << RED << "Client " << clientFd << " was timed-out" << RESET << std::endl;
+					std::stringstream message;
+					message << "Client " << clientFd << " was timed-out";
+					LOG_RED(message.str());
 				#endif
 				this->_response.clear();
 				this->_response.setProtocol("HTTP/1.1");
 				this->_response.setStatus("408");
+				this->_response.setRequestMethod("TIMEOUT");
 				this->_response.createErrorBody();
 				this->_response.putToResponseMap(clientFd);
 				this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
 				goto tryRemove;
 			}
+			#ifdef SHOW_LOG_2
+			else if (clientFd != -1) // only to make the printed LOG_2 more beautiful
+			{
+				std::cout << "\033[A\033[K";
+				std::cout << "\033[A\033[K";
+			}
+			#endif
 		}
 		for (int i = 0; i < numEvents; ++i)
 		{

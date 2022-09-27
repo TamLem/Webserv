@@ -135,10 +135,14 @@ void Server::runEventLoop()
 				// 	setsockopt(clientFd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
 				// 	LOG_GREEN("socket set to keepalive!!!!!");
 				// }
+				if (this->_socketHandler->isKeepAlive(clientFd) == true)
+					this->_response.addHeaderField("Connection", "keep-alive");
 				if (this->_response.sendRes(clientFd) == true)
 				{
-					if (this->_response.was3XXCode(clientFd) == false)
-						this->_socketHandler->removeKeepAlive(clientFd);
+					// if (this->_response.was3XXCode(clientFd) == false)
+					// 	this->_socketHandler->removeKeepAlive(clientFd);
+					if (this->_socketHandler->isKeepAlive(clientFd) == true && this->_response.isInResponseMap(clientFd) == false)
+						this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_READ);
 					if (this->_socketHandler->removeClient(i, true) == true)
 					{
 						removeClientTraces(clientFd);
@@ -236,6 +240,8 @@ void Server::handlePOST(int clientFd, const Request& request)
 
 	this->_response.setProtocol(PROTOCOL);
 	this->_response.addHeaderField("server", this->_currentConfig.serverName);
+	// if (this->_socketHandler->isKeepAlive(clientFd) == true) // 201 is still missing the headerfields...!!!!!
+	// 	this->_response.addHeaderField("Connection", "keep-alive");
 	this->_response.setStatus("201");
 
 	this->_response.createBodyFromFile("./server/data/pages/post_success.html");
@@ -244,7 +250,7 @@ void Server::handlePOST(int clientFd, const Request& request)
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 	this->_response.setPostLength(clientFd, tempHeaderFields);
 	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
-	this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
+	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
 	// if (this->_response.getStatus() == "303")
 	// 	this->_socketHandler->removeKeepAlive(clientFd); // just for testing !!!!!!!!
 	this->_response.setPostChunked(clientFd/* , request.getRoutedTarget() */, tempHeaderFields);

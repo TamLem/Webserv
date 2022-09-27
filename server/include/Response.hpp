@@ -35,7 +35,7 @@ class Response : public Message
 	// private Methods
 		void createMessageMap(void);
 		bool isValidStatus(const std::string&);
-		void _createFileExistingHeader(int clientFd, const Request &request, int port);
+		// void _createFileExistingHeader(int clientFd, const Request &request, int port);
 		size_t _handleChunked(int i);
 	public:
 		Response(void);
@@ -57,13 +57,13 @@ class Response : public Message
 		void setProtocol(const std::string&);
 		void setRequestMethod(const std::string&);
 
-		bool was3XXCode(int clientFd); // for keep-alive
+		// bool was3XXCode(int clientFd); // for keep-alive
 
 	// for POST requests
 		void setPostTarget(int clientFd, std::string target);
 		void setPostLength(int clientFd, std::map<std::string, std::string> &headerFields);
 		void setPostBufferSize(int clientFd, size_t bufferSize);
-		void checkPostTarget(int clientFd, const Request &request, int port);
+		// void checkPostTarget(int clientFd, const Request &request, int port);
 		void setPostChunked(int clientFd/* , std::string target */, std::map<std::string, std::string> &headerFields);
 
 		const std::string& getStatus(void) const;
@@ -154,7 +154,7 @@ class Response : public Message
 		public:
 			virtual const char* what() const throw();
 	};
-	
+
 	class BadRequestException : public std::exception
 	{
 		public:

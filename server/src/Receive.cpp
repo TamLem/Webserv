@@ -228,20 +228,20 @@ void Response::setPostTarget(int clientFd, std::string target)
  * @param  port: the port that was used for the request
  * @retval None
  */
-void Response::checkPostTarget(int clientFd, const Request &request, int port)
-{
-	std::string target = request.getRoutedTarget();
-	if (access(target.c_str(), F_OK ) != -1)
-	{
-		this->removeFromReceiveMap(clientFd);
-		#ifdef SHOW_LOG_2
-			std::stringstream message;
-			message << "file " << target << " is already existing";
-			LOG_RED(message.str());
-		#endif
-		this->_createFileExistingHeader(clientFd, request, port);
-	}
-}
+// void Response::checkPostTarget(int clientFd, const Request &request, int port)
+// {
+// 	std::string target = request.getRoutedTarget();
+// 	if (access(target.c_str(), F_OK ) != -1)
+// 	{
+// 		this->removeFromReceiveMap(clientFd);
+// 		#ifdef SHOW_LOG_2
+// 			std::stringstream message;
+// 			message << "file " << target << " is already existing";
+// 			LOG_RED(message.str());
+// 		#endif
+// 		// this->_createFileExistingHeader(clientFd, request, port);
+// 	}
+// }
 
 /**
  * @brief  converts a string to a size_t, similar to atoi
@@ -311,42 +311,6 @@ void Response::setPostChunked(int clientFd/* , std::string target */, std::map<s
 	// }
 }
 
-/**
- * @brief  creates a 303 response header for POST requests if the file is already existing
- * @note
- * @param  clientFd: clients filedescriptor
- * @param  &request: the request object
- * @param  port: the port on which the request came
- * @retval None
- */
-void Response::_createFileExistingHeader(int clientFd, const Request &request, int port)
-{
-	std::stringstream serverNamePort;
-	serverNamePort << request.getHostName() << ":" << port; // creates ie. localhost:8080
-// clear all the unused data
-	this->headerFields.clear();
-	this->body.clear();
-	this->removeFromReceiveMap(clientFd);
-	this->removeFromResponseMap(clientFd);
-// set all the data for the header
-	this->setProtocol(PROTOCOL);
-	this->setStatus("303");
-	std::string location = "http://" + serverNamePort.str() + request.getRawTarget();
-	this->addHeaderField("location", location);
-	this->addHeaderField("Connection", "close");
-	this->addHeaderField("Host", serverNamePort.str());
-	// this->setBody("http://" + serverNamePort.str() + request.getRawTarget()); // for testing only!!!
-
-	this->putToResponseMap(clientFd);
-// only for testing !!!!!! removes all leftover contents from the clientFd // ILLEGAL READ !!!!!!
-	// char buffer[2];
-	// while (read(clientFd, buffer, 1) > 0)
-	// {
-	// 	buffer[1] = '\0';
-	// 	LOG_YELLOW(buffer);
-	// }
-//
-}
 
 /**
  * @brief  sets the total and bytesleft for the request, only for non chunked requests
@@ -391,4 +355,45 @@ void Response::setPostBufferSize(int clientFd, size_t bufferSize)
 // 		return (true);
 // 	else
 // 		return (false);
+// }
+
+
+
+////////// LEGACY CONTENT BELOW//////////
+
+// /**
+//  * @brief  creates a 303 response header for POST requests if the file is already existing
+//  * @note
+//  * @param  clientFd: clients filedescriptor
+//  * @param  &request: the request object
+//  * @param  port: the port on which the request came
+//  * @retval None
+//  */
+// void Response::_createFileExistingHeader(int clientFd, const Request &request, int port)
+// {
+// 	std::stringstream serverNamePort;
+// 	serverNamePort << request.getHostName() << ":" << port; // creates ie. localhost:8080
+// // clear all the unused data
+// 	this->headerFields.clear();
+// 	this->body.clear();
+// 	this->removeFromReceiveMap(clientFd);
+// 	this->removeFromResponseMap(clientFd);
+// // set all the data for the header
+// 	this->setProtocol(PROTOCOL);
+// 	this->setStatus("303");
+// 	std::string location = "http://" + serverNamePort.str() + request.getRawTarget();
+// 	this->addHeaderField("location", location);
+// 	this->addHeaderField("Connection", "close");
+// 	this->addHeaderField("Host", serverNamePort.str());
+// 	// this->setBody("http://" + serverNamePort.str() + request.getRawTarget()); // for testing only!!!
+
+// 	this->putToResponseMap(clientFd);
+// // only for testing !!!!!! removes all leftover contents from the clientFd // ILLEGAL READ !!!!!!
+// 	// char buffer[2];
+// 	// while (read(clientFd, buffer, 1) > 0)
+// 	// {
+// 	// 	buffer[1] = '\0';
+// 	// 	LOG_YELLOW(buffer);
+// 	// }
+// //
 // }

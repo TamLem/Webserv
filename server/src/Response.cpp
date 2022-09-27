@@ -83,15 +83,15 @@ void Response::setProtocol(const std::string& protocol)
 	this->protocol = protocol;
 }
 
-bool Response::was3XXCode(int clientFd)
-{
-	(void)clientFd;
-	// if (this->_responseMap.count(clientFd))
-		// return (this->_responseMap[clientFd].status[0] == '3');
-		return (this->status[0] == '3');
-	// else
-	// 	return (false);
-}
+// bool Response::was3XXCode(int clientFd)
+// {
+// 	(void)clientFd;
+// 	// if (this->_responseMap.count(clientFd))
+// 		// return (this->_responseMap[clientFd].status[0] == '3');
+// 		return (this->status[0] == '3');
+// 	// else
+// 	// 	return (false);
+// }
 
 const std::string& Response::getStatus(void) const
 {

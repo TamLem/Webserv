@@ -506,7 +506,14 @@ void Server::_readRequestHead(int clientFd)
 	while (charsRead < MAX_REQUEST_HEADER_SIZE)
 	{
 		n = read(clientFd, buffer, 1);
-		if (n < 0) // read had an error reading from fd, was failing PUT
+		if (buffer[0] == '\n' && n < 0)
+		{
+			#ifdef SHOW_LOG_2
+				LOG_RED("Incomplete Request detected");
+			#endif
+			throw Server::BadRequestException();
+		}
+		else if (n < 0) // read had an error reading from fd, was failing PUT
 		{
 			#ifdef SHOW_LOG
 				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED" << std::endl;

@@ -59,8 +59,8 @@ void Server::runEventLoop()
 		#endif
 		int numEvents = this->_socketHandler->getEvents();
 		int clientFd = -1;
-		if (numEvents == 0)
-		{
+		// if (numEvents == 0)
+		// {
 			tryRemove:
 			clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
 			if (clientFd != -1 && this->_response.isInResponseMap(clientFd) == false)
@@ -88,7 +88,7 @@ void Server::runEventLoop()
 				std::cout << "\033[A\033[K";
 			}
 			#endif
-		}
+		// }
 		for (int i = 0; i < numEvents; ++i)
 		{
 			clientFd = this->_socketHandler->getFD(i);

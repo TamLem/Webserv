@@ -43,7 +43,7 @@ class Response : public Message
 
 /////
 		bool isInResponseMap(int clientFd);
-		std::string lastExitStatus;
+		// std::string lastExitStatus;
 /////
 		void receiveChunk(int i);
 		bool isInReceiveMap(int clientFd); // to verify wether the receiveMap has a key for the filedescriptor

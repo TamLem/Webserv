@@ -77,7 +77,7 @@ void Response::receiveChunk(int i)
 
 	#ifdef SHOW_LOG_2
 		std::cout << BOLD << GREEN << "Bytes received from " << clientFd << ": " << n << RESET << std::endl;
-		LOG_YELLOW(chunk);
+		// LOG_YELLOW(chunk); // REMOVE AFTER TESTING, this might break the server if a non text file is in the body!!
 	#endif
 // checking for errors of read
 	if (n > 0)
@@ -138,16 +138,20 @@ void Response::receiveChunk(int i)
  */
 std::string Response::constructPostResponse() // this needs to be worked on !!!!!!
 {
+	this->clear();
 	std::ifstream postBody;
 	postBody.open("./server/data/pages/post_success.html"); // do not do it like that maybe unsafe if file gets deleted, or build failsafety to keep it from failing if file does not exist
 
 	std::stringstream buffer;
-	buffer << "HTTP/1.1 201 Created";
+	this->setProtocol(PROTOCOL);
+	this->setStatus("201");
+	this->addHeaderField("Connection", "close");
 	buffer << CRLFTWO;
 	if (postBody.is_open())
 		buffer << postBody.rdbuf();
+	// this->setBody(buffer.str());
 
-	return (buffer.str());
+	return (this->getResponse());
 }
 
 /**

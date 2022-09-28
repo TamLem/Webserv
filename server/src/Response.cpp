@@ -1,4 +1,6 @@
 #include "Response.hpp"
+#include "Utils.hpp"
+
 //// might be temporary
 	bool Response::isInResponseMap(int clientFd)
 	{
@@ -81,15 +83,15 @@ void Response::setProtocol(const std::string& protocol)
 	this->protocol = protocol;
 }
 
-bool Response::was3XXCode(int clientFd)
-{
-	(void)clientFd;
-	// if (this->_responseMap.count(clientFd))
-		// return (this->_responseMap[clientFd].status[0] == '3');
-		return (this->status[0] == '3');
-	// else
-	// 	return (false);
-}
+// bool Response::was3XXCode(int clientFd)
+// {
+// 	(void)clientFd;
+// 	// if (this->_responseMap.count(clientFd))
+// 		// return (this->_responseMap[clientFd].status[0] == '3');
+// 		return (this->status[0] == '3');
+// 	// else
+// 	// 	return (false);
+// }
 
 const std::string& Response::getStatus(void) const
 {
@@ -108,12 +110,21 @@ const std::map<std::string, std::string>& Response::getMessageMap(void) const
 
 std::string Response::getResponse()
 {
-	std::cout << "Request Method: " << this->_requestMethod << std::endl;
+	#ifdef SHOW_LOG_2
+	std::stringstream message;
+	message << "Request Method: " << this->_requestMethod;
+	LOG_YELLOW(message.str());
+	#endif
 	std::stringstream buffer;
 	buffer << this->constructHeader();
+	#ifdef FORTYTWO_TESTER
 	if (this->_requestMethod != "HEAD")
+	#endif
 		buffer << this->getBody();
-	buffer << CRLFTWO;
+	if (this->getBody().length() > 0)
+		buffer << CRLFTWO;
+	else
+		buffer << CRLF;
 
 	return (buffer.str());
 }
@@ -155,23 +166,7 @@ std::string Response::constructHeader(void)
 
 void Response::createErrorBody(void)
 {
-	std::stringstream body;
-	body <<
-	"<html>\n\
-	<head>\n\
-	<title>Error " << this->status << "</title>\n\
-	<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"images/favicon.ico\">\n\
-	</head>\n\
-	<body bgcolor=\"000000\">\n\
-	<center>\n\
-	<h1 style=\"color:white\">Error " << this->status << "</h1>\n\
-	<p style=\"color:white\">" << this->statusMessage << "!\n\
-	<br><br>\n\
-	<img src=\"/images/error.jpg\" align=\"TOP\">\n\
-	</center>\n\
-	</body>\n\
-	</html>";
-	this->body = body.str();
+	this->body = createErrorString(this->status, this->statusMessage);
 }
 
 void Response::createIndex(const Request& request)
@@ -422,6 +417,16 @@ const char* Response::NegativeDecimalsNotAllowedException::what(void) const thro
 const char* Response::ClientDisconnect::what(void) const throw()
 {
 	return ("client disconnected");
+}
+
+const char* Response::MissingChunkContentLengthException::what(void) const throw()
+{
+	return ("411");
+}
+
+const char* Response::BadRequestException::what(void) const throw()
+{
+	return ("400");
 }
 
 

@@ -1,6 +1,7 @@
 #include "Server.hpp"
 #include "Config.hpp"
 #include "Cgi/Cgi.hpp"
+#include "Utils.hpp"
 #include <dirent.h> // dirent, opendir
 #include <cstdio> // remove
 
@@ -57,65 +58,103 @@ void Server::runEventLoop()
 			std::cout << "server running " << std::endl;
 		#endif
 		int numEvents = this->_socketHandler->getEvents();
+		int clientFd = -1;
 		// if (numEvents == 0)
 		// {
-			// this->_socketHandler->removeInactiveClients();	// remove inactive clients
-		// 	this->_response.clearResponseMap();
+			tryRemove:
+			clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
+			if (clientFd != -1 && this->_response.isInResponseMap(clientFd) == false)
+			{
+				this->_socketHandler->removeKeepAlive(clientFd);
+				#ifdef SHOW_LOG
+					std::stringstream message;
+					message << "Client " << clientFd << " was timed-out";
+					LOG_RED(message.str());
+				#endif
+				this->_response.clear();
+				this->_response.setProtocol(PROTOCOL);
+				this->_response.setStatus("408");
+				this->_response.setRequestMethod("TIMEOUT");
+				this->_response.addHeaderField("Connection", "close");
+				this->_response.createErrorBody();
+				this->_response.putToResponseMap(clientFd);
+				this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
+				goto tryRemove;
+			}
+			#ifdef SHOW_LOG_2
+			else if (clientFd != -1) // only to make the printed LOG_2 more beautiful
+			{
+				std::cout << "\033[A\033[K";
+				std::cout << "\033[A\033[K";
+			}
+			#endif
 		// }
-		// for (int i = 0; i < numEvents; ++i)
-		// {
-		// 	this->_clients[i].timeout
-		// } @@@
 		for (int i = 0; i < numEvents; ++i)
 		{
+			clientFd = this->_socketHandler->getFD(i);
 			#ifdef SHOW_LOG_2
 				std::cout << "no. events: " << numEvents << " ev:" << i << std::endl;
 			#endif
 			if (this->_socketHandler->acceptConnection(i))
+			{
+				this->_socketHandler->setTimeout(clientFd);
 				continue ;
+			}
 			else if (this->_socketHandler->readFromClient(i) == true /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false */)
 			{
 				#ifdef SHOW_LOG_2
-					std::cout << BLUE << "read from client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+					std::cout << BLUE << "read from client" << clientFd << RESET << std::endl;
 				#endif
+				this->_socketHandler->setTimeout(clientFd);
 				try
 				{
-					handleRequest(this->_socketHandler->getFD(i));
-					if (this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == false)
+					handleRequest(clientFd);
+					if (this->_response.isInReceiveMap(clientFd) == false)
 					{
 						this->_socketHandler->setWriteable(i);
-						this->_socketHandler->setEvent(this->_socketHandler->getFD(i), EV_DELETE, EVFILT_READ); // removes any possible read event that is still left
+						this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_READ); // removes any possible read event that is still left
 					}
 				}
 				catch(const std::exception& e)
 				{
-					// this->_socketHandler->removeKeepAlive(this->_socketHandler->getFD(i)); // already in remove client traces
+					// this->_socketHandler->removeKeepAlive(clientFd); // already in remove client traces
 					std::cerr << YELLOW << e.what() << RESET << '\n';
 					this->_socketHandler->removeClient(i, true);
-					removeClientTraces(this->_socketHandler->getFD(i));
+					removeClientTraces(clientFd);
 				}
 			}
-			else if (this->_socketHandler->writeToClient(i) == true /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) */) // this commented part is a dirty workaround, only use it for testing!!!!
+			else if (this->_socketHandler->writeToClient(i) == true /* && this->_response.isInResponseMap(clientFd) */) // this commented part is a dirty workaround, only use it for testing!!!!
 			{
 				#ifdef SHOW_LOG_2
-					std::cout << BLUE << "write to client" << this->_socketHandler->getFD(i) << RESET << std::endl;
+					std::cout << BLUE << "write to client" << clientFd << RESET << std::endl;
 				#endif
-				if (this->_response.sendRes(this->_socketHandler->getFD(i)) == true)
+				this->_socketHandler->setTimeout(clientFd);
+				// if (this->_socketHandler->isKeepAlive(clientFd) == true) // tried to fix keep-alive connections!!! did not work, might be completely wrong!!!!
+				// {
+				// 	bool val = true;
+				// 	setsockopt(clientFd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+				// 	LOG_GREEN("socket set to keepalive!!!!!");
+				// }
+				if (this->_socketHandler->isKeepAlive(clientFd) == true)
+					this->_response.addHeaderField("Connection", "keep-alive");
+				if (this->_response.sendRes(clientFd) == true)
 				{
-					if (this->_response.was3XXCode(this->_socketHandler->getFD(i)) == false)
-						this->_socketHandler->removeKeepAlive(this->_socketHandler->getFD(i));
-					// else
-					// 	this->_socketHandler->setEvent(this->_socketHandler->getFD(i), EV_ADD, EVFILT_READ); // tried to reuse the same socket for the keepalive answer, did not work for some reason.... try implementing the timeout we talked about instead
+					// if (this->_response.was3XXCode(clientFd) == false)
+					// 	this->_socketHandler->removeKeepAlive(clientFd);
+					if (this->_socketHandler->isKeepAlive(clientFd) == true && this->_response.isInResponseMap(clientFd) == false)
+						this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_READ);
 					if (this->_socketHandler->removeClient(i, true) == true)
 					{
-						removeClientTraces(this->_socketHandler->getFD(i));
+						removeClientTraces(clientFd);
 					}
-					else if (this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false)
-						this->_socketHandler->setEvent(this->_socketHandler->getFD(i), EV_DELETE, EVFILT_WRITE);
+					else if (this->_response.isInResponseMap(clientFd) == false)
+						this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_WRITE);
 				}
 			}
-			if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients
-				removeClientTraces(this->_socketHandler->getFD(i));
+			if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients ???? really?
+			{
+				removeClientTraces(clientFd);
+			}
 		}
 	}
 }
@@ -180,6 +219,20 @@ void Server::handlePOST(int clientFd, const Request& request)
 	#endif
 	std::map<std::string, std::string> tempHeaderFields = request.getHeaderFields();
 
+	#ifdef FORTYTWO_TESTER
+	if (request.getMethod() == "PUT")
+	{
+		this->_response.setProtocol(PROTOCOL);
+		this->_response.addHeaderField("server", this->_currentConfig.serverName);
+		// this->_response.addHeaderField("connection", "close");
+		this->_response.setStatus("201");
+		this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
+		this->_response.setPostBufferSize(clientFd, 100000);
+		this->_response.setPostChunked(clientFd, /* request.getRoutedTarget(), */ tempHeaderFields);
+		return ;
+	}
+	#endif
+
 	if (tempHeaderFields.count("content-length") == 0)
 		throw Server::LengthRequiredException();
 	else if (tempHeaderFields.count("content-length") && _strToSizeT(tempHeaderFields["content-length"]) > this->_currentConfig.clientMaxBodySize)
@@ -187,16 +240,20 @@ void Server::handlePOST(int clientFd, const Request& request)
 
 	this->_response.setProtocol(PROTOCOL);
 	this->_response.addHeaderField("server", this->_currentConfig.serverName);
+	// if (this->_socketHandler->isKeepAlive(clientFd) == true) // 201 is still missing the headerfields...!!!!!
+	// 	this->_response.addHeaderField("Connection", "keep-alive");
 	this->_response.setStatus("201");
+
 	this->_response.createBodyFromFile("./server/data/pages/post_success.html");
 	// put this info into the receiveStruct maybe ????
 
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 	this->_response.setPostLength(clientFd, tempHeaderFields);
 	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
-
-	this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
-	this->_response.setPostChunked(clientFd, request.getRoutedTarget(), tempHeaderFields); // this should set bool to true and create the tempTarget
+	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
+	// if (this->_response.getStatus() == "303")
+	// 	this->_socketHandler->removeKeepAlive(clientFd); // just for testing !!!!!!!!
+	this->_response.setPostChunked(clientFd/* , request.getRoutedTarget() */, tempHeaderFields);
 }
 
 static void staticRemoveTarget(const std::string& path)
@@ -253,6 +310,112 @@ void Server::removeClientTraces(int clientFd)
 	this->_socketHandler->removeKeepAlive(clientFd);
 }
 
+// void Server::matchLocation(Request& request)
+// {
+// 	int max_count = 0;
+// 	std::string target = request.getDecodedTarget();
+// 	#ifdef SHOW_LOG_2
+// 	std::cout  << RED << "target: " << target << std::endl;
+// 	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
+// 	{
+// 		std::cout << RED << it->first << ": "
+// 		<< it->second.root << " is dir: " << it->second.isDir << RESET << "\n";
+// 	}
+// 	#endif
+// 	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
+// 	{
+// 		if (it->second.isDir == false)
+// 		{
+// 			if (routeFile(request, it, target) == 0)
+// 				return ;
+// 		}
+// 		if (it->second.isDir == true)
+// 			routeDir(request, it, target, max_count);
+// 	}
+// 	if (max_count == 0)
+// 		routeDefault(request);
+// 	#ifdef SHOW_LOG
+// 		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << std::endl;
+// 	#endif
+// }
+
+// static std::string percentDecodingFix(std::string target)
+// {
+// 	std::string accent;
+// 	accent += (const char)204;
+// 	accent += (const char)136;
+
+// 	std::string ü;
+// 	ü += (const char)195;
+// 	ü += (const char)188;
+
+// 	std::string ä;
+// 	ä += (const char)195;
+// 	ä += (const char)164;
+
+// 	std::string ö;
+// 	ö += (const char)195;
+// 	ö += (const char)182;
+
+// 	target = staticReplaceInString(target, "u" + accent, ü);
+// 	target = staticReplaceInString(target, "a" + accent, ä);
+// 	target = staticReplaceInString(target, "o" + accent, ö);
+// 	return (target);
+// }
+
+// std::string Server::percentDecoding(const std::string& str)
+// {
+// 	std::stringstream tmp;
+// 	char c;
+// 	int i = 0;
+// 	while (str[i] != '\0')
+// 	{
+// 		if (str[i] == '%')
+// 		{
+// 			if (str[i + 1] == '\0' || str[i + 2] == '\0')
+// 				throw InvalidHex();
+// 			c = char(strtol(str.substr(i + 1, 2).c_str(), NULL, 16));
+// 			if (c == 0)
+// 				throw InvalidHex();
+// 			tmp << c;
+// 			i += 3;
+// 		}
+// 		else
+// 		{
+// 			tmp << str[i];
+// 			i++;
+// 		}
+// 	}
+// 	return (percentDecodingFix(tmp.str()));
+// }
+
+// void Server::checkLocationMethod(const Request& request) const
+// {
+// 	if (this->_currentLocationKey.empty() == true)
+// 		return ;
+// 	if (this->_currentConfig.location.find(_currentLocationKey)->second.allowedMethods.count(request.getMethod()) != 1)
+// 		throw MethodNotAllowed();
+// }
+
+// bool Server::_isCgiRequest(std::string requestHead) // AE this function ahs to be included in locationMatching
+// {
+// 	requestHead = requestHead.substr(0, requestHead.find("HTTP/1.1")); // AE is formatting checked before?
+// 	if (requestHead.find("/cgi/") != std::string::npos) // AE file extension should deterime if something is cgi or not
+// 		return (true);
+// 	if (this->_currentConfig.cgiBin.length() != 0 && requestHead.find(this->_currentConfig.cgiBin) != std::string::npos)
+// 		return (true);
+// 	else if (this->_currentConfig.cgi.size() != 0)
+// 	{
+// 		std::map<std::string, std::string>::const_iterator it = this->_currentConfig.cgi.begin();
+// 		for (; it != this->_currentConfig.cgi.end(); ++it)
+// 		{
+// 			if (requestHead.find(it->first) != std::string::npos) // AE define this better (has to be ending, not just existing)
+// 				return (true);
+// 		}
+// 	}
+// 	return (false);
+// }
+
 void Server::handleRequest(int clientFd) // i is the index from the evList of the socketHandler
 {
 	bool isCgi = false;
@@ -273,8 +436,8 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			//compression (merge slashes)
 			//resolve relative paths
 			//determine location
-			request.setDecodedTarget(this->percentDecoding(request.getRawTarget()));
-			request.setQuery(this->percentDecoding(request.getQuery()));
+			request.setDecodedTarget(percentDecoding(request.getRawTarget()));
+			request.setQuery(percentDecoding(request.getQuery()));
 			isCgi = this->_isCgiRequest(this->_requestHead);
 			#ifdef SHOW_LOG
 				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
@@ -343,7 +506,14 @@ void Server::_readRequestHead(int clientFd)
 	while (charsRead < MAX_REQUEST_HEADER_SIZE)
 	{
 		n = read(clientFd, buffer, 1);
-		if (n < 0) // read had an error reading from fd, was failing PUT
+		if (buffer[0] == '\n' && n < 0)
+		{
+			#ifdef SHOW_LOG_2
+				LOG_RED("Incomplete Request detected");
+			#endif
+			throw Server::BadRequestException();
+		}
+		else if (n < 0) // read had an error reading from fd, was failing PUT
 		{
 			#ifdef SHOW_LOG
 				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED" << std::endl;
@@ -357,7 +527,7 @@ void Server::_readRequestHead(int clientFd)
 		else // append one character from client request if it is an ascii-char
 		{
 			buffer[1] = '\0';
-			if (!this->_isPrintableAscii(buffer[0]))
+			if (!_isPrintableAscii(buffer[0]))
 			{
 				#ifdef SHOW_LOG
 					std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;

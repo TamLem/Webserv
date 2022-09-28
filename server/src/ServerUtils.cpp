@@ -1,3 +1,4 @@
+#include "Utils.hpp"
 #include "Server.hpp"
 
 bool Server::_crlftwoFound()
@@ -26,7 +27,7 @@ std::string staticReplaceInString(std::string str, std::string tofind, std::stri
 		return(str);
 }
 
-std::string staticPercentDecodingFix(std::string target)
+std::string percentDecodingFix(std::string target)
 {
 	std::string accent;
 	accent += (const char)204;
@@ -73,7 +74,7 @@ std::string Server::percentDecoding(const std::string& str)
 			i++;
 		}
 	}
-	return (staticPercentDecodingFix(tmp.str()));
+	return (percentDecodingFix(tmp.str()));
 }
 
 void Server::checkLocationMethod(const Request& request) const
@@ -101,4 +102,27 @@ bool Server::_isCgiRequest(std::string requestHead) // AE this function ahs to b
 		}
 	}
 	return (false);
+}
+
+std::string createErrorString(std::string statusCode, std::string statusMessage)
+{
+	std::stringstream message;
+
+	message << \
+	"<html>\n\
+	<head>\n\
+	<title>Error " << statusCode << "</title>\n\
+	<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"images/favicon.ico\">\n\
+	</head>\n\
+	<body bgcolor=\"000000\">\n\
+	<center>\n\
+	<h1 style=\"color:white\">Error " << statusCode << "</h1>\n\
+	<p style=\"color:white\">" << statusMessage << "!\n\
+	<br><br>\n\
+	<img src=\"/images/error.jpg\" align=\"TOP\">\n\
+	</center>\n\
+	</body>\n\
+	</html>";
+
+	return (message.str());
 }

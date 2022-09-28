@@ -10,7 +10,7 @@ else
 CXXFLAGS	=	-std=c++98 -Wall -Wextra #-Werror // please fix this Tam
 endif
 
-# CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
+CXXFLAGS	+=	-g# -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
 
 # CXXFLAGS	+=	-D FORTYTWO_TESTER
 

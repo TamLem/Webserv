@@ -117,7 +117,7 @@ void Server::runEventLoop()
 				}
 				catch(const std::exception& e)
 				{
-					// this->_socketHandler->removeKeepAlive(clientFd); // already in remove client traces
+					this->_socketHandler->removeKeepAlive(clientFd); // needed so that the force remove works
 					std::cerr << YELLOW << e.what() << RESET << '\n';
 					this->_socketHandler->removeClient(i, true);
 					removeClientTraces(clientFd);
@@ -140,7 +140,14 @@ void Server::runEventLoop()
 					// if (this->_response.was3XXCode(clientFd) == false)
 					// 	this->_socketHandler->removeKeepAlive(clientFd);
 					if (this->_socketHandler->isKeepAlive(clientFd) == true && this->_response.isInResponseMap(clientFd) == false)
+					{
 						this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_READ);
+						#ifdef SHOW_LOG_2
+							std::stringstream message;
+							message << "FD " << clientFd << "SET TO READABLE AGAIN";
+							LOG_RED(message.str());
+						#endif
+					}
 					if (this->_socketHandler->removeClient(i, true) == true)
 					{
 						removeClientTraces(clientFd);
@@ -227,7 +234,8 @@ void Server::handlePOST(int clientFd, const Request& request)
 		if (this->_socketHandler->isKeepAlive(clientFd)) // only for testing!!!!
 			this->_response.addHeaderField("Connection", "keep-alive"); // only for testing !!!!
 		this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
-		this->_response.setPostBufferSize(clientFd, 100000);
+		this->_response.setPostBufferSize(clientFd, 100000); //AE here you changed the buffer size, but what was it before? !!!!!
+		// this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize); // THIS IS THE ORIGINAL !!!!
 		this->_response.setPostChunked(clientFd, /* request.getRoutedTarget(), */ tempHeaderFields);
 		return ;
 	}

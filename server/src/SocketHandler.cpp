@@ -236,7 +236,7 @@ bool SocketHandler::readFromClient(int i)
 		int status = this->_getClient(fd);
 		if (status == -1)
 		{
-			close(fd);
+			close(fd); // !!!!! never close the connection without remove client
 			std::cerr << RED << "read Error getting client for fd: " << fd << std::endl;
 			// perror(NULL); // check if illegal
 			std::cerr << RESET;

@@ -140,21 +140,15 @@ void Response::receiveChunk(int i)
  * @note
  * @retval the response as a string with head and body that needs to be sent to the client
  */
-void Response::constructPostResponse() // this needs to be worked on !!!!!!
+void Response::constructPostResponse()
 {
 	this->clear();
-	// std::ifstream postBody;
-	// postBody.open("./server/data/pages/post_success.html"); // do not do it like that maybe unsafe if file gets deleted, or build failsafety to keep it from failing if file does not exist
+
 
 	std::stringstream buffer;
 	this->setProtocol(PROTOCOL);
 	this->setStatus("201");
-	// this->addHeaderField("Location", "/uploads/upload_test.txt");
-	// this->addHeaderField("Connection", "keep-alive");
-	// if (postBody.is_open())
-	// 	buffer << postBody.rdbuf();
-	// this->setBody(buffer.str());
-	this->setBody("");
+	this->addContentLengthHeaderField();
 }
 
 /**

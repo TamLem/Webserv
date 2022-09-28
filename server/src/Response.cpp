@@ -110,7 +110,6 @@ const std::map<std::string, std::string>& Response::getMessageMap(void) const
 
 std::string Response::getResponse()
 {
-	this->addContentLengthHeaderField();
 	std::stringstream buffer;
 	buffer << this->constructHeader();
 	#ifdef FORTYTWO_TESTER

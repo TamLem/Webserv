@@ -103,7 +103,7 @@ void Server::runEventLoop()
 			else if (this->_socketHandler->readFromClient(i) == true /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false */)
 			{
 				#ifdef SHOW_LOG_2
-					std::cout << BLUE << "read from client" << clientFd << RESET << std::endl;
+					std::cout << BLUE << "read from client " << clientFd << RESET << std::endl;
 				#endif
 				this->_socketHandler->setTimeout(clientFd);
 				try
@@ -135,8 +135,6 @@ void Server::runEventLoop()
 				// 	setsockopt(clientFd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
 				// 	LOG_GREEN("socket set to keepalive!!!!!");
 				// }
-				if (this->_socketHandler->isKeepAlive(clientFd) == true)
-					this->_response.addHeaderField("Connection", "keep-alive");
 				if (this->_response.sendRes(clientFd) == true)
 				{
 					// if (this->_response.was3XXCode(clientFd) == false)
@@ -226,6 +224,8 @@ void Server::handlePOST(int clientFd, const Request& request)
 		this->_response.addHeaderField("server", this->_currentConfig.serverName);
 		// this->_response.addHeaderField("connection", "close");
 		this->_response.setStatus("201");
+		if (this->_socketHandler->isKeepAlive(clientFd)) // only for testing!!!!
+			this->_response.addHeaderField("Connection", "keep-alive"); // only for testing !!!!
 		this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 		this->_response.setPostBufferSize(clientFd, 100000);
 		this->_response.setPostChunked(clientFd, /* request.getRoutedTarget(), */ tempHeaderFields);

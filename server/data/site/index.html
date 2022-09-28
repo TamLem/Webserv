@@ -16,22 +16,40 @@
 
 <body>
 	<div class="container">
-		<div class="header">
-			<h1>Welcome to Webserv</h1>
-			<h2><i>An HTTP Server</i></h2>
-			<div class="nav">
-				<ul class="nav navbar-nav navbar-dark bg-dark">
-					<li role="presentation" class="active"><a href="index.html">Home</a></li>
-					<li role="presentation"><a href="upload.html">Upload</a></li>
-					<li role="presentation"><a href="#">Messages</a></li>
-				  </ul>
+		<div class="row header">
+			<div class="col">
+				<h1>Welcome to Webserv</h1>
+				<h2><i>An HTTP Server</i></h2>
+				<div class="nav">
+					<ul class="nav navbar-nav navbar-dark bg-dark">
+						<li role="presentation" class="active"><a href="index.html">Home</a></li>
+						<li role="presentation"><a href="upload.html">Upload</a></li>
+						<li role="presentation"><a href="#">Messages</a></li>
+					  </ul>
+				</div>
 			</div>
 		</div>
 		
-		<div class="main-content">
-			<div id="cover-image">
-				<img src="/images/web-server-dynamic.png" alt="Webserv">
-				
+		<div class="row">
+			<div class="col main-content">
+				<div id="cover-image">
+					<img src="/images/web-server-dynamic.png" alt="Webserv">
+					
+				</div>
+			</div>
+		</div>
+
+		<!-- file upload form -->
+		<div class="row justify-content-center" style="width:100%;">
+			<div class="col-4 form-div">
+				<form action="" id='upload-form' method="post" enctype="multipart/form-data">
+					<div class="form-group">
+						<label for="file" style="margin-bottom: 20px; font-size: 16px;">File Upload</label>
+						<input type="file" name="file" id="file">
+						<p class="help-block">Upload a file</p>
+					</div>
+					<button id="upload-btn "type="submit" class="btn btn-default">Upload</button>
+				</form>
 			</div>
 		</div>
 	</div>
@@ -39,7 +57,12 @@
 	<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
 	<script>
+		document.getElementById('file').addEventListener('change', function() {
+			const uploadPath = '/uploads/' + this.value.substr(this.value.lastIndexOf('\\') + 1);
+			console.log('upload path: ', uploadPath);
+			document.getElementById('upload-form').setAttribute('action', uploadPath);
 
+		});
 	</script>
 </body>
 

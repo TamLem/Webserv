@@ -156,6 +156,13 @@ std::string Response::constructHeader(void)
 void Response::createErrorBody(void)
 {
 	std::stringstream body;
+	std::string errorImage;
+
+	if (this->status < "500")
+		errorImage = CLIENT_ERROR_IMG;
+	else
+		errorImage = SERVER_ERROR_IMG;
+
 	body <<
 	"<html>\n\
 	<head>\n\
@@ -167,8 +174,10 @@ void Response::createErrorBody(void)
 	<h1 style=\"color:white\">Error " << this->status << "</h1>\n\
 	<p style=\"color:white\">" << this->statusMessage << "!\n\
 	<br><br>\n\
-	<img src=\"/images/error.jpg\" align=\"TOP\">\n\
-	</center>\n\
+	<img src=\"" <<
+	errorImage <<
+	"\" align=\"TOP\">\n" <<
+	"</center>\n\
 	</body>\n\
 	</html>";
 	this->body = body.str();

@@ -17,6 +17,9 @@
 #include <unistd.h> // access
 #include <sys/stat.h> // stat
 
+#define CLIENT_ERROR_IMG "/images/error.jpg"
+#define SERVER_ERROR_IMG "/images/Disaster-Girl.jpg"
+
 class Response : public Message
 {
 	private:

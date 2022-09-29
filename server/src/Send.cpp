@@ -15,9 +15,9 @@
 //optional one for the server to send the response to the client
 bool Response::sendRes(int fd)
 {
-	std::cout << "In SENDRES Request Method: " << this->_requestMethod << std::endl;
+	// std::cout << "In SENDRES Request Method: " << this->_requestMethod << std::endl;
 
-	std::cout << GREEN << "Sending response to client" << RESET << std::endl;
+	std::cout << GREEN << "Sending response to client " << fd << RESET << std::endl;
 	if (this->_responseMap.count(fd) == 0)
 	{
 		if (this->_requestMethod != "HEAD")
@@ -28,6 +28,7 @@ bool Response::sendRes(int fd)
 	int sendSize = MAX_SEND_CHUNK_SIZE;
 	if (this->_responseMap[fd].response.size() < MAX_SEND_CHUNK_SIZE)
 		sendSize = this->_responseMap[fd].response.size();
+	// LOG_BLUE(this->_responseMap[fd].response); // REMOVE AFTER TESTING, will print the send response, carefull with images/videos!!!!!
 	int n = send(fd, this->_responseMap[fd].response.c_str(), sendSize, 0);
 	if (n == -1)
 	{
@@ -41,7 +42,7 @@ bool Response::sendRes(int fd)
 	#ifdef SHOW_LOG_2
 		else
 	// disable after testing!!!!!!!!!!
-		std::cout << BLUE << "was send >" << RESET << this->_responseMap[fd].response << BLUE << "<" << RESET << std::endl;
+		// std::cout << BLUE << "was send >" << RESET << this->_responseMap[fd].response << BLUE << "<" << RESET << std::endl;
 	//
 			std::cout << YELLOW << "sent " << n << " bytes to fd: " << fd  << RESET << std::endl;
 	#endif
@@ -51,8 +52,7 @@ bool Response::sendRes(int fd)
 		#ifdef SHOW_LOG_2
 			std::cout << RED << " FULL Response sent for fd: " << fd << RESET << std::endl;
 		#endif
-		// close(fd); // never ever close here, we need to rely on the remove client to close the connection, otherwise keep-alive does not work!
-		this->lastExitStatus = this->_responseMap[fd].status; // this might be temporary
+		// this->lastExitStatus = this->_responseMap[fd].status; // this might be temporary
 		if (this->_responseMap.count(fd) == 1)
 			this->_responseMap.erase(fd);
 		return (true);
@@ -64,7 +64,7 @@ bool Response::handleClientDisconnect(int fd)
 {
 	char buf[100];
 
-	while(read(fd, buf, 100)); // this is bad, might lead to hanging connections if a lot of data was put on the fd, but maybe not that bad since a fd can only hold 64kb at once
+	while(read(fd, buf, 100)); // this is bad, might lead to hanging connections if a lot of data was put on the fd, but maybe not that bad since a fd can only hold 64kb at once !!!!!!!!!
 
 	close(fd);
 	this->_responseMap.erase(fd);

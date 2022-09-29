@@ -67,7 +67,7 @@ struct ResponseStruct
 	std::string response;
 	size_t total;
 	size_t bytesLeft;
-	std::istream *requestedFile;
+	// std::istream *requestedFile; // is unused!!!?
 // header information
 	std::string protocoll;
 	std::string status;

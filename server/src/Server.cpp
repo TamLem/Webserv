@@ -1,6 +1,7 @@
 #include "Server.hpp"
 #include "Config.hpp"
 #include "Cgi/Cgi.hpp"
+#include "Utils.hpp"
 #include <dirent.h> // dirent, opendir
 #include <cstdio> // remove
 
@@ -54,27 +55,40 @@ void Server::runEventLoop()
 	{
 
 		#ifdef SHOW_LOG
-			// std::cout << "server running " << std::endl;
+			std::cout << "server running " << std::endl;
 		#endif
 		int numEvents = this->_socketHandler->getEvents();
 		int clientFd = -1;
-		if (numEvents == 0)
-		{
+		// if (numEvents == 0)
+		// {
 			tryRemove:
 			clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
-			if (clientFd != -1)
+			if (clientFd != -1 && this->_response.isInResponseMap(clientFd) == false)
 			{
-				this->removeClientTraces(clientFd);
+				this->_socketHandler->removeKeepAlive(clientFd);
 				#ifdef SHOW_LOG
-					std::cout << RED << "Client " << clientFd << " was timed-out" << RESET << std::endl;
+					std::stringstream message;
+					message << "Client " << clientFd << " was timed-out";
+					LOG_RED(message.str());
 				#endif
-				close(clientFd);
+				this->_response.clear();
+				this->_response.setProtocol(PROTOCOL);
+				this->_response.setStatus("408");
+				this->_response.setRequestMethod("TIMEOUT");
+				this->_response.addHeaderField("Connection", "close");
+				this->_response.createErrorBody();
+				this->_response.putToResponseMap(clientFd);
+				this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
 				goto tryRemove;
 			}
-		}
-		#ifdef SHOW_LOG_2
-			std::cout << "no. events: " << numEvents << endl ;
-		#endif
+			#ifdef SHOW_LOG_2
+			else if (clientFd != -1) // only to make the printed LOG_2 more beautiful
+			{
+				std::cout << "\033[A\033[K";
+				std::cout << "\033[A\033[K";
+			}
+			#endif
+		// }
 		for (int i = 0; i < numEvents; ++i)
 		{
 			#ifdef SHOW_LOG_2
@@ -115,6 +129,14 @@ void Server::runEventLoop()
 					std::cout << BLUE << "write to client" << clientFd << RESET << std::endl;
 				#endif
 				this->_socketHandler->setTimeout(clientFd);
+				// if (this->_socketHandler->isKeepAlive(clientFd) == true) // tried to fix keep-alive connections!!! did not work, might be completely wrong!!!!
+				// {
+				// 	bool val = true;
+				// 	setsockopt(clientFd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+				// 	LOG_GREEN("socket set to keepalive!!!!!");
+				// }
+				if (this->_socketHandler->isKeepAlive(clientFd) == true)
+					this->_response.addHeaderField("Connection", "keep-alive");
 				if (this->_cgiSockets.find(clientFd) != this->_cgiSockets.end())
 				{
 					this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_WRITE);
@@ -122,10 +144,10 @@ void Server::runEventLoop()
 				}
 				else if (this->_response.sendRes(clientFd) == true)
 				{
-					if (this->_response.was3XXCode(clientFd) == false)
-						this->_socketHandler->removeKeepAlive(clientFd);
-					// else
-					// 	this->_socketHandler->setEvent(this->_socketHandler->getFD(i), EV_ADD, EVFILT_READ); // tried to reuse the same socket for the keepalive answer, did not work for some reason.... try implementing the timeout we talked about instead
+					// if (this->_response.was3XXCode(clientFd) == false)
+					// 	this->_socketHandler->removeKeepAlive(clientFd);
+					if (this->_socketHandler->isKeepAlive(clientFd) == true && this->_response.isInResponseMap(clientFd) == false)
+						this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_READ);
 					if (this->_socketHandler->removeClient(i, true) == true)
 					{
 						removeClientTraces(clientFd);
@@ -136,7 +158,6 @@ void Server::runEventLoop()
 			}
 			else if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients ???? really?
 			{
-				// close(clientFd); // check if it breaks anything
 				removeClientTraces(clientFd);
 			}
 		}
@@ -222,7 +243,7 @@ void Server::handlePOST(int clientFd, const Request& request)
 		this->_response.setStatus("201");
 		this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 		this->_response.setPostBufferSize(clientFd, 100000);
-		this->_response.setPostChunked(clientFd, request.getRoutedTarget(), tempHeaderFields);
+		this->_response.setPostChunked(clientFd, /* request.getRoutedTarget(), */ tempHeaderFields);
 		return ;
 	}
 	#endif
@@ -234,6 +255,8 @@ void Server::handlePOST(int clientFd, const Request& request)
 
 	this->_response.setProtocol(PROTOCOL);
 	this->_response.addHeaderField("server", this->_currentConfig.serverName);
+	// if (this->_socketHandler->isKeepAlive(clientFd) == true) // 201 is still missing the headerfields...!!!!!
+	// 	this->_response.addHeaderField("Connection", "keep-alive");
 	this->_response.setStatus("201");
 
 	this->_response.createBodyFromFile("./server/data/pages/post_success.html");
@@ -242,8 +265,10 @@ void Server::handlePOST(int clientFd, const Request& request)
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 	this->_response.setPostLength(clientFd, tempHeaderFields);
 	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
-	this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
-	this->_response.setPostChunked(clientFd, request.getRoutedTarget(), tempHeaderFields); // this should set bool to true and create the tempTarget
+	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
+	// if (this->_response.getStatus() == "303")
+	// 	this->_socketHandler->removeKeepAlive(clientFd); // just for testing !!!!!!!!
+	this->_response.setPostChunked(clientFd/* , request.getRoutedTarget() */, tempHeaderFields);
 }
 
 static void staticRemoveTarget(const std::string& path)
@@ -426,8 +451,8 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			//compression (merge slashes)
 			//resolve relative paths
 			//determine location
-			request.setDecodedTarget(this->percentDecoding(request.getRawTarget()));
-			request.setQuery(this->percentDecoding(request.getQuery()));
+			request.setDecodedTarget(percentDecoding(request.getRawTarget()));
+			request.setQuery(percentDecoding(request.getQuery()));
 			isCgi = this->_isCgiRequest(this->_requestHead);
 			#ifdef SHOW_LOG
 				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
@@ -496,7 +521,14 @@ void Server::_readRequestHead(int clientFd)
 	while (charsRead < MAX_REQUEST_HEADER_SIZE)
 	{
 		n = read(clientFd, buffer, 1);
-		if (n < 0) // read had an error reading from fd, was failing PUT
+		if (buffer[0] == '\n' && n < 0)
+		{
+			#ifdef SHOW_LOG_2
+				LOG_RED("Incomplete Request detected");
+			#endif
+			throw Server::BadRequestException();
+		}
+		else if (n < 0) // read had an error reading from fd, was failing PUT
 		{
 			#ifdef SHOW_LOG
 				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED" << std::endl;
@@ -510,7 +542,7 @@ void Server::_readRequestHead(int clientFd)
 		else // append one character from client request if it is an ascii-char
 		{
 			buffer[1] = '\0';
-			if (!this->_isPrintableAscii(buffer[0]))
+			if (!_isPrintableAscii(buffer[0]))
 			{
 				#ifdef SHOW_LOG
 					std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;

@@ -592,55 +592,15 @@ void Server::_readRequestHead(int clientFd)
 
 void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 {
-// 	#ifdef FORTYTWO_TESTER
-// // was missing for the tester maybe????
-// 	_response.setProtocol(PROTOCOL);
-// 	_response.setStatus("200");
-//  //
-// 	#endif
-	// int cgiPipe[2];
-	// if (pipe(cgiPipe) == -1)
-	// {
-	// 	#ifdef SHOW_LOG
-	// 		std::cerr << RED << "PIPE FAILED" << RESET << std::endl;
-	// 	#endif
-	// 	throw Server::InternalServerErrorException();
-	// }
-	// cout << "cgi out pipe: " << cgiPipe[0] << endl;
-	// dup2(fd, cgiPipe[0]);
-	// this->_socketHandler->setEvent(cgiPipe[0], EV_ADD, EVFILT_READ);
-	// this->_socketHandler->setEvent(cgiPipe[0], EVFILT_READ);
 	FILE *tempFile = tmpfile();
 	this->_cgiSockets[fd] = tempFile;
 	int cgi_out = fileno(tempFile);
-	// this->_socketHandler->_cgiSockets.push_back(cgiPipe[0]);
 	Cgi newCgi(request, configStruct);
 	#ifdef SHOW_LOG
 		newCgi.printEnv();
 	#endif
 	newCgi.init_cgi(fd, cgi_out);
-	// close(cgi_out);
 	cgi_response_handle(fd);
-	/* 
-		if (request.isChunked() == )
-	*/
-	// if (request.getHeaderFields().count("transfer-encoding") 
-	// 	&& request.getHeaderFields().find("transfer-encoding")->second == "chunked")
-	// {
-		
-	// }
-
-
-	//initiate cgi response
-	//listen to event on cgiPipe[0]
-	//if event is read, read from cgiPipe[0] and write to fd
-	//if event is write, write to cgiPipe[1]
-	//if event is error, close cgiPipe[0] and cgiPipe[1]
-	//if event is hangup, close cgiPipe[0] and cgiPipe[1]
-	//if event is timeout, close cgiPipe[0] and cgiPipe[1]
-	//if event is terminate, close cgiPipe[0] and cgiPipe[1]
-	//if event is close, close cgiPipe[0] and cgiPipe[1]
-
 
 	// newCgi.cgi_response(fd);
 }
@@ -658,20 +618,3 @@ void Server::cgi_response_handle(int clientFd)
 	response.parseCgiHeaders();
 	response.sendResponse();
 }
-
-	// char buffer[lSize];
-	// int n = 0;
-	// if((n = fread(buffer, 1, lSize - 1, tempFile)) > 0 || !ferror(tempFile))
-	// {
-	// 	cout << "cgi output: " << buffer << endl;
-	// 	write(clientFd, buffer, n);
-	// 	buffer[n] = '\0';
-	// 	exit(0);
-	// }
-	// else
-	// {
-	// 	perror("fread");
-	// 	cout << "no cgi out" << endl;
-	// }
-	// return ;
-	// cout << "cgi response handle" << endl;

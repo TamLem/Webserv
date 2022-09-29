@@ -336,16 +336,6 @@ std::string Request::getHostName() const
 
 const char* Request::InvalidNumberOfTokens::what() const throw()
 {
-	// #ifdef FORTYTWO_TESTER
-	// if (count == 0) //Test POST http://localhost:8080/ with a size of 0
-	// 	return ("405"); // FORTYTWO_TESTER AE change back to 400 when POST works
-	// else if (count == 1) // PUT
-	// 	return ("201"); // FORTYTWO_TESTER AE change back to 400 when POST works
-	// else
-	// 	return ("400");
-	// count++;
-	// std::cout << "count is now: " << count << std::endl;
-	// #endif
 	return ("400");
 }
 

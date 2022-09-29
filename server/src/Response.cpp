@@ -233,8 +233,7 @@ void Response::createIndex(const Request& request)
 	else
 	{
 		perror(NULL);
-		throw ERROR_404(); // AE exception
-		//AE 500 response
+		throw ERROR_500();
 	}
 }
 

@@ -19,11 +19,11 @@ public:
 	CgiResponse(int cgiFD, int clientFD);
 	~CgiResponse();
 
-	void parseCgiHeaders(std::string buf);
-	string& readline(int fd);
+	void parseCgiHeaders();
+	string readline(int fd);
 	bool checkForMandatoryHeaders(string& headerLine);
 	void parseSingleHeaderField(string& headerLine);
-	string &getValue(std::string &keyValueString);
+	string getValue(std::string &keyValueString);
 	void sendResponse();
 	void tunnelResponse(int cgiFD, int clientFD);
 

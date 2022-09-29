@@ -49,6 +49,7 @@ SRC_FILES	=	main.cpp \
 				Send.cpp \
 				Receive.cpp \
 				Cgi.cpp	\
+				CgiResponse.cpp \
 				Request.cpp \
 				Config.cpp \
 				SingleServerConfig.cpp

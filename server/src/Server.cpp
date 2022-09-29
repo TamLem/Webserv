@@ -50,11 +50,11 @@ Server::~Server(void)
 
 void Server::runEventLoop()
 {
-		while(keep_running)
+	while(keep_running)
 	{
 
 		#ifdef SHOW_LOG
-			std::cout << "server running " << std::endl;
+			// std::cout << "server running " << std::endl;
 		#endif
 		int numEvents = this->_socketHandler->getEvents();
 		int clientFd = -1;
@@ -72,18 +72,21 @@ void Server::runEventLoop()
 				goto tryRemove;
 			}
 		}
+		#ifdef SHOW_LOG_2
+			std::cout << "no. events: " << numEvents << endl ;
+		#endif
 		for (int i = 0; i < numEvents; ++i)
 		{
-			clientFd = this->_socketHandler->getFD(i);
 			#ifdef SHOW_LOG_2
-				std::cout << "no. events: " << numEvents << " ev:" << i << std::endl;
+				std::cout << "event id:" << i << std::endl;
 			#endif
+			clientFd = this->_socketHandler->getFD(i);
 			if (this->_socketHandler->acceptConnection(i))
 			{
 				this->_socketHandler->setTimeout(clientFd);
 				continue ;
 			}
-			else if (this->_socketHandler->readFromClient(i) == true /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false */)
+			else if (this->_socketHandler->readFromClient(i) == true) /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false */
 			{
 				#ifdef SHOW_LOG_2
 					std::cout << BLUE << "read from client" << clientFd << RESET << std::endl;
@@ -106,13 +109,18 @@ void Server::runEventLoop()
 					removeClientTraces(clientFd);
 				}
 			}
-			else if (this->_socketHandler->writeToClient(i) == true /* && this->_response.isInResponseMap(clientFd) */) // this commented part is a dirty workaround, only use it for testing!!!!
+			else if (this->_socketHandler->writeToClient(i) == true /* &&  !isCgiSocket(clientFd)   && this->_response.isInResponseMap(clientFd) */) // this commented part is a dirty workaround, only use it for testing!!!!
 			{
 				#ifdef SHOW_LOG_2
 					std::cout << BLUE << "write to client" << clientFd << RESET << std::endl;
 				#endif
 				this->_socketHandler->setTimeout(clientFd);
-				if (this->_response.sendRes(clientFd) == true)
+				if (this->_cgiSockets.find(clientFd) != this->_cgiSockets.end())
+				{
+					this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_WRITE);
+						// this->cgi_response_handle(clientFd);
+				}
+				else if (this->_response.sendRes(clientFd) == true)
 				{
 					if (this->_response.was3XXCode(clientFd) == false)
 						this->_socketHandler->removeKeepAlive(clientFd);
@@ -126,7 +134,7 @@ void Server::runEventLoop()
 						this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_WRITE);
 				}
 			}
-			if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients ???? really?
+			else if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients ???? really?
 			{
 				// close(clientFd); // check if it breaks anything
 				removeClientTraces(clientFd);
@@ -134,6 +142,16 @@ void Server::runEventLoop()
 		}
 	}
 }
+
+// bool Server::isCgiSocket(int clientFd)
+// {
+// 	for (std::map<int, FILE *>::iterator it = this->_cgiSockets.begin(); it != this->_cgiSockets.end(); ++it)
+// 	{
+// 		if (it->second == clientFd)
+// 			return true;
+// 	}
+// 	return false;
+// }
 
 
 void Server::handleGET(const Request& request)
@@ -417,8 +435,8 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
 			// request.setRoutedTarget("." + request.getRoutedTarget());
 			//check method
-			checkLocationMethod(request);
-
+			if (isCgi == false)
+				this->checkLocationMethod(request);
 			if (request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive")
 				this->_socketHandler->addKeepAlive(clientFd);
 
@@ -532,32 +550,46 @@ void Server::_readRequestHead(int clientFd)
 	}
 }
 
-
-
 void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 {
-	#ifdef FORTYTWO_TESTER
-// was missing for the tester maybe????
-	_response.setProtocol(PROTOCOL);
-	_response.setStatus("200");
- //
-	#endif
-	int cgiPipe[2];
-	if (pipe(cgiPipe) == -1)
-	{
-		#ifdef SHOW_LOG
-			std::cerr << RED << "PIPE FAILED" << RESET << std::endl;
-		#endif
-		throw Server::InternalServerErrorException();
-	}
-	this->_socketHandler->setEvent(cgiPipe[1], EV_ADD | EV_CLEAR, EVFILT_READ);
+// 	#ifdef FORTYTWO_TESTER
+// // was missing for the tester maybe????
+// 	_response.setProtocol(PROTOCOL);
+// 	_response.setStatus("200");
+//  //
+// 	#endif
+	// int cgiPipe[2];
+	// if (pipe(cgiPipe) == -1)
+	// {
+	// 	#ifdef SHOW_LOG
+	// 		std::cerr << RED << "PIPE FAILED" << RESET << std::endl;
+	// 	#endif
+	// 	throw Server::InternalServerErrorException();
+	// }
+	// cout << "cgi out pipe: " << cgiPipe[0] << endl;
+	// dup2(fd, cgiPipe[0]);
+	// this->_socketHandler->setEvent(cgiPipe[0], EV_ADD, EVFILT_READ);
 	// this->_socketHandler->setEvent(cgiPipe[0], EVFILT_READ);
-	this->_cgiSockets.push_back(cgiPipe[1]);
-
+	FILE *tempFile = tmpfile();
+	this->_cgiSockets[fd] = tempFile;
+	int cgi_out = fileno(tempFile);
+	// this->_socketHandler->_cgiSockets.push_back(cgiPipe[0]);
 	Cgi newCgi(request, configStruct);
 	#ifdef SHOW_LOG
 		newCgi.printEnv();
 	#endif
+	newCgi.init_cgi(fd, cgi_out);
+	// close(cgi_out);
+	cgi_response_handle(fd);
+	/* 
+		if (request.isChunked() == )
+	*/
+	// if (request.getHeaderFields().count("transfer-encoding") 
+	// 	&& request.getHeaderFields().find("transfer-encoding")->second == "chunked")
+	// {
+		
+	// }
+
 
 	//initiate cgi response
 	//listen to event on cgiPipe[0]
@@ -570,5 +602,36 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 	//if event is close, close cgiPipe[0] and cgiPipe[1]
 
 
-	newCgi.cgi_response(fd);
+	// newCgi.cgi_response(fd);
 }
+
+void Server::cgi_response_handle(int clientFd)
+{
+	FILE *tempFile = this->_cgiSockets[clientFd];
+	long	lSize = ftell(tempFile);
+	cout << "lSize: " << lSize << endl;
+	rewind(tempFile);
+	int cgi_out = fileno(tempFile);
+	
+	CgiResponse response(cgi_out, clientFd);
+	
+	response.parseCgiHeaders();
+	response.sendResponse();
+}
+
+	// char buffer[lSize];
+	// int n = 0;
+	// if((n = fread(buffer, 1, lSize - 1, tempFile)) > 0 || !ferror(tempFile))
+	// {
+	// 	cout << "cgi output: " << buffer << endl;
+	// 	write(clientFd, buffer, n);
+	// 	buffer[n] = '\0';
+	// 	exit(0);
+	// }
+	// else
+	// {
+	// 	perror("fread");
+	// 	cout << "no cgi out" << endl;
+	// }
+	// return ;
+	// cout << "cgi response handle" << endl;

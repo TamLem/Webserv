@@ -27,6 +27,16 @@ void Response::setRequestMethod(const std::string& method)
 	this->_requestMethod = method;
 }
 
+void Response::setRequestHead(std::string requestHead, size_t clientFd)
+{
+	this->_receiveMap[clientFd].requestHead = requestHead;
+}
+
+std::string Response::getRequestHead(size_t clientFd)
+{
+	return (this->_receiveMap[clientFd].requestHead);
+}
+
 std::string Response::getRequestMethod(void) const
 {
 	return this->_requestMethod;

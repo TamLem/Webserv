@@ -105,7 +105,7 @@ class Server
 		void _handleResponse(int i);
 
 		bool _isCgiRequest(std::string requestHead);
-		void cgi_handle(Request& request, int fd, ConfigStruct configStruct);
+		void cgi_handle(Request& request, int fd, ConfigStruct configStruct, FILE *tempFile);
 
 	public:
 

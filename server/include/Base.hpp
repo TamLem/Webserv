@@ -67,11 +67,10 @@ struct ResponseStruct
 	std::string response;
 	size_t total;
 	size_t bytesLeft;
-	// std::istream *requestedFile; // is unused!!!?
 // header information
-	std::string protocoll;
-	std::string status;
-	std::string statusMessage;
+	// std::string protocoll;
+	// std::string status;
+	// std::string statusMessage;
 	std::string target; // this is the target after directory/file routing
 };
 
@@ -88,9 +87,12 @@ struct LocationStruct
 // ReceiveStruct
 struct ReceiveStruct
 {
-// chunking
+// identifiers
 	bool isChunked;
+	bool isCgi;
+	bool end;
 // general
+	std::string requestHead;
 	std::string target;
 	size_t total;
 	size_t bytesLeft;

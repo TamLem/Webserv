@@ -426,17 +426,27 @@ void Server::removeClientTraces(int clientFd)
 
 void Server::handleRequest(int clientFd) // i is the index from the evList of the socketHandler
 {
-	bool isCgi = false;
+	// bool isCgi = false;
 	this->_response.clear();
 	this->loopDetected = false;
 	try
 	{
 		if (this->_response.isInReceiveMap(clientFd) == true)
+		{
 			this->_response.receiveChunk(clientFd);
+			if (this->_response.isFinished(clientFd) == true)
+			{
+				Request tempRequest(this->_response.getRequestHead(clientFd));
+				this->applyCurrentConfig(tempRequest);
+				this->cgi_handle(tempRequest, clientFd, this->_currentConfig, this->_response.getTempFile(clientFd));
+				this->_response.removeFromReceiveMap(clientFd);
+			}
+		}
 		else
 		{
 			this->_readRequestHead(clientFd); // read 1024 charackters or if less until /r/n/r/n is found
 			Request request(this->_requestHead);
+			this->_response.setRequestHead(this->_requestHead, clientFd);
 			this->_response.setRequestMethod(request.getMethod());
 			this->applyCurrentConfig(request);
 			//normalize target (in Request)
@@ -446,7 +456,7 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			//determine location
 			request.setDecodedTarget(percentDecoding(request.getRawTarget()));
 			request.setQuery(percentDecoding(request.getQuery()));
-			isCgi = this->_isCgiRequest(this->_requestHead);
+			this->_response.setIsCgi(clientFd, this->_isCgiRequest(this->_requestHead));
 			#ifdef SHOW_LOG
 				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
 			#endif
@@ -458,18 +468,28 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			if (request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive")
 				this->_socketHandler->addKeepAlive(clientFd);
 
-			if (isCgi == true)
+			/* if (isCgi == true)
 			{
 				this->applyCurrentConfig(request);
 				cgi_handle(request, clientFd, this->_currentConfig);
 			}
-			else if (request.getMethod() == "POST" || request.getMethod() == "PUT")
+			else  */if (request.getMethod() == "POST" || request.getMethod() == "PUT")
 				this->handlePOST(clientFd, request);
 			else if (request.getMethod() == "DELETE")
+			{
 				this->handleDELETE(request);
+				this->_response.putToResponseMap(clientFd);
+				this->_response.removeFromReceiveMap(clientFd);
+				// this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_READ);
+				// this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
+			}
 			else
 			{
 				this->handleGET(request);
+				this->_response.putToResponseMap(clientFd);
+				this->_response.removeFromReceiveMap(clientFd);
+				// this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_READ);
+				// this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
 			}
 		}
 	}
@@ -519,7 +539,9 @@ void Server::_readRequestHead(int clientFd)
 			#ifdef SHOW_LOG_2
 				LOG_RED("Incomplete Request detected");
 			#endif
+			#ifndef FORTYTWO_TESTER
 			throw Server::BadRequestException();
+			#endif
 		}
 		else if (n < 0) // read had an error reading from fd, was failing PUT
 		{
@@ -577,7 +599,7 @@ void Server::_readRequestHead(int clientFd)
 
 
 
-void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
+void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FILE *tempFile)
 {
 	#ifdef FORTYTWO_TESTER
 // was missing for the tester maybe????
@@ -585,6 +607,7 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 	_response.setStatus("200");
  //
 	#endif
+	(void)tempFile; // @Tam here is your FILE*
 	int cgiPipe[2];
 	if (pipe(cgiPipe) == -1)
 	{

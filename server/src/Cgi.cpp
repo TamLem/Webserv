@@ -151,7 +151,7 @@ void Cgi::cgi_response(int fd)
 		#ifdef SHOW_LOG
 			cout << "cgi output: " << buf << endl;
 		#endif
-		send(fd, buf, n, 0);
+		send(fd, buf, n, 0); // make sure to not send any data to the client here!!! you need to put the data into the responseMap[clientFd] and then add a write event !!!!! @Tam
 	}
 	close(pipefd[0]);
 	// close(fd);

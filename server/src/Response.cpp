@@ -110,21 +110,12 @@ const std::map<std::string, std::string>& Response::getMessageMap(void) const
 
 std::string Response::getResponse()
 {
-	#ifdef SHOW_LOG_2
-	std::stringstream message;
-	message << "Request Method: " << this->_requestMethod;
-	LOG_YELLOW(message.str());
-	#endif
 	std::stringstream buffer;
 	buffer << this->constructHeader();
 	#ifdef FORTYTWO_TESTER
 	if (this->_requestMethod != "HEAD")
 	#endif
-		buffer << this->getBody();
-	if (this->getBody().length() > 0)
-		buffer << CRLFTWO;
-	else
-		buffer << CRLF;
+	buffer << this->getBody();
 
 	return (buffer.str());
 }

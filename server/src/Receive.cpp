@@ -30,9 +30,8 @@ void Response::receiveChunk(int i)
 				if (endBuffer[0] != '\r' || endBuffer[1] != '\n')
 					throw Response::BadRequestException();
 				this->_receiveMap.erase(i);
-				this->_responseMap[clientFd].response = this->constructPostResponse();
-				this->_responseMap[clientFd].total = this->_responseMap[clientFd].response.length();
-				this->_responseMap[clientFd].bytesLeft = this->_responseMap[clientFd].response.length();
+				this->constructPostResponse();
+				this->putToResponseMap(clientFd);
 				return ;
 			}
 			this->_receiveMap[i].bytesLeft = this->_receiveMap[i].total;
@@ -101,7 +100,9 @@ void Response::receiveChunk(int i)
 	// buffer[n] = '\0' // this would be needed for the next line
 	// buffer << chunk; // this will stop writing if encounters a '\0', wich can happen in binary data!
 	buffer.write(chunk, n); // with this there can even be a '\0' in there, it wont stop writing
-
+	char debug[25] = {'\0'}; // REMOVE
+	int b = read(clientFd, debug, 24); // REMOVE
+	(void)b; // REMOVE
 // setting the bytesLeft and checking if all content was read
 	if (bytesLeft)
 	{
@@ -119,13 +120,16 @@ void Response::receiveChunk(int i)
 		this->_receiveMap[i].bytesLeft = bytesLeft;
 		buffer.close();
 	}
-	else if (this->_receiveMap[i].isChunked == false)
+	else /* if (this->_receiveMap[i].isChunked == false) */
 	{
 		buffer.close();
 		this->_receiveMap.erase(i);
-		this->_responseMap[clientFd].response = this->constructPostResponse();
-		this->_responseMap[clientFd].total = this->_responseMap[clientFd].response.length();
-		this->_responseMap[clientFd].bytesLeft = this->_responseMap[clientFd].response.length();
+		this->constructPostResponse();
+		this->putToResponseMap(clientFd);
+		// std::string abc = this->_responseMap[clientFd].response;
+		// total = abc.length();
+		// this->_responseMap[clientFd].total = this->_responseMap[clientFd].response.length();
+		// this->_responseMap[clientFd].bytesLeft = this->_responseMap[clientFd].response.length();
 	}
 }
 
@@ -136,22 +140,15 @@ void Response::receiveChunk(int i)
  * @note
  * @retval the response as a string with head and body that needs to be sent to the client
  */
-std::string Response::constructPostResponse() // this needs to be worked on !!!!!!
+void Response::constructPostResponse()
 {
 	this->clear();
-	std::ifstream postBody;
-	postBody.open("./server/data/pages/post_success.html"); // do not do it like that maybe unsafe if file gets deleted, or build failsafety to keep it from failing if file does not exist
+
 
 	std::stringstream buffer;
 	this->setProtocol(PROTOCOL);
 	this->setStatus("201");
-	this->addHeaderField("Connection", "close");
-	buffer << CRLFTWO;
-	if (postBody.is_open())
-		buffer << postBody.rdbuf();
-	// this->setBody(buffer.str());
-
-	return (this->getResponse());
+	this->addContentLengthHeaderField();
 }
 
 /**

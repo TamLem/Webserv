@@ -23,7 +23,7 @@ class Request : public Message
 	// private Members
 		std::set<std::string> validMethods;
 		std::string method;
-		std::string url; // AE remove
+		// std::string url; // AE remove
 		// std::string target;
 		std::string decodedTarget;
 		std::string routedTarget;

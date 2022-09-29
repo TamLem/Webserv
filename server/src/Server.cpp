@@ -293,24 +293,17 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			this->_response.receiveChunk(clientFd);
 		else
 		{
-			this->_readRequestHead(clientFd); // read 1024 charackters or if less until /r/n/r/n is found
+			this->_readRequestHead(clientFd);
 			Request request(this->_requestHead);
 			this->_response.setRequestMethod(request.getMethod());
 			this->applyCurrentConfig(request);
-			//normalize target (in Request)
-			//normalize target (in Request)
-			//compression (merge slashes)
-			//resolve relative paths
-			//determine location
 			request.setDecodedTarget(this->percentDecoding(request.getRawTarget()));
 			request.setQuery(this->percentDecoding(request.getQuery()));
 			isCgi = this->_isCgiRequest(this->_requestHead);
 			#ifdef SHOW_LOG
 				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
 			#endif
-			this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
-			// request.setRoutedTarget("." + request.getRoutedTarget());
-			//check method
+			this->matchLocation(request);
 			if (isCgi == false)
 				checkLocationMethod(request);
 
@@ -357,7 +350,6 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			this->_response.removeFromReceiveMap(clientFd);
 		this->_response.putToResponseMap(clientFd);
 	}
-	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 }
 
 

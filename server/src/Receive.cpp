@@ -299,7 +299,16 @@ bool Response::isChunked(size_t clientFd)
 
 FILE *Response::getTempFile(size_t clientFd)
 {
-	return (this->_tempFile[clientFd]);
+	if (this->_tempFile.count(clientFd))
+		return (this->_tempFile[clientFd]);
+	else
+		return (NULL);
+}
+
+void Response::removeTempFile(size_t clientFd)
+{
+	if (this->_tempFile.count(clientFd))
+		this->_tempFile.erase(clientFd);
 }
 
 /**

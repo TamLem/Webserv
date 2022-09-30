@@ -325,6 +325,7 @@ void Server::removeClientTraces(int clientFd)
 {
 	this->_response.removeFromReceiveMap(clientFd);
 	this->_response.removeFromResponseMap(clientFd);
+	this->_response.removeTempFile(clientFd);
 	this->_socketHandler->removeKeepAlive(clientFd);
 }
 

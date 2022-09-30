@@ -113,8 +113,8 @@ void CgiResponse::tunnelResponse(int srcFD, int destFD)
 	{
 		send(destFD, buf, n, 0); // @Tam please do not send anything directly to the client since it is strictly forbidden by the subject
 	}
-	close(this->_cgiFD);
-	close(this->_clientFD); // @Tam never close the clientFD anywhere, let it happen in the mainloop
+	close(this->_cgiFD); // @Tam is this the closing of the tempfile? because you need to close it once you are done reading all the data from it
+	close(this->_clientFD); // @Tam never close the clientFD anywhere, let it happen in the mainloop after the response was sent
 }
 
 

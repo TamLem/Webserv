@@ -49,6 +49,7 @@ class Response : public Message
 		bool isCgi(size_t clientFd);
 		bool isChunked(size_t clientFd);
 		FILE *getTempFile(size_t clientFd);
+		void removeTempFile(size_t clientFd);
 		// std::string lastExitStatus;
 
 		void receiveChunk(int i);

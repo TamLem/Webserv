@@ -40,11 +40,12 @@ class Cgi
 		string _pathInfo;
 		string _pathTranslated;
 		string _queryString;
-		bool   _chunked;
 		bool	_selfExecuting;
 		ConfigStruct _confStruct;
+		FILE*  _infile;
+		bool   _chunked;
 	public:
-		Cgi(Request &request, ConfigStruct confStruct);
+		Cgi(Request &request, ConfigStruct confStruct, FILE *infile);
 
 		~Cgi();
 

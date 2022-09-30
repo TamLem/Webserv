@@ -77,8 +77,9 @@ void CgiResponse::parseCgiHeaders()
 	int n = 0;
 	while ((n = read(_cgiFD, buf, 1024)) > 0)
 	{
-		cout << "buf: " << buf << endl;
-		this->body.append(buf, n);
+		buf[n] = '\0';
+		// cout << "buf: " << buf << endl;
+		this->_body.append(buf, n);
 	}
 
 	return ; //remove next lines
@@ -92,13 +93,10 @@ void CgiResponse::parseCgiHeaders()
 
 void CgiResponse::sendResponse()
 {
-	cout << "sending response" << endl;
-	// string headers = this->constructHeader();
-	string headers  = "HTTP/1.1 200 OK\r\nContent-Length: " + std::to_string(this->body.length()) + "\r\n\r\n";
-	//print headers
-	// cout << headers << endl;
-	send(_clientFD, headers.c_str(), headers.length(), 0);
-	send(_clientFD, this->body.c_str(), this->body.length(), 0);
+	cout << "sending response" << " body" << this->_body << endl;
+	string headers  = "HTTP/1.1 200 OK\r\nContent-Length: " + std::to_string(this->_body.length()) + "\r\n\r\n";
+	string resp = headers + this->_body;
+	send(_clientFD, resp.c_str(), resp.length(), 0);
 	// send(_cgiFD, headers.c_str(), headers.length(), 0);
 	// tunnelResponse(_cgiFD, _clientFD);
 }

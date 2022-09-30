@@ -77,6 +77,7 @@ class Server
 	// private Members
 		Config *_config;
 		SocketHandler *_socketHandler;
+		std::map<int, FILE *> _cgiSockets;
 
 		// std::vector <ClientStruct> _clients;
 		Response _response;// needs to go away
@@ -84,7 +85,6 @@ class Server
 		ConfigStruct _currentConfig;
 		std::string _currentLocationKey;
 		bool loopDetected;
-		std::map<int, FILE *> _cgiSockets;
 
 	// private Methods
 		static void handle_signal(int sig);

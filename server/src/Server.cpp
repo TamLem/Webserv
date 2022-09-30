@@ -436,7 +436,7 @@ void Server::removeClientTraces(int clientFd)
 
 void Server::handleRequest(int clientFd) // i is the index from the evList of the socketHandler
 {
-	// bool isCgi = false;
+	bool isCgi = false;
 	this->_response.clear();
 	this->loopDetected = false;
 	try
@@ -607,12 +607,13 @@ void Server::_readRequestHead(int clientFd)
 	}
 }
 
-void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
+void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FILE *infile)
 {
-	FILE *tempFile = tmpfile();
-	this->_cgiSockets[fd] = tempFile;
-	int cgi_out = fileno(tempFile);
-	Cgi newCgi(request, configStruct);
+	LOG_YELLOW("\tcgi_handle");
+	FILE *outFile = tmpfile();
+	this->_cgiSockets[fd] = outFile;
+	int cgi_out = fileno(outFile);
+	Cgi newCgi(request, configStruct, infile);
 	#ifdef SHOW_LOG
 		newCgi.printEnv();
 	#endif
@@ -624,11 +625,11 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
 
 void Server::cgi_response_handle(int clientFd)
 {
-	FILE *tempFile = this->_cgiSockets[clientFd];
-	long	lSize = ftell(tempFile);
+	FILE *outFile = this->_cgiSockets[clientFd];
+	long	lSize = ftell(outFile);
 	cout << "lSize: " << lSize << endl;
-	rewind(tempFile);
-	int cgi_out = fileno(tempFile);
+	rewind(outFile);
+	int cgi_out = fileno(outFile);
 	
 	CgiResponse response(cgi_out, clientFd);
 	

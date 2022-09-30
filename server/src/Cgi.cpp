@@ -15,7 +15,8 @@ void printMap(std::map<std::string, std::string> map)
 	}
 }
 
-Cgi::Cgi(Request &request, ConfigStruct configStruct): _selfExecuting(false), _confStruct(configStruct)
+Cgi::Cgi(Request &request, ConfigStruct configStruct, FILE *infile): 
+	_selfExecuting(false), _confStruct(configStruct), _infile(infile)
 {
 	#ifdef SHOW_CONSTRUCTION
 		std::cout << GREEN << "Cgi Constructor called for " << this << RESET << std::endl;
@@ -26,7 +27,8 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct): _selfExecuting(false), _c
 	_chunked = false;
 	if(request.getHeaderFields().find("transfer-encoding")->second == "chunked")
 		_chunked = true;
-	string url = request.getDecodedTarget();
+	// string url = request.getDecodedTarget(); //returning empty string fix in request
+	string url = request.getUrl();
 	string extension = url.substr(url.find_last_of("."));
 
 	if (url.find("/cgi/") != string::npos)
@@ -184,7 +186,12 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	}
 	if (this->_method == "POST")
 	{
-		if (dup2(client_fd, STDIN_FILENO == -1))
+		long	lSize = ftell(this->_infile);
+		cout << "lSize: " << lSize << endl;
+		rewind(this->_infile);
+		int infileFd = fileno(this->_infile);
+		lseek(infileFd, 0, SEEK_SET);
+		if (dup2(infileFd, STDIN_FILENO == -1))
 		{
 			std::cout << "dup2 failed" << std::endl;
 			return ; //add 500

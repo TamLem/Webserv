@@ -160,8 +160,8 @@ int SocketHandler::getEvents()
 		std::cout << "num clients: " << _clients.size() << std::endl;
 	#endif
 	// memset(this->_evList, 0, sizeof(this->_evList)); // just for testing!!!!!!
-	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, &timeout); // use this for final working version
-	// int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL); // use this only for testing !!!!!!
+	// int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, &timeout); // use this for final working version
+	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL); // use this only for testing !!!!!!
 	#ifdef SHOW_LOG_2
 		std::stringstream debug;
 		debug << this->_evList[0].ident;

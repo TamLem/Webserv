@@ -15,6 +15,8 @@ private:
 	CgiResponse& operator=(const CgiResponse&);
 	CgiResponse(void);
 
+	string _body;
+
 public:
 	CgiResponse(int cgiFD, int clientFD);
 	~CgiResponse();

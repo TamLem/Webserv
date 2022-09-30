@@ -141,8 +141,24 @@ void Response::receiveChunk(int i)
 	}
 }
 
+void printSentBytes(int fd)
+{
+	std::cout << BOLD << GREEN << "Bytes sent from " << fd << ": " << RESET << std::endl;
+	char buffer[1000];
+	int n = 0;
+	for (int i = 0; n < 1000; i++)
+	{
+		n += read(fd, buffer, 1000 - n);
+		buffer[n] = '\0';
+	}
+	std::cout << buffer << std::endl;
+	exit(0);
+}
+
 void Response::_readForCgi(size_t clientFd)
 {
+	printSentBytes(clientFd);
+	return ;
 	size_t total = this->_receiveMap[clientFd].total;
 	size_t bytesLeft = this->_receiveMap[clientFd].bytesLeft;
 	size_t bufferSize = this->_receiveMap[clientFd].bufferSize;

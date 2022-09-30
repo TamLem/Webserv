@@ -130,7 +130,7 @@ void Response::receiveChunk(int i)
 		else /* if (this->_receiveMap[i].isChunked == false) */
 		{
 			buffer.close();
-			this->_receiveMap.erase(i);
+			this->removeFromReceiveMap(clientFd);
 			this->constructPostResponse();
 			this->putToResponseMap(clientFd);
 			// std::string abc = this->_responseMap[clientFd].response;
@@ -157,14 +157,15 @@ void printSentBytes(int fd)
 
 void Response::_readForCgi(size_t clientFd)
 {
-	printSentBytes(clientFd);
-	return ;
+	// printSentBytes(clientFd);
+	// return ;
 	size_t total = this->_receiveMap[clientFd].total;
 	size_t bytesLeft = this->_receiveMap[clientFd].bytesLeft;
 	size_t bufferSize = this->_receiveMap[clientFd].bufferSize;
 	char chunk[bufferSize];
 	int n = 0;
-	this->_tempFile[clientFd] = tmpfile();
+	if (this->_tempFile.count(clientFd) == 0)
+		this->_tempFile[clientFd] = tmpfile();
 
 	if (total > bufferSize && bytesLeft > bufferSize)
 	{
@@ -274,7 +275,26 @@ void Response::removeFromReceiveMap(int fd)
 
 bool Response::isFinished(size_t clientFd)
 {
-	return (this->_receiveMap[clientFd].end);
+	if (this->_receiveMap.count(clientFd))
+		return (this->_receiveMap[clientFd].end);
+	else
+		return (false);
+}
+
+bool Response::isCgi(size_t clientFd)
+{
+	if (this->_receiveMap.count(clientFd))
+		return (this->_receiveMap[clientFd].isCgi);
+	else
+		return (false);
+}
+
+bool Response::isChunked(size_t clientFd)
+{
+	if (this->_receiveMap.count(clientFd))
+		return (this->_receiveMap[clientFd].isChunked);
+	else
+		return (false);
 }
 
 FILE *Response::getTempFile(size_t clientFd)
@@ -395,7 +415,12 @@ static size_t _strToSizeT(std::string str)
 void Response::setPostChunked(int clientFd/* , std::string target */, std::map<std::string, std::string> &headerFields)
 {
 	if (this->_receiveMap.count(clientFd) && headerFields.count("transfer-encoding") && headerFields["transfer-encoding"] == "chunked")
+	{
 		this->_receiveMap[clientFd].isChunked = true;
+		#ifdef SHOW_LOG_2
+			LOG_RED("was set to chunked true");
+		#endif
+	}
 }
 
 
@@ -434,6 +459,9 @@ void Response::setPostBufferSize(int clientFd, size_t bufferSize)
 void Response::setIsCgi(int clientFd, bool state)
 {
 	this->_receiveMap[clientFd].isCgi = state;
+	#ifdef SHOW_LOG_2
+		std::cout << RED << BOLD << "set isCgi to " << state << RESET << std::endl;
+	#endif
 	this->_receiveMap[clientFd].end = false;
 }
 

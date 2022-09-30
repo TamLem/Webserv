@@ -46,6 +46,8 @@ class Response : public Message
 		bool isInResponseMap(int clientFd);
 		void setIsCgi(int clientFd, bool state);
 		bool isFinished(size_t clientFd);
+		bool isCgi(size_t clientFd);
+		bool isChunked(size_t clientFd);
 		FILE *getTempFile(size_t clientFd);
 		// std::string lastExitStatus;
 

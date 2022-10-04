@@ -137,6 +137,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		{
 			this->_conf->listen.insert(std::make_pair<std::string, unsigned short>(value, port));
 		}
+		else
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::DuplicatePortException();
+		}
 		break ;
 	}
 
@@ -940,4 +945,9 @@ const char* SingleServerConfig::InvalidFileExtensionException::what(void) const 
 const char* SingleServerConfig::InvalidCgiHandlerException::what(void) const throw()
 {
 	return ("↑↑↑ this file extension is invalid, please provide without any trailing \'/\' and only one not leading \'.\'");
+}
+
+const char* SingleServerConfig::DuplicatePortException::what(void) const throw()
+{
+	return ("↑↑↑ this port is already in use");
 }

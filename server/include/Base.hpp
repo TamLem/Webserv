@@ -95,6 +95,7 @@ struct ReceiveStruct
 	std::string requestHead;
 	std::string target;
 	size_t total;
+	size_t bytesWritten;
 	size_t bytesLeft;
 	int bufferSize;
 };

@@ -157,8 +157,7 @@ void printSentBytes(int fd)
 
 void Response::_readForCgi(size_t clientFd)
 {
-	printSentBytes(clientFd);
-	return ;
+	// printSentBytes(clientFd);
 	size_t total = this->_receiveMap[clientFd].total;
 	size_t bytesLeft = this->_receiveMap[clientFd].bytesLeft;
 	size_t bufferSize = this->_receiveMap[clientFd].bufferSize;
@@ -208,7 +207,7 @@ void Response::_readForCgi(size_t clientFd)
 	// buffer[n] = '\0' // this would be needed for the next line
 	// buffer << chunk; // this will stop writing if encounters a '\0', wich can happen in binary data!
 	size_t count = n;
-	fwrite(chunk, sizeof(char), count, this->_tempFile[clientFd]); // with this there can even be a '\0' in there, it wont stop writing
+	this->_receiveMap[clientFd].bytesWritten += fwrite(chunk, sizeof(char), count, this->_tempFile[clientFd]); // with this there can even be a '\0' in there, it wont stop writing
 // setting the bytesLeft and checking if all content was read
 	if (bytesLeft)
 	{
@@ -417,6 +416,7 @@ void Response::setPostLength(int clientFd, std::map<std::string, std::string> &h
 
 	this->_receiveMap[clientFd].total = length;
 	this->_receiveMap[clientFd].bytesLeft = length;
+	this->_receiveMap[clientFd].bytesWritten = 0;
 }
 
 /**

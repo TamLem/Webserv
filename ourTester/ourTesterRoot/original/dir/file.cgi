@@ -1,1 +1,1 @@
-content of file.ext in dir
+content of file.cgi in dir

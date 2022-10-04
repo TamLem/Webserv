@@ -129,5 +129,8 @@ ae: all
 our: all
 	./$(NAME) server/config/ourTester.conf
 
+tester:
+	@make -C ./ourTester
+
 #phony
 .PHONY: all clean fclean re run

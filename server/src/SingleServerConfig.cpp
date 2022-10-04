@@ -109,6 +109,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		std::cout << RED << keyValue << RESET << std::endl;
 		throw SingleServerConfig::NoValueFoundException();
 	}
+
+	static bool autoIndexSet;
+	static bool cbbsSet;
+	static bool cmbsSet;
+
 	std::string key = keyValue.substr(0, keyValue.find_first_of(WHITESPACE));
 	std::string value = "";
 	int nKey = 0;
@@ -147,6 +152,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (root):
 	{
+		if (this->_conf->root.length() != 0)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw DuplicateRootException();
+		}
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -172,7 +182,7 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		if (this->_conf->serverName.length() != 0)
 		{
 			std::cout << RED << keyValue << RESET << std::endl;
-			throw SingleServerConfig::ServerNameDuplicateException();
+			throw SingleServerConfig::DuplicateServerNameException();
 		}
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
@@ -188,6 +198,13 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (autoindex):
 	{
+		if (autoIndexSet == true)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::DuplicateAutoIndexException();
+		}
+		else
+			autoIndexSet = true;
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -205,6 +222,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (index_page):
 	{
+		if (this->_conf->indexPage.length() != 0)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::DuplicateIndexPageException();
+		}
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -217,6 +239,13 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (client_body_buffer_size):
 	{
+		if (cbbsSet == true)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::DuplicateCBBSException();
+		}
+		else
+			cbbsSet = true;
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -234,6 +263,13 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (client_max_body_size):
 	{
+		if (cmbsSet == true)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::DuplicateCMBSException();
+		}
+		else
+			cmbsSet = true;
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -257,6 +293,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (cgi_bin):
 	{
+		if (this->_conf->cgiBin.length() != 0)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw DuplicateCGIBinException();
+		}
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -353,7 +394,7 @@ void SingleServerConfig::_handleCgi(std::string line)
 		}
 		else if (this->_conf->cgi.count(key) == 1)
 		{
-			std::cout << RED << key << RESET << std::endl;
+			std::cout << RED << line << RESET << std::endl;
 			throw SingleServerConfig::DuplicateCgiExtensionException();
 		}
 		// else if (value[0] == '.') // why?????????
@@ -939,7 +980,7 @@ const char* SingleServerConfig::InvalidPathException::what(void) const throw()
 
 const char* SingleServerConfig::DuplicateCgiExtensionException::what(void) const throw()
 {
-	return ("↑↑↑ this extension is already in use");
+	return ("↑↑↑ this extension is already set up");
 }
 
 const char* SingleServerConfig::InvalidFileExtensionException::what(void) const throw()
@@ -957,7 +998,37 @@ const char* SingleServerConfig::DuplicatePortException::what(void) const throw()
 	return ("↑↑↑ this port is already in use");
 }
 
-const char* SingleServerConfig::ServerNameDuplicateException::what(void) const throw()
+const char* SingleServerConfig::DuplicateServerNameException::what(void) const throw()
 {
 	return ("↑↑↑ duplicate, server_name is already set up");
+}
+
+const char* SingleServerConfig::DuplicateRootException::what(void) const throw()
+{
+	return ("↑↑↑ duplicate, root is already set up");
+}
+
+const char* SingleServerConfig::DuplicateAutoIndexException::what(void) const throw()
+{
+	return ("↑↑↑ duplicate, autoindex is already set up");
+}
+
+const char* SingleServerConfig::DuplicateIndexPageException::what(void) const throw()
+{
+	return ("↑↑↑ duplicate, autoindex is already set up");
+}
+
+const char* SingleServerConfig::DuplicateCBBSException::what(void) const throw()
+{
+	return ("↑↑↑ duplicate, client_body_buffer_size is already set up");
+}
+
+const char* SingleServerConfig::DuplicateCMBSException::what(void) const throw()
+{
+	return ("↑↑↑ duplicate, client_max_body_size is already set up");
+}
+
+const char* SingleServerConfig::DuplicateCGIBinException::what(void) const throw()
+{
+	return ("↑↑↑ duplicate, cgi_bin is already set up");
 }

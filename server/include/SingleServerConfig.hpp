@@ -231,7 +231,43 @@ class SingleServerConfig
 				virtual const char* what() const throw();
 		};
 
-		class ServerNameDuplicateException : public std::exception
+		class DuplicateServerNameException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateRootException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateAutoIndexException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateIndexPageException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateCBBSException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateCMBSException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
+
+		class DuplicateCGIBinException : public std::exception
 		{
 			public:
 				virtual const char* what() const throw();

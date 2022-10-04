@@ -1,0 +1,1 @@
+content of noefile.cgi in dir

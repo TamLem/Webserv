@@ -126,5 +126,8 @@ ae: all
 42: all
 	./$(NAME) server/config/42tester.conf
 
+our: all
+	./$(NAME) server/config/ourTester.conf
+
 #phony
 .PHONY: all clean fclean re run

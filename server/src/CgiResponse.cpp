@@ -94,9 +94,10 @@ void CgiResponse::parseCgiHeaders()
 void CgiResponse::sendResponse()
 {
 	cout << "sending response" << " body" << this->_body << endl;
-	string headers  = "HTTP/1.1 200 OK\r\nContent-Length: " + std::to_string(this->_body.length()) + "\r\n\r\n";
+	string headers  = "HTTP/1.1 200 OK\r\nContent-Length: " + std::to_string(this->_body.length()) + "\r\n\r\n"; // @Tam please do not send a hardcoded response, what if the cgi crahed or something went wrong?
 	string resp = headers + this->_body;
-	send(_clientFD, resp.c_str(), resp.length(), 0);
+	send(_clientFD, resp.c_str(), resp.length(), 0); // @Tam please do not send anything directly to the client since it is strictly forbidden by the subject
+	LOG_GREEN(resp);
 	// send(_cgiFD, headers.c_str(), headers.length(), 0);
 	// tunnelResponse(_cgiFD, _clientFD);
 }
@@ -110,10 +111,10 @@ void CgiResponse::tunnelResponse(int srcFD, int destFD)
 	buf[1024] = '\0';
 	while ((n = read(srcFD, buf, 1024)) > 0)
 	{
-		send(destFD, buf, n, 0);
+		send(destFD, buf, n, 0); // @Tam please do not send anything directly to the client since it is strictly forbidden by the subject
 	}
-	close(this->_cgiFD);
-	close(this->_clientFD);
+	close(this->_cgiFD); // @Tam is this the closing of the tempfile? because you need to close it once you are done reading all the data from it
+	close(this->_clientFD); // @Tam never close the clientFD anywhere, let it happen in the mainloop after the response was sent
 }
 
 

@@ -61,6 +61,7 @@ void Server::runEventLoop()
 		int clientFd = -1;
 		// if (numEvents == 0)
 		// {
+		#ifndef FORTYTWO_TESTER
 			tryRemove:
 			clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
 			if (clientFd != -1 && this->_response.isInResponseMap(clientFd) == false)
@@ -88,6 +89,7 @@ void Server::runEventLoop()
 				std::cout << "\033[A\033[K";
 			}
 			#endif
+		#endif
 		// }
 		for (int i = 0; i < numEvents; ++i)
 		{
@@ -129,12 +131,6 @@ void Server::runEventLoop()
 					std::cout << BLUE << "write to client" << clientFd << RESET << std::endl;
 				#endif
 				this->_socketHandler->setTimeout(clientFd);
-				// if (this->_socketHandler->isKeepAlive(clientFd) == true) // tried to fix keep-alive connections!!! did not work, might be completely wrong!!!!
-				// {
-				// 	bool val = true;
-				// 	setsockopt(clientFd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
-				// 	LOG_GREEN("socket set to keepalive!!!!!");
-				// }
 				if (this->_response.sendRes(clientFd) == true)
 				{
 					// if (this->_response.was3XXCode(clientFd) == false)
@@ -241,8 +237,8 @@ void Server::handlePOST(int clientFd, const Request& request)
 		this->_response.addHeaderField("server", this->_currentConfig.serverName);
 		// this->_response.addHeaderField("connection", "close");
 		this->_response.setStatus("201");
-		if (this->_socketHandler->isKeepAlive(clientFd)) // only for testing!!!!
-			this->_response.addHeaderField("Connection", "keep-alive"); // only for testing !!!!
+		// if (this->_socketHandler->isKeepAlive(clientFd)) // only for testing!!!!
+		// 	this->_response.addHeaderField("Connection", "keep-alive"); // only for testing !!!!
 		this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 		this->_response.setPostBufferSize(clientFd, 100000); //AE here you changed the buffer size, but what was it before? !!!!!
 		// this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize); // THIS IS THE ORIGINAL !!!!
@@ -251,7 +247,7 @@ void Server::handlePOST(int clientFd, const Request& request)
 	}
 	#endif
 
-	if (tempHeaderFields.count("content-length") == 0)
+	if (tempHeaderFields.count("content-length") == 0 && (tempHeaderFields.count("transfer-encoding") && tempHeaderFields["transfer-encoding"] == "chunked") == false)
 		throw Server::LengthRequiredException();
 	else if (tempHeaderFields.count("content-length") && _strToSizeT(tempHeaderFields["content-length"]) > this->_currentConfig.clientMaxBodySize)
 		throw Server::ContentTooLargeException();
@@ -267,7 +263,11 @@ void Server::handlePOST(int clientFd, const Request& request)
 
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 	this->_response.setPostLength(clientFd, tempHeaderFields);
-	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
+	#ifndef FORTYTWO_TESTER
+		this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
+	#else
+		this->_response.setPostBufferSize(clientFd, 100); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
+	#endif
 	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
 	// if (this->_response.getStatus() == "303")
 	// 	this->_socketHandler->removeKeepAlive(clientFd); // just for testing !!!!!!!!
@@ -325,6 +325,7 @@ void Server::removeClientTraces(int clientFd)
 {
 	this->_response.removeFromReceiveMap(clientFd);
 	this->_response.removeFromResponseMap(clientFd);
+	this->_response.removeTempFile(clientFd);
 	this->_socketHandler->removeKeepAlive(clientFd);
 }
 
@@ -444,7 +445,7 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 		if (this->_response.isInReceiveMap(clientFd) == true)
 		{
 			this->_response.receiveChunk(clientFd);
-			if (this->_response.isFinished(clientFd) == true)
+			if (this->_response.isFinished(clientFd) == true && this->_response.isCgi(clientFd) == true)
 			{
 				Request tempRequest(this->_response.getRequestHead(clientFd));
 				this->applyCurrentConfig(tempRequest);
@@ -630,9 +631,9 @@ void Server::cgi_response_handle(int clientFd)
 	cout << "lSize: " << lSize << endl;
 	rewind(outFile);
 	int cgi_out = fileno(outFile);
-	
+
 	CgiResponse response(cgi_out, clientFd);
-	
+
 	response.parseCgiHeaders();
 	response.sendResponse();
 }

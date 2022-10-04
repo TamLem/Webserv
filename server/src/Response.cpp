@@ -254,7 +254,10 @@ void Response::createBodyFromFile(const std::string& target)
 {
 	std::stringstream tempBody;
 	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
-	if (access(target.c_str(), F_OK) != 0 && errno == EACCES)
+	// if (access(target.c_str(), F_OK) != 0 && errno == EACCES)
+	if (access(target.c_str(), F_OK) != 0)
+		throw ERROR_404();
+	if (access(target.c_str(), R_OK) != 0)
 		throw ERROR_403();
 	if (targetExists(target) == false || staticTargetIsDir(target) == true)
 		throw ERROR_404();

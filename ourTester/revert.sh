@@ -7,6 +7,7 @@ echo "Applying standard permissions..."
 chmod  0755 ./ourTesterRoot/original/nordir
 chmod  0755 ./ourTesterRoot/original/nowdir
 chmod  0755 ./ourTesterRoot/original/noxdir
+chmod  0755 ./ourTesterRoot/index/no/autoindex/nopermission
 
 # chmod 0755 ./ourTesterRoot/original/dir
 

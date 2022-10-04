@@ -132,5 +132,8 @@ our: all
 tester:
 	@make -C ./ourTester
 
+cleantester:
+	@make clean -C ./ourTester
+
 #phony
 .PHONY: all clean fclean re run

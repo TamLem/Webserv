@@ -21,7 +21,7 @@ public:
 	CgiResponse(int cgiFD, int clientFD);
 	~CgiResponse();
 
-	void parseCgiHeaders();
+	string &getBody();
 	string readline(int fd);
 	bool checkForMandatoryHeaders(string& headerLine);
 	void parseSingleHeaderField(string& headerLine);

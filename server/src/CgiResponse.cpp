@@ -65,11 +65,9 @@ bool CgiResponse::checkForMandatoryHeaders(string& headerLine)
 	return (false);
 }
 
-void CgiResponse::parseCgiHeaders()
+string &CgiResponse::getBody()
 {
 	string line = readline(_cgiFD);
-	// if (line.empty() || !checkForMandatoryHeaders(line))
-	// 	throw ERROR_404();
 	while (line != "\r")
 		line = readline(_cgiFD);
 	//save the rest in body
@@ -81,14 +79,7 @@ void CgiResponse::parseCgiHeaders()
 		// cout << "buf: " << buf << endl;
 		this->_body.append(buf, n);
 	}
-
-	return ; //remove next lines
-	while (line != CRLF && !line.empty())
-	{
-		parseSingleHeaderField(line);
-		line =  readline(_cgiFD);
-	}
-
+	return (_body);
 }
 
 void CgiResponse::sendResponse()

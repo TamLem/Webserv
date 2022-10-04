@@ -131,6 +131,11 @@ void Server::runEventLoop()
 					std::cout << BLUE << "write to client" << clientFd << RESET << std::endl;
 				#endif
 				this->_socketHandler->setTimeout(clientFd);
+				if (this->_cgiSockets.find(clientFd) != this->_cgiSockets.end())
+				{
+					cgi_response_handle(clientFd);
+					this->_cgiSockets.erase(clientFd);
+				}
 				if (this->_response.sendRes(clientFd) == true)
 				{
 					// if (this->_response.was3XXCode(clientFd) == false)
@@ -266,7 +271,7 @@ void Server::handlePOST(int clientFd, const Request& request)
 	#ifndef FORTYTWO_TESTER
 		this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
 	#else
-		this->_response.setPostBufferSize(clientFd, 100); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
+		this->_response.setPostBufferSize(clientFd, 2000); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
 	#endif
 	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
 	// if (this->_response.getStatus() == "303")
@@ -619,21 +624,29 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FIL
 		newCgi.printEnv();
 	#endif
 	newCgi.init_cgi(fd, cgi_out);
-	cgi_response_handle(fd);
-
+	// cgi_response_handle(fd);
 	// newCgi.cgi_response(fd);
 }
 
 void Server::cgi_response_handle(int clientFd)
 {
+	LOG_GREEN("\tcgi_response_handle");
 	FILE *outFile = this->_cgiSockets[clientFd];
-	long	lSize = ftell(outFile);
-	cout << "lSize: " << lSize << endl;
-	rewind(outFile);
+	// long	lSize = ftell(outFile);
+	// cout << "lSize: " << lSize << endl;
+	// rewind(outFile);
 	int cgi_out = fileno(outFile);
 
-	CgiResponse response(cgi_out, clientFd);
+	CgiResponse cgiResponse(cgi_out, clientFd);
 
-	response.parseCgiHeaders();
-	response.sendResponse();
+	// cgiResponse.getBody();
+	// cgiResponse.sendResponse();
+
+	this->_response.clear();
+	this->_response.setProtocol(PROTOCOL);
+	this->_response.setStatus("201");
+	this->_response.setBody(cgiResponse.getBody());
+	this->_response.addContentLengthHeaderField();
+	this->_response.putToResponseMap(clientFd);
+
 }

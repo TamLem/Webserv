@@ -33,9 +33,16 @@ void Response::receiveChunk(int i)
 					throw Response::BadRequestException();
 				if (endBuffer[0] != '\r' || endBuffer[1] != '\n')
 					throw Response::BadRequestException();
-				this->_receiveMap.erase(i);
-				this->constructPostResponse();
-				this->putToResponseMap(clientFd);
+				if (this->_receiveMap[i].isCgi == false)
+				{
+					this->_receiveMap.erase(i);
+					this->constructPostResponse();
+					this->putToResponseMap(clientFd);
+				}
+				else
+				{
+					this->_receiveMap[i].end = true;
+				}
 				return ;
 			}
 			this->_receiveMap[i].bytesLeft = this->_receiveMap[i].total;

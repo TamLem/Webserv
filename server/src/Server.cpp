@@ -271,7 +271,7 @@ void Server::handlePOST(int clientFd, const Request& request)
 	#ifndef FORTYTWO_TESTER
 		this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
 	#else
-		this->_response.setPostBufferSize(clientFd, 2000); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
+		this->_response.setPostBufferSize(clientFd, 1000); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
 	#endif
 	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
 	// if (this->_response.getStatus() == "303")
@@ -481,7 +481,7 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			//check method
 			if (isCgi == false)
 				this->checkLocationMethod(request);
-			if (request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive")
+			if ((request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive") || request.getHeaderFields().count("connection") == 0)
 				this->_socketHandler->addKeepAlive(clientFd);
 
 			/* if (isCgi == true)
@@ -636,6 +636,7 @@ void Server::cgi_response_handle(int clientFd)
 	// cout << "lSize: " << lSize << endl;
 	// rewind(outFile);
 	int cgi_out = fileno(outFile);
+	lseek(cgi_out, 0, SEEK_SET);
 
 	CgiResponse cgiResponse(cgi_out, clientFd);
 

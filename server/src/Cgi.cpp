@@ -70,7 +70,7 @@ Cgi::~Cgi()
 void Cgi::setEnv(Request &request) // think about changing this to return a const char **
 {
 	std::map<std::string, std::string> reqHeaders = request.getHeaderFields();
-
+	//print header fields
 	_env["REQUEST_METHOD"] = _method;
 	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_env["PATH_INFO"] = _pathInfo;
@@ -88,6 +88,11 @@ void Cgi::setEnv(Request &request) // think about changing this to return a cons
 		_env["REMOTE_ADDR"] = reqHeaders["X-Forwarded-For"];
 	}
 	_env["REDIRECT_STATUS"] = "200";
+	std::map<std::string, std::string>::const_iterator it = reqHeaders.begin();
+	while (it != reqHeaders.end()) {
+		_env["HTTP_" + it->first] = it->second;
+		it++;
+	}
 
 }
 

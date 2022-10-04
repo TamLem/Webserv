@@ -249,7 +249,7 @@ void Server::handleDELETE(const Request& request)
 	_response.setProtocol(PROTOCOL);
 	_response.setBody("");
 	_response.addHeaderField("server", this->_currentConfig.serverName);
-	_response.setStatus("200");
+	_response.setStatus("204");
 }
 
 void Server::handleERROR(const std::string& status)

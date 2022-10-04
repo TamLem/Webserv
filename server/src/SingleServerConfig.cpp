@@ -169,6 +169,11 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (server_name):
 	{
+		if (this->_conf->serverName.length() != 0)
+		{
+			std::cout << RED << keyValue << RESET << std::endl;
+			throw SingleServerConfig::ServerNameDuplicateException();
+		}
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -950,4 +955,9 @@ const char* SingleServerConfig::InvalidCgiHandlerException::what(void) const thr
 const char* SingleServerConfig::DuplicatePortException::what(void) const throw()
 {
 	return ("↑↑↑ this port is already in use");
+}
+
+const char* SingleServerConfig::ServerNameDuplicateException::what(void) const throw()
+{
+	return ("↑↑↑ duplicate, server_name is already set up");
 }

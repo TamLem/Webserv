@@ -372,6 +372,11 @@ const char* Response::ERROR_403::what() const throw()
 	return ("403");
 }
 
+const char* Response::ERROR_413::what() const throw()
+{
+	return ("413");
+}
+
 const char* Response::ERROR_423::what() const throw()
 {
 	return ("423");

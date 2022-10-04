@@ -71,7 +71,7 @@ class Response : public Message
 	// for POST requests
 		void setPostTarget(int clientFd, std::string target);
 		void setPostLength(int clientFd, std::map<std::string, std::string> &headerFields);
-		void setPostBufferSize(int clientFd, size_t bufferSize);
+		void setPostBufferSize(int clientFd, size_t bufferSize, size_t maxBodySize);
 		// void checkPostTarget(int clientFd, const Request &request, int port);
 		void setPostChunked(int clientFd/* , std::string target */, std::map<std::string, std::string> &headerFields);
 
@@ -116,6 +116,11 @@ class Response : public Message
 	};
 
 	class ERROR_403 : public Message::BadRequest
+	{
+		const char* what() const throw();
+	};
+
+	class ERROR_413 : public Message::BadRequest
 	{
 		const char* what() const throw();
 	};

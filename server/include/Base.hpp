@@ -97,7 +97,8 @@ struct ReceiveStruct
 	size_t total;
 	size_t bytesWritten;
 	size_t bytesLeft;
-	int bufferSize;
+	size_t bufferSize;
+	size_t maxBodySize;
 };
 
 // ConfigStruct

@@ -344,6 +344,20 @@ size_t Response::_handleChunked(int clientFd)
 	size_t length = 0;
 	hexadecimal >> std::hex >> length;
 
+	#ifdef FORTYTWO_TESTER
+		if (this->_receiveMap[clientFd].target.find("post_body") != std::string::npos && length > this->_receiveMap[clientFd].maxBodySize)
+		{
+			char trashcan[2048];
+			int n = 0;
+			while (n >= 0)
+				n = read(clientFd, trashcan, 2048);
+			throw Response::ERROR_413();
+		}
+	#else
+		if (length > this->_receiveMap[clientFd].maxBodySize)
+			throw Response::ERROR_413();
+	#endif
+
 	return (length);
 }
 
@@ -467,9 +481,10 @@ void Response::setPostLength(int clientFd, std::map<std::string, std::string> &h
  * @param  bufferSize: buffer size specified in the config
  * @retval None
  */
-void Response::setPostBufferSize(int clientFd, size_t bufferSize)
+void Response::setPostBufferSize(int clientFd, size_t bufferSize, size_t maxBodySize)
 {
 	this->_receiveMap[clientFd].bufferSize = bufferSize;
+	this->_receiveMap[clientFd].maxBodySize = maxBodySize;
 }
 
 void Response::setIsCgi(int clientFd, bool state)

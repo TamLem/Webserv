@@ -132,7 +132,7 @@ our: all
 tester:
 	@make -C ./ourTester
 
-cleantester:
+rmtester:
 	@make clean -C ./ourTester
 
 #phony

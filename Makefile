@@ -137,4 +137,4 @@ rmtester:
 	@make clean -C ./ourTester
 
 #phony
-.PHONY: all clean fclean re run
+.PHONY: all clean fclean re run tester

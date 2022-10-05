@@ -76,6 +76,52 @@ static void curl_delete(const std::string& url, const std::string& expected)
 	i++;
 }
 
+static void curl_cgi_post(const std::string& url, const std::string& expected)
+{
+	static int i = 1;
+	long statuscode;
+	CURL *curl;
+	struct curl_slist *host = NULL;
+	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
+	curl_slist_append(host, "server1:6000:127.0.0.1");
+	curl_slist_append(host, "server2:8080:127.0.0.1");
+	CURLcode res;
+	std::string readBuffer;
+	curl = curl_easy_init();
+
+	if(curl)
+	{
+		curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statuscode);
+		res = curl_easy_perform(curl);
+		if(res == CURLE_OK)
+		{
+			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statuscode);
+		}
+		curl_easy_cleanup(curl);
+		std::cout << YELLOW << "Test " << i << ": " << url << RESET << std::endl;
+		if (readBuffer.compare(expected) == 0)
+			std::cout << GREEN << "OK" << RESET << std::endl;
+		else if (nothrow_stol(expected) == statuscode)
+			std::cout << GREEN << "OK" << RESET << " status code: " << statuscode << std::endl;
+		else if (readBuffer.find(expected) != std::string::npos)
+			std::cout << GREEN << "OK" << RESET << " found: " << expected << std::endl;
+		else
+		{
+			std::cout << RED << "KO" << RESET << std::endl;
+			std::cout << "expected: " << expected << std::endl;
+			std::cout << "recieved: " << readBuffer << std::endl;
+		}
+	}
+	else
+		std::cout << RED << "ERROR with curl" << RESET << std::endl;
+	i++;
+}
+
 static void curl_post(const std::string& url, const std::string& expected)
 {
 	static int i = 1;
@@ -202,6 +248,7 @@ int main(void)
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/new.cgi", "THIS IS THE CONTENT OF MY NEW FILE.");
+	curl_cgi_post("http://webserv/uploads/existingfile.cgi", "THIS IS THE CONTENT OF EXISTINGFILE.CGI IN UPLOADS.");
 	//////// DELETE
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<DELETE>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_delete("http://webserv/uploads/new.txt", "204");
@@ -209,3 +256,155 @@ int main(void)
 }
 
 //c++ curl_example.cpp -o curl_example -lcurl && ./curl_example
+
+/*
+Test GET http://localhost:8080/
+GET / HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Accept-Encoding: gzip
+
+Test POST http://localhost:8080/ with a size of 0
+POST / HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Transfer-Encoding: chunked
+Content-Type: test/file
+Accept-Encoding: gzip
+
+Test HEAD http://localhost:8080/
+HEAD / HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+
+Test GET http://localhost:8080/directory
+GET /directory HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Accept-Encoding: gzip
+
+Test GET http://localhost:8080/directory/youpi.bad_extension
+GET /directory/youpi.bad_extension HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Accept-Encoding: gzip
+
+Test GET http://localhost:8080/directory/youpi.bla
+GET /directory/youpi.bla HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Accept-Encoding: gzip
+
+Test GET Expected 404 on http://localhost:8080/directory/oulalala
+GET /directory/oulalala HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Accept-Encoding: gzip
+
+Test GET http://localhost:8080/directory/nop
+GET /directory/nop HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Accept-Encoding: gzip
+
+Test GET http://localhost:8080/directory/nop/
+GET /directory/nop/ HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Accept-Encoding: gzip
+
+Test GET http://localhost:8080/directory/nop/other.pouic
+GET /directory/nop/other.pouic HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Accept-Encoding: gzip
+
+Test GET Expected 404 on http://localhost:8080/directory/nop/other.pouac
+GET /directory/nop/other.pouac HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Accept-Encoding: gzip
+
+Test GET Expected 404 on http://localhost:8080/directory/Yeah
+GET /directory/Yeah HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Accept-Encoding: gzip
+
+Test GET http://localhost:8080/directory/Yeah/not_happy.bad_extension
+GET /directory/Yeah/not_happy.bad_extension HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Accept-Encoding: gzip
+
+Test Put http://localhost:8080/put_test/file_should_exist_after with a size of 1000
+PUT /put_test/file_should_exist_after HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Transfer-Encoding: chunked
+Accept-Encoding: gzip
+
+Test Put http://localhost:8080/put_test/file_should_exist_after with a size of 10000000
+PUT /put_test/file_should_exist_after HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Transfer-Encoding: chunked
+Accept-Encoding: gzip
+
+Test POST http://localhost:8080/directory/youpi.bla with a size of 100000000
+POST /directory/youpi.bla HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Transfer-Encoding: chunked
+Content-Type: test/file
+Accept-Encoding: gzip
+
+Test POST http://localhost:8080/directory/youpla.bla with a size of 100000000
+POST /directory/youpla.bla HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Transfer-Encoding: chunked
+Content-Type: test/file
+Accept-Encoding: gzip
+
+Test POST http://localhost:8080/directory/youpi.bla with a size of 100000 with special headers
+POST /directory/youpi.bla HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Transfer-Encoding: chunked
+Content-Type: test/file
+X-Secret-Header-For-Test: 1
+Accept-Encoding: gzip
+
+Test POST http://localhost:8080/post_body with a size of 0
+POST /post_body HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Transfer-Encoding: chunked
+Content-Type: test/file
+Accept-Encoding: gzip
+
+Test POST http://localhost:8080/post_body with a size of 100
+POST /post_body HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Transfer-Encoding: chunked
+Content-Type: test/file
+Accept-Encoding: gzip
+
+Test POST http://localhost:8080/post_body with a size of 200
+POST /post_body HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Transfer-Encoding: chunked
+Content-Type: test/file
+Accept-Encoding: gzip
+
+Test POST http://localhost:8080/post_body with a size of 101
+POST /post_body HTTP/1.1
+Host: localhost:8080
+User-Agent: Go-http-client/1.1
+Transfer-Encoding: chunked
+Content-Type: test/file
+Accept-Encoding: gzip
+*/

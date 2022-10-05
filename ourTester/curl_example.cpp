@@ -11,11 +11,17 @@
 #define BOLD "\033[1m"
 #define UNDERLINED "\033[4m"
 
-static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
-{
-	((std::string*)userp)->append((char*)contents, size * nmemb);
-	return size * nmemb;
-}
+
+#include <stdio.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <netinet/in.h>
+// #include <string.h>
+#include <arpa/inet.h>
+
+#define PORT 80
+#define NONE -1
 
 static long nothrow_stol(const std::string& string)
 {
@@ -25,14 +31,74 @@ static long nothrow_stol(const std::string& string)
 	}
 	catch (std::exception &e)
 	{
-		return (-1);
+		return (NONE);
 	}
 	return (ret);
 }
 
-static void curl_delete(const std::string& url, const std::string& expected)
+static void evaluation(const std::string& testcase, const std::string& readBuffer, const std::string& expected, long statuscode)
 {
 	static int i = 1;
+	
+	std::cout << YELLOW << "Test " << i << ": " << testcase << RESET << std::endl;
+	if (readBuffer.compare(expected) == 0)
+		std::cout << GREEN << "OK" << RESET << std::endl;
+	else if (nothrow_stol(expected) == statuscode)
+		std::cout << GREEN << "OK" << RESET << " status code: " << statuscode << std::endl;
+	else if (readBuffer.find(expected) != std::string::npos)
+		std::cout << GREEN << "OK" << RESET << " found: " << expected << std::endl;
+	else
+	{
+		std::cout << RED << "KO" << RESET << std::endl;
+		std::cout << "expected: " << expected << std::endl;
+		std::cout << "recieved: " << readBuffer << std::endl;
+	}
+	i++;
+}
+
+static void my_request(const std::string& request, const std::string& expected)
+{
+	int sock = 0;
+	long valread;
+	struct sockaddr_in serv_addr;
+	char readBuffer[1024] = {0};
+	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	{
+		std::cout << "\n Socket creation error" << std::endl;
+		return ;
+	}
+	
+	memset(&serv_addr, '0', sizeof(serv_addr));
+	
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(PORT);
+	
+	// Convert IPv4 and IPv6 addresses from text to binary form
+	if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0)
+	{
+		std::cout << "\nInvalid address/ Address not supported" << std::endl;
+		return ;
+	}
+	
+	if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+	{
+		std::cout << "\nConnection Failed" << std::endl;
+		return ;
+	}
+	send(sock, request.c_str(), request.length(), 0);
+	valread = read( sock , readBuffer, 1024);
+	evaluation(request.substr(0, request.find_first_of('\n')), readBuffer, expected, NONE);
+}
+
+
+static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+	((std::string*)userp)->append((char*)contents, size * nmemb);
+	return size * nmemb;
+}
+
+static void curl_delete(const std::string& url, const std::string& expected)
+{
 	long statuscode;
 	CURL *curl;
 	struct curl_slist *host = NULL;
@@ -57,28 +123,14 @@ static void curl_delete(const std::string& url, const std::string& expected)
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statuscode);
 		}
 		curl_easy_cleanup(curl);
-		std::cout << YELLOW << "Test " << i << ": " << url << RESET << std::endl;
-		if (readBuffer.compare(expected) == 0)
-			std::cout << GREEN << "OK" << RESET << std::endl;
-		else if (nothrow_stol(expected) == statuscode)
-			std::cout << GREEN << "OK" << RESET << " status code: " << statuscode << std::endl;
-		else if (readBuffer.find(expected) != std::string::npos)
-			std::cout << GREEN << "OK" << RESET << " found: " << expected << std::endl;
-		else
-		{
-			std::cout << RED << "KO" << RESET << std::endl;
-			std::cout << "expected: " << expected << std::endl;
-			std::cout << "recieved: " << readBuffer << std::endl;
-		}
+		evaluation(url, readBuffer, expected, statuscode);
 	}
 	else
 		std::cout << RED << "ERROR with curl" << RESET << std::endl;
-	i++;
 }
 
 static void curl_post(const std::string& url, const std::string& expected)
 {
-	static int i = 1;
 	long statuscode;
 	CURL *curl;
 	struct curl_slist *host = NULL;
@@ -101,28 +153,14 @@ static void curl_post(const std::string& url, const std::string& expected)
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statuscode);
 		}
 		curl_easy_cleanup(curl);
-		std::cout << YELLOW << "Test " << i << ": " << url << RESET << std::endl;
-		if (readBuffer.compare(expected) == 0)
-			std::cout << GREEN << "OK" << RESET << std::endl;
-		else if (nothrow_stol(expected) == statuscode)
-			std::cout << GREEN << "OK" << RESET << " status code: " << statuscode << std::endl;
-		else if (readBuffer.find(expected) != std::string::npos)
-			std::cout << GREEN << "OK" << RESET << " found: " << expected << std::endl;
-		else
-		{
-			std::cout << RED << "KO" << RESET << std::endl;
-			std::cout << "expected: " << expected << std::endl;
-			std::cout << "recieved: " << readBuffer << std::endl;
-		}
+		evaluation(url, readBuffer, expected, statuscode);
 	}
 	else
 		std::cout << RED << "ERROR with curl" << RESET << std::endl;
-	i++;
 }
 
 static void curl_get(const std::string& url, const std::string& expected)
 {
-	static int i = 1;
 	long statuscode;
 	CURL *curl;
 	struct curl_slist *host = NULL;
@@ -145,28 +183,27 @@ static void curl_get(const std::string& url, const std::string& expected)
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statuscode);
 		}
 		curl_easy_cleanup(curl);
-		std::cout << YELLOW << "Test " << i << ": " << url << RESET << std::endl;
-		if (readBuffer.compare(expected) == 0)
-			std::cout << GREEN << "OK" << RESET << std::endl;
-		else if (nothrow_stol(expected) == statuscode)
-			std::cout << GREEN << "OK" << RESET << " status code: " << statuscode << std::endl;
-		else if (readBuffer.find(expected) != std::string::npos)
-			std::cout << GREEN << "OK" << RESET << " found: " << expected << std::endl;
-		else
-		{
-			std::cout << RED << "KO" << RESET << std::endl;
-			std::cout << "expected: " << expected << std::endl;
-			std::cout << "recieved: " << readBuffer << std::endl;
-		}
+		evaluation(url, readBuffer, expected, statuscode);
 	}
 	else
 		std::cout << RED << "ERROR with curl" << RESET << std::endl;
-	i++;
 }
+
+
 
 int main(void)
 {
-	
+	// BAD REQUEST TESTS
+	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<INPUT>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
+	my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "200");
+	my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "200");
+	my_request("GET HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
+	my_request("GET / HTTP/1.0\r\nHost: webserv\r\n\r\n", "505");
+	my_request("GET / HTTP/1.1\r\nUser-Agent: Go-http-client/1.1\r\n\r\n", "400");
+	// my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r", "400"); // AE this lets server wait 60 sec timeout?
+	my_request("GET / HTTP/1.1\nHost: webserv\r\n\r\n", "400");
+	my_request("PST / HTTP/1.1\r\nHost: webserv\r\n\r\n", "501");
+	my_request("POST / HTTP/1.1\r\nHost: webserv\r\n\r\n", "411");
 	//////// GET
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<GET>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_get("http://webserv", "content of index.html in root");
@@ -174,7 +211,8 @@ int main(void)
 	curl_get("http://webserv/route/dir/file", "content of file in dir");
 	curl_get("http://webserv/route/cgi/file", "content of file in cgi");
 	// curl_get("http://server1:6000", "content of file in server1");
-	// curl_get("http://server2/route/file", "xxx");
+	// curl_get("http://server1/doesntexist", "MY_CUSTOM_PAGE");
+	// curl_get("http://server2/route/file", "content of file in server2");
 	// curl_get("http://server2:8080/route/file", "content of file in server2");
 	// curl_get("http://server2:8081/route/file", "content of file in server2");
 	// curl_get("http://server2/route/dir/file", "content of file in dir");
@@ -196,7 +234,6 @@ int main(void)
 	curl_get("http://webserv/index/no/autoindex/", "autoindex123");
 	curl_get("http://webserv/index/no/autoindex/nopermission/", "404"); // kind of special
 	curl_get("http://webserv/index/no/noautoindex/", "404");
-	// BAD REQUEST TESTS
 	//////// POST
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<POST>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_post("http://webserv/uploads/new.txt", "201");

@@ -484,12 +484,11 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			if ((request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive") || request.getHeaderFields().count("connection") == 0)
 				this->_socketHandler->addKeepAlive(clientFd);
 
-			/* if (isCgi == true)
-			{
-				this->applyCurrentConfig(request);
-				cgi_handle(request, clientFd, this->_currentConfig);
-			}
-			else  */if (request.getMethod() == "POST" || request.getMethod() == "PUT")
+			#ifdef FORTYTWO_TESTER
+			if (request.getMethod() == "POST" || request.getMethod() == "PUT")
+			#else
+			if (request.getMethod() == "POST)
+			#endif
 				this->handlePOST(clientFd, request);
 			else if (request.getMethod() == "DELETE")
 			{

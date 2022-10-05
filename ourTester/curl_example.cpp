@@ -22,6 +22,7 @@
 
 #define PORT 80
 #define NONE -1
+#define EMPTY -2
 
 static long nothrow_stol(const std::string& string)
 {
@@ -87,7 +88,7 @@ static void my_request(const std::string& request, const std::string& expected)
 	}
 	send(sock, request.c_str(), request.length(), 0);
 	valread = read( sock , readBuffer, 1024);
-	evaluation(request.substr(0, request.find_first_of('\n')), readBuffer, expected, NONE);
+	evaluation(request.substr(0, request.find_first_of('\n')), readBuffer, expected, EMPTY);
 }
 
 
@@ -196,19 +197,39 @@ int main(void)
 	// BAD REQUEST TESTS
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<INPUT>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "200");
-	my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "200");
+	my_request("GET /  HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
+	my_request("GET  / HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
+	my_request(" GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
+	my_request("GET / HTTP/1.1\r\nHost:webserv\r\n\r\n", "200");
+	my_request("GET / HTTP/1.1\r\n Host: webserv\r\n\r\n", "400");
+	my_request("GET / HTTP/1.1\r\nHost: webserv \r\n\r\n", "200");
+	my_request("GET / HTTP/1.1\r\nHost:  webserv  \r\n\r\n", "400"); // AE only one whitespace
+	my_request("GET / HTTP/1.1\r\nHost : webserv\r\n\r\n", "400");
+	my_request("GET /route/dir/%25file HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of %file in dir");
+	my_request("GET /route/dir/%2file HTTP/1.1\r\nHost: webserv\r\n\r\n", "400"); // AE dangerous
+	my_request("GET /ü-ei HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
+	// my_request("", "400"); // AE problem
+	// my_request(" ", "400"); // AE problem
+	// my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
+	// my_request("GET .. HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
+	// my_request("GET ... HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
+	my_request("GET .../README.md HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE ultra dangerous!!!
 	my_request("GET HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
 	my_request("GET / HTTP/1.0\r\nHost: webserv\r\n\r\n", "505");
+	my_request("GET / HTTP/1.1\r\nHost: webserv\r\nHost: webserv\r\n\r\n", "400");
+	my_request("GET / HTTP/1.1\r\nHost: webserv\r\ncontent-length: 0\r\ntransfer-encoding: chunked\r\n\r\n", "400"); // AE is this even imlemented?
 	my_request("GET / HTTP/1.1\r\nUser-Agent: Go-http-client/1.1\r\n\r\n", "400");
 	// my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r", "400"); // AE this lets server wait 60 sec timeout?
 	my_request("GET / HTTP/1.1\nHost: webserv\r\n\r\n", "400");
 	my_request("PST / HTTP/1.1\r\nHost: webserv\r\n\r\n", "501");
 	my_request("POST / HTTP/1.1\r\nHost: webserv\r\n\r\n", "411");
+	my_request("POST /uploads/big.txt HTTP/1.1\r\nHost: webserv\r\ncontent-length: 200\r\n\r\n01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789", "413");
 	//////// GET
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<GET>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_get("http://webserv", "content of index.html in root");
 	curl_get("http://webserv:80", "content of index.html in root");
 	curl_get("http://webserv/route/dir/file", "content of file in dir");
+	curl_get("http://webserv/route/dir/200charfile", "413"); //AE how to trigger client_body_buffer_size
 	curl_get("http://webserv/route/cgi/file", "content of file in cgi");
 	// curl_get("http://server1:6000", "content of file in server1");
 	// curl_get("http://server1/doesntexist", "MY_CUSTOM_PAGE");

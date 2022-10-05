@@ -73,7 +73,7 @@ string &CgiResponse::getBody()
 	//save the rest in body
 	char buf[1024];
 	int n = 0;
-	while ((n = read(_cgiFD, buf, 1024)) > 0)
+	while ((n = read(_cgiFD, buf, 1023)) > 0)
 	{
 		buf[n] = '\0';
 		// cout << "buf: " << buf << endl;

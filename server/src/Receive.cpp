@@ -103,9 +103,9 @@ void Response::receiveChunk(int i)
 				std::cout << BOLD << YELLOW << "Bytes left to read from " << clientFd << ": " << bytesLeft << RESET << std::endl;
 			#endif
 		}
-		else if (n == -1)
+		else
 		{
-			#ifdef SHOW_LOG
+			#ifdef SHOW_LOG_2
 				std::cout << RED << "reading for POST on fd " << clientFd << " failed" << RESET << std::endl;
 			#endif
 			this->_receiveMap.erase(i);
@@ -200,9 +200,9 @@ void Response::_readForCgi(size_t clientFd)
 			std::cout << BOLD << YELLOW << "Bytes left to read from " << clientFd << ": " << bytesLeft << RESET << std::endl;
 		#endif
 	}
-	else if (n == -1)
+	else
 	{
-		#ifdef SHOW_LOG
+		#ifdef SHOW_LOG_2
 			std::cout << RED << "reading for POST on fd " << clientFd << " failed" << RESET << std::endl;
 		#endif
 		this->_receiveMap.erase(clientFd);

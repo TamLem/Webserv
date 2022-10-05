@@ -15,7 +15,7 @@ void printMap(std::map<std::string, std::string> map)
 	}
 }
 
-Cgi::Cgi(Request &request, ConfigStruct configStruct, FILE *infile): 
+Cgi::Cgi(Request &request, ConfigStruct configStruct, FILE *infile):
 	_selfExecuting(false), _confStruct(configStruct), _infile(infile)
 {
 	#ifdef SHOW_CONSTRUCTION
@@ -219,73 +219,73 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 		{
 			std::cerr << "error executing cgi" << std::endl;
 		}
-		exit(1);
+		exit(1); // throw internal server error if this occurs
 	}
 	wait(NULL);
 	dup2(stdin_init, STDIN_FILENO);
 	dup2(stdout_init, STDOUT_FILENO);
 }
 
-void Cgi::cgi_response(int fd)
-{
-	std::string file;
-	std::string executable;
-	char **args;
-	int pipefd[2];
+// void Cgi::cgi_response(int fd)
+// {
+// 	std::string file;
+// 	std::string executable;
+// 	char **args;
+// 	int pipefd[2];
 
-	args = NULL;
-	executable = _scriptName;
-	if (this->_chunked)
-		_handleChunked(fd);
-	pipe(pipefd);
-	int stdout_init = dup(STDOUT_FILENO);
-	int stdin_init = dup(STDIN_FILENO);
-	std::cout << GREEN << "Executing CGI..." << std::endl;
-	cout << "executable: " << executable << endl;
-	if (!_selfExecuting && this->_method == "GET")
-	{
-		cout << "GET" << endl;
-		passAsInput();
-		dup2(pipefd[1], STDOUT_FILENO);
-		close(pipefd[1]);
-	}
-	if (this->_method == "POST")
-	{
-		dup2(fd, STDIN_FILENO);
-		passAsOutput();
-	}
-	file = _pathInfo;
-	int pid = fork();
-	if (pid == 0)
-	{
-		if (execve(executable.c_str(), args, mapToStringArray(_env)) == -1)
-		{
-			std::cerr << "error executing cgi" << std::endl;
-		}
-		exit(0);
-	}
-	wait(NULL);
-	dup2(stdin_init, STDIN_FILENO);
-	dup2(stdout_init, STDOUT_FILENO);
-	cout << "cgi response done" << endl;
-	std::string header = "HTTP/1.1 200 OK\r\n"; //cgi status code
-	send(fd, header.c_str(), header.size(), 0);
-	if (this->_method == "POST")
-	{
-		close(pipefd[0]);
-		close(fd);
-		return ;
-	}
-	char buf[1024];
-	buf[1023] = '\0';
-	int n;
-	while((n = read(pipefd[0], buf, 1023)) > 0)
-	{
-		#ifdef SHOW_LOG
-			cout << "cgi output: " << buf << endl;
-		#endif
-		send(fd, buf, n, 0); // make sure to not send any data to the client here!!! you need to put the data into the responseMap[clientFd] and then add a write event !!!!! @Tam
-	}
-	close(pipefd[0]);
-	close(fd);
-}
+// 	args = NULL;
+// 	executable = _scriptName;
+// 	if (this->_chunked)
+// 		_handleChunked(fd);
+// 	pipe(pipefd);
+// 	int stdout_init = dup(STDOUT_FILENO);
+// 	int stdin_init = dup(STDIN_FILENO);
+// 	std::cout << GREEN << "Executing CGI..." << std::endl;
+// 	cout << "executable: " << executable << endl;
+// 	if (!_selfExecuting && this->_method == "GET")
+// 	{
+// 		cout << "GET" << endl;
+// 		passAsInput();
+// 		dup2(pipefd[1], STDOUT_FILENO);
+// 		close(pipefd[1]);
+// 	}
+// 	if (this->_method == "POST")
+// 	{
+// 		dup2(fd, STDIN_FILENO);
+// 		passAsOutput();
+// 	}
+// 	file = _pathInfo;
+// 	int pid = fork();
+// 	if (pid == 0)
+// 	{
+// 		if (execve(executable.c_str(), args, mapToStringArray(_env)) == -1)
+// 		{
+// 			std::cerr << "error executing cgi" << std::endl;
+// 		}
+// 		exit(0);
+// 	}
+// 	wait(NULL);
+// 	dup2(stdin_init, STDIN_FILENO);
+// 	dup2(stdout_init, STDOUT_FILENO);
+// 	cout << "cgi response done" << endl;
+// 	std::string header = "HTTP/1.1 200 OK\r\n"; //cgi status code
+// 	send(fd, header.c_str(), header.size(), 0);
+// 	if (this->_method == "POST")
+// 	{
+// 		close(pipefd[0]);
+// 		close(fd);
+// 		return ;
+// 	}
+// 	char buf[1024];
+// 	buf[1023] = '\0';
+// 	int n;
+// 	while((n = read(pipefd[0], buf, 1023)) > 0)
+// 	{
+// 		#ifdef SHOW_LOG
+// 			cout << "cgi output: " << buf << endl;
+// 		#endif
+// 		send(fd, buf, n, 0); // make sure to not send any data to the client here!!! you need to put the data into the responseMap[clientFd] and then add a write event !!!!! @Tam
+// 	}
+// 	close(pipefd[0]);
+// 	close(fd);
+// }

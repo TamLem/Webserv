@@ -20,7 +20,7 @@ int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::c
 		request.setRoutedTarget("." + result);
 		_currentLocationKey = it->first; // AE does it have to be "" instead?
 		// _currentLocationKey = "";
-		#ifdef SHOW_LOG
+		#ifdef SHOW_LOG_2
 			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << RESET << std::endl;
 		#endif
 		return (0);

@@ -61,7 +61,7 @@ void Server::runEventLoop()
 		int clientFd = -1;
 		// if (numEvents == 0)
 		// {
-		#ifndef FORTYTWO_TESTER
+		// #ifndef FORTYTWO_TESTER
 			tryRemove:
 			clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
 			if (clientFd != -1 && this->_response.isInResponseMap(clientFd) == false)
@@ -89,7 +89,7 @@ void Server::runEventLoop()
 				std::cout << "\033[A\033[K";
 			}
 			#endif
-		#endif
+		// #endif
 		// }
 		for (int i = 0; i < numEvents; ++i)
 		{
@@ -322,6 +322,7 @@ void Server::handleERROR(const std::string& status)
 	else
 		_response.createErrorBody();
 	_response.addHeaderField("server", this->_currentConfig.serverName);
+	_response.addHeaderField("Connection", "close");
 	_response.addContentLengthHeaderField();
 }
 
@@ -428,14 +429,9 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 		if (this->_response.isInReceiveMap(clientFd) == true)
 			this->_response.removeFromReceiveMap(clientFd);
 		this->_response.putToResponseMap(clientFd);
-
-		int n = 1; // AE @tim maybe find a less hacky solution for this :) 
-		char trash[2048];
-		while (n > 0)
-		{
-			n = read(clientFd, trash, 2048);
-		}
+		this->_socketHandler->removeKeepAlive(clientFd);
 	}
+	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 }
 
 
@@ -462,7 +458,7 @@ void Server::_readRequestHead(int clientFd)
 		}
 		else if (n < 0) // read had an error reading from fd, was failing PUT
 		{
-			#ifdef SHOW_LOG
+			#ifdef SHOW_LOG_2
 				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED" << std::endl;
 			#endif
 			#ifndef FORTYTWO_TESTER
@@ -476,7 +472,7 @@ void Server::_readRequestHead(int clientFd)
 			buffer[1] = '\0';
 			if (!_isPrintableAscii(buffer[0]))
 			{
-				#ifdef SHOW_LOG
+				#ifdef SHOW_LOG_2
 					std::cout << RED << "NON-ASCII CHAR FOUND IN REQUEST" << RESET << std::endl;
 				#endif
 				throw Server::BadRequestException();
@@ -492,7 +488,7 @@ void Server::_readRequestHead(int clientFd)
 		}
 		if (firstLineBreak == false && charsRead > MAX_REQUEST_LINE_SIZE)
 		{
-			#ifdef SHOW_LOG
+			#ifdef SHOW_LOG_2
 				std::cout << RED << "FIRST LINE TOO LONG" << RESET << std::endl;
 			#endif
 			throw Server::FirstLineTooLongException();
@@ -508,8 +504,8 @@ void Server::_readRequestHead(int clientFd)
 	{
 		#ifdef SHOW_LOG
 			std::cout << RED << "HEAD BIGGER THAN " << MAX_REQUEST_HEADER_SIZE << " OR NO CRLFTWO FOUND (incomplete request)" << RESET << std::endl;
+			std:: cout << YELLOW << "received >" << RESET << this->_requestHead << YELLOW << "<" << RESET << std::endl;
 		#endif
-		std:: cout << YELLOW << "received >" << RESET << this->_requestHead << YELLOW << "<" << RESET << std::endl;
 		throw Server::BadRequestException();
 	}
 }
@@ -521,10 +517,11 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FIL
 	this->_cgiSockets[fd] = outFile;
 	int cgi_out = fileno(outFile);
 	Cgi newCgi(request, configStruct, infile);
-	#ifdef SHOW_LOG
+	#ifdef SHOW_LOG_2
 		newCgi.printEnv();
 	#endif
 	newCgi.init_cgi(fd, cgi_out);
+	fclose(infile);
 	// cgi_response_handle(fd);
 	// newCgi.cgi_response(fd);
 }
@@ -550,5 +547,6 @@ void Server::cgi_response_handle(int clientFd)
 	this->_response.setBody(cgiResponse.getBody());
 	this->_response.addContentLengthHeaderField();
 	this->_response.putToResponseMap(clientFd);
+	fclose(outFile);
 
 }

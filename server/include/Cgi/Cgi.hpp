@@ -5,7 +5,7 @@
 #include "Request.hpp"
 
 #include <iostream>
-#include <sstream> 
+#include <sstream>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -51,7 +51,7 @@ class Cgi
 
 		void setEnv(Request &request);
 		void init_cgi(int client_fd, int cgi_out);
-		void cgi_response(int fd);
+		// void cgi_response(int fd);
 		void phpHandler(Request &req);
 		void passAsInput();
 		void passAsOutput();

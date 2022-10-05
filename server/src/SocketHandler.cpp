@@ -325,7 +325,7 @@ std::string SocketHandler::createTimeoutResponse()
 {
 	std::stringstream message;
 
-	message << "HTTP/1.1 408 Request Timeout" << CRLF << createErrorString("408", "Request Timeout") << CRLFTWO;
+	message << "HTTP/1.1 408 Request Timeout" << CRLF << "Connection: close" << CRLF << createErrorString("408", "Request Timeout") << CRLFTWO;
 
 	return (message.str());
 }

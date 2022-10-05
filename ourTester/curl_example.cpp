@@ -76,52 +76,6 @@ static void curl_delete(const std::string& url, const std::string& expected)
 	i++;
 }
 
-static void curl_cgi_post(const std::string& url, const std::string& expected)
-{
-	static int i = 1;
-	long statuscode;
-	CURL *curl;
-	struct curl_slist *host = NULL;
-	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
-	curl_slist_append(host, "server1:6000:127.0.0.1");
-	curl_slist_append(host, "server2:8080:127.0.0.1");
-	CURLcode res;
-	std::string readBuffer;
-	curl = curl_easy_init();
-
-	if(curl)
-	{
-		curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
-		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statuscode);
-		res = curl_easy_perform(curl);
-		if(res == CURLE_OK)
-		{
-			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statuscode);
-		}
-		curl_easy_cleanup(curl);
-		std::cout << YELLOW << "Test " << i << ": " << url << RESET << std::endl;
-		if (readBuffer.compare(expected) == 0)
-			std::cout << GREEN << "OK" << RESET << std::endl;
-		else if (nothrow_stol(expected) == statuscode)
-			std::cout << GREEN << "OK" << RESET << " status code: " << statuscode << std::endl;
-		else if (readBuffer.find(expected) != std::string::npos)
-			std::cout << GREEN << "OK" << RESET << " found: " << expected << std::endl;
-		else
-		{
-			std::cout << RED << "KO" << RESET << std::endl;
-			std::cout << "expected: " << expected << std::endl;
-			std::cout << "recieved: " << readBuffer << std::endl;
-		}
-	}
-	else
-		std::cout << RED << "ERROR with curl" << RESET << std::endl;
-	i++;
-}
-
 static void curl_post(const std::string& url, const std::string& expected)
 {
 	static int i = 1;
@@ -224,7 +178,7 @@ int main(void)
 	// curl_get("http://server2:8080/route/file", "content of file in server2");
 	// curl_get("http://server2:8081/route/file", "content of file in server2");
 	// curl_get("http://server2/route/dir/file", "content of file in dir");
-	curl_get("http://webserv/route/dir/file.cgi", "CONTENT OF FILE.CGI IN DIR");
+	curl_get("http://webserv/route/dir/file.cgi", "content of file.cgi in dir"); // only POST triggers cgi, GET only returns file
 	curl_get("http://webserv/route/dir/file.ext", "content of file.ext in extdir");
 	curl_get("http://webserv/route/dir/norfile", "403");
 	curl_get("http://webserv/route/nordir/file", "content of file in nordir");
@@ -248,10 +202,10 @@ int main(void)
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/new.cgi", "THIS IS THE CONTENT OF MY NEW FILE.");
-	curl_cgi_post("http://webserv/uploads/existingfile.cgi", "THIS IS THE CONTENT OF EXISTINGFILE.CGI IN UPLOADS.");
 	//////// DELETE
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<DELETE>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_delete("http://webserv/uploads/new.txt", "204");
+	curl_delete("http://webserv/uploads/doesnotexist", "404");
 
 }
 

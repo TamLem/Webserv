@@ -135,6 +135,7 @@ static void curl_get(const std::string& url, const std::string& expected)
 	if(curl)
 	{
 		curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
+		curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -195,6 +196,7 @@ int main(void)
 	curl_get("http://webserv/index/no/autoindex/", "autoindex123");
 	curl_get("http://webserv/index/no/autoindex/nopermission/", "404"); // kind of special
 	curl_get("http://webserv/index/no/noautoindex/", "404");
+	// BAD REQUEST TESTS
 	//////// POST
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<POST>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_post("http://webserv/uploads/new.txt", "201");

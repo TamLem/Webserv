@@ -50,7 +50,7 @@
 #define MAX_REQUEST_HEADER_SIZE 1024 // change this to increase the size of accepted request-headers
 #define MAX_EVENTS 128
 #define MAX_SEND_CHUNK_SIZE (1024 * 1024) // this controlls the size of the chunks we are sending back to the client
-#define CLIENT_TIMEOUT 30 // this will kick clients after X amount of inactivity
+#define CLIENT_TIMEOUT 60 // this will kick clients after X amount of inactivity
 
 // ClientStruct
 struct ClientStruct
@@ -67,11 +67,10 @@ struct ResponseStruct
 	std::string response;
 	size_t total;
 	size_t bytesLeft;
-	std::istream *requestedFile;
 // header information
-	std::string protocoll;
-	std::string status;
-	std::string statusMessage;
+	// std::string protocoll;
+	// std::string status;
+	// std::string statusMessage;
 	std::string target; // this is the target after directory/file routing
 };
 
@@ -88,13 +87,18 @@ struct LocationStruct
 // ReceiveStruct
 struct ReceiveStruct
 {
-// chunking
+// identifiers
 	bool isChunked;
+	bool isCgi;
+	bool end;
 // general
+	std::string requestHead;
 	std::string target;
 	size_t total;
+	size_t bytesWritten;
 	size_t bytesLeft;
-	int bufferSize;
+	size_t bufferSize;
+	size_t maxBodySize;
 };
 
 // ConfigStruct

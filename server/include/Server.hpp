@@ -19,6 +19,7 @@
 #include <map>
 #include <set>
 #include <csignal>
+#include "stdio.h"
 
 /* our includes */
 #include "Config.hpp"
@@ -26,6 +27,8 @@
 #include "Request.hpp"
 #include "SingleServerConfig.hpp"
 #include "Base.hpp"
+#include "Cgi/Cgi.hpp"
+#include "Cgi/CgiResponse.hpp"
 
 #define UPLOAD_DIR "./server/data/uploads/"
 
@@ -74,6 +77,7 @@ class Server
 	// private Members
 		Config *_config;
 		SocketHandler *_socketHandler;
+		std::map<int, FILE *> _cgiSockets;
 
 		// std::vector <ClientStruct> _clients;
 		Response _response;// needs to go away
@@ -81,7 +85,6 @@ class Server
 		ConfigStruct _currentConfig;
 		std::string _currentLocationKey;
 		bool loopDetected;
-		std::vector<int> _cgiSockets;
 
 	// private Methods
 		static void handle_signal(int sig);
@@ -105,7 +108,10 @@ class Server
 		void _handleResponse(int i);
 
 		bool _isCgiRequest(std::string requestHead);
-		void cgi_handle(Request& request, int fd, ConfigStruct configStruct);
+		void cgi_handle(Request& request, int fd, ConfigStruct configStruct, FILE *tempFile);
+		void cgi_response_handle(int clientFd);
+		bool isCgiSocket(int clientFd);
+
 
 	public:
 
@@ -152,6 +158,8 @@ class Server
 			const char* what() const throw();
 		};
 };
+
+
 
 // std::string percentDecodingFix(std::string target);
 std::string staticReplaceInString(std::string str, std::string tofind, std::string toreplace);

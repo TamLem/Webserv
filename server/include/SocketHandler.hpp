@@ -84,10 +84,12 @@ class SocketHandler
 
 		bool removeClient(int fd, bool force = false);
 		int removeInactiveClients();
+		std::string createTimeoutResponse();
 
 		void addKeepAlive(int clientFd);
 		void removeKeepAlive(int clientFd);
 		bool isKeepAlive(int clientFd);
+		std::vector<int> _cgiSockets;
 
 	// Getter
 		int getFD(int i) const;

@@ -86,7 +86,7 @@ void CgiResponse::sendResponse()
 {
 	cout << "sending response" << " body" << this->_body << endl;
 	string headers  = "HTTP/1.1 200 OK\r\nContent-Length: " + std::to_string(this->_body.length()) + "\r\n\r\n"; // @Tam please do not send a hardcoded response, what if the cgi crahed or something went wrong?
-	string resp = headers + this->_body;
+	string resp = headers + this->_body; // is it really needed to create a full response with headers here????
 	send(_clientFD, resp.c_str(), resp.length(), 0); // @Tam please do not send anything directly to the client since it is strictly forbidden by the subject
 	LOG_GREEN(resp);
 	// send(_cgiFD, headers.c_str(), headers.length(), 0);

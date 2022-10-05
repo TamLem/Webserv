@@ -487,7 +487,7 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			#ifdef FORTYTWO_TESTER
 			if (request.getMethod() == "POST" || request.getMethod() == "PUT")
 			#else
-			if (request.getMethod() == "POST)
+			if (request.getMethod() == "POST")
 			#endif
 				this->handlePOST(clientFd, request);
 			else if (request.getMethod() == "DELETE")

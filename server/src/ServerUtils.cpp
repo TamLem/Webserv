@@ -125,8 +125,8 @@ std::string createErrorString(std::string statusCode, std::string statusMessage)
 	<br><br>\n\
 	<img src=\"" <<
 	errorImage <<
-	"\" align=\"TOP\">\n" <<
-	"</center>\n\
+	"\" align=\"TOP\">\n\
+	</center>\n\
 	</body>\n\
 	</html>";
 

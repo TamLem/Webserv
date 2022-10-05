@@ -428,6 +428,13 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 		if (this->_response.isInReceiveMap(clientFd) == true)
 			this->_response.removeFromReceiveMap(clientFd);
 		this->_response.putToResponseMap(clientFd);
+
+		int n = 1; // AE @tim maybe find a less hacky solution for this :) 
+		char trash[2048];
+		while (n > 0)
+		{
+			n = read(clientFd, trash, 2048);
+		}
 	}
 }
 

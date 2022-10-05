@@ -28,7 +28,8 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct, FILE *infile):
 	if(request.getHeaderFields().find("transfer-encoding")->second == "chunked")
 		_chunked = true;
 	// string url = request.getDecodedTarget(); //returning empty string fix in request
-	string url = request.getUrl();
+	// string url = request.getDecodedTarget(); // AE @tam do you need the decoded or routed target?
+	string url = request.getRoutedTarget(); // AE @tam do you need the decoded or routed target?
 	string extension = url.substr(url.find_last_of("."));
 
 	if (url.find("/cgi/") != string::npos)

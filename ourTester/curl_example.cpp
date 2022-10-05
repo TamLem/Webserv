@@ -199,6 +199,7 @@ int main(void)
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<POST>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/new.txt", "201");
+	curl_post("http://webserv/uploads/new.cgi", "THIS IS THE CONTENT OF MY NEW FILE.");
 	//////// DELETE
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<DELETE>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_delete("http://webserv/uploads/new.txt", "204");

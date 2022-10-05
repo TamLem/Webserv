@@ -51,7 +51,7 @@ Server::~Server(void)
 
 void Server::runEventLoop()
 {
-		while(keep_running)
+	while(keep_running)
 	{
 
 		#ifdef SHOW_LOG
@@ -61,6 +61,7 @@ void Server::runEventLoop()
 		int clientFd = -1;
 		// if (numEvents == 0)
 		// {
+		#ifndef FORTYTWO_TESTER
 			tryRemove:
 			clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
 			if (clientFd != -1 && this->_response.isInResponseMap(clientFd) == false)
@@ -88,19 +89,20 @@ void Server::runEventLoop()
 				std::cout << "\033[A\033[K";
 			}
 			#endif
+		#endif
 		// }
 		for (int i = 0; i < numEvents; ++i)
 		{
-			clientFd = this->_socketHandler->getFD(i);
 			#ifdef SHOW_LOG_2
-				std::cout << "no. events: " << numEvents << " ev:" << i << std::endl;
+				std::cout << "event id:" << i << std::endl;
 			#endif
+			clientFd = this->_socketHandler->getFD(i);
 			if (this->_socketHandler->acceptConnection(i))
 			{
 				this->_socketHandler->setTimeout(clientFd);
 				continue ;
 			}
-			else if (this->_socketHandler->readFromClient(i) == true /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false */)
+			else if (this->_socketHandler->readFromClient(i) == true) /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false */
 			{
 				#ifdef SHOW_LOG_2
 					std::cout << BLUE << "read from client " << clientFd << RESET << std::endl;
@@ -123,18 +125,17 @@ void Server::runEventLoop()
 					removeClientTraces(clientFd);
 				}
 			}
-			else if (this->_socketHandler->writeToClient(i) == true /* && this->_response.isInResponseMap(clientFd) */) // this commented part is a dirty workaround, only use it for testing!!!!
+			else if (this->_socketHandler->writeToClient(i) == true /* &&  !isCgiSocket(clientFd)   && this->_response.isInResponseMap(clientFd) */) // this commented part is a dirty workaround, only use it for testing!!!!
 			{
 				#ifdef SHOW_LOG_2
 					std::cout << BLUE << "write to client" << clientFd << RESET << std::endl;
 				#endif
 				this->_socketHandler->setTimeout(clientFd);
-				// if (this->_socketHandler->isKeepAlive(clientFd) == true) // tried to fix keep-alive connections!!! did not work, might be completely wrong!!!!
-				// {
-				// 	bool val = true;
-				// 	setsockopt(clientFd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
-				// 	LOG_GREEN("socket set to keepalive!!!!!");
-				// }
+				if (this->_cgiSockets.find(clientFd) != this->_cgiSockets.end())
+				{
+					cgi_response_handle(clientFd);
+					this->_cgiSockets.erase(clientFd);
+				}
 				if (this->_response.sendRes(clientFd) == true)
 				{
 					// if (this->_response.was3XXCode(clientFd) == false)
@@ -156,13 +157,23 @@ void Server::runEventLoop()
 						this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_WRITE);
 				}
 			}
-			if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients ???? really?
+			else if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients ???? really?
 			{
 				removeClientTraces(clientFd);
 			}
 		}
 	}
 }
+
+// bool Server::isCgiSocket(int clientFd)
+// {
+// 	for (std::map<int, FILE *>::iterator it = this->_cgiSockets.begin(); it != this->_cgiSockets.end(); ++it)
+// 	{
+// 		if (it->second == clientFd)
+// 			return true;
+// 	}
+// 	return false;
+// }
 
 
 void Server::handleGET(const Request& request)
@@ -231,17 +242,17 @@ void Server::handlePOST(int clientFd, const Request& request)
 		this->_response.addHeaderField("server", this->_currentConfig.serverName);
 		// this->_response.addHeaderField("connection", "close");
 		this->_response.setStatus("201");
-		if (this->_socketHandler->isKeepAlive(clientFd)) // only for testing!!!!
-			this->_response.addHeaderField("Connection", "keep-alive"); // only for testing !!!!
+		// if (this->_socketHandler->isKeepAlive(clientFd)) // only for testing!!!!
+		// 	this->_response.addHeaderField("Connection", "keep-alive"); // only for testing !!!!
 		this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
-		this->_response.setPostBufferSize(clientFd, 100000); //AE here you changed the buffer size, but what was it before? !!!!!
+		this->_response.setPostBufferSize(clientFd, 100000, 1000000); //AE here you changed the buffer size, but what was it before? !!!!!
 		// this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize); // THIS IS THE ORIGINAL !!!!
 		this->_response.setPostChunked(clientFd, /* request.getRoutedTarget(), */ tempHeaderFields);
 		return ;
 	}
 	#endif
 
-	if (tempHeaderFields.count("content-length") == 0)
+	if (tempHeaderFields.count("content-length") == 0 && (tempHeaderFields.count("transfer-encoding") && tempHeaderFields["transfer-encoding"] == "chunked") == false)
 		throw Server::LengthRequiredException();
 	else if (tempHeaderFields.count("content-length") && _strToSizeT(tempHeaderFields["content-length"]) > this->_currentConfig.clientMaxBodySize)
 		throw Server::ContentTooLargeException();
@@ -252,12 +263,16 @@ void Server::handlePOST(int clientFd, const Request& request)
 	// 	this->_response.addHeaderField("Connection", "keep-alive");
 	this->_response.setStatus("201");
 
-	this->_response.createBodyFromFile("./server/data/pages/post_success.html");
+	// this->_response.createBodyFromFile("./server/data/pages/post_success.html");
 	// put this info into the receiveStruct maybe ????
 
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 	this->_response.setPostLength(clientFd, tempHeaderFields);
-	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize);
+	#ifndef FORTYTWO_TESTER
+	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize, this->_currentConfig.clientMaxBodySize);
+	#else
+		this->_response.setPostBufferSize(clientFd, 1000, this->_currentConfig.clientMaxBodySize); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
+	#endif
 	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
 	// if (this->_response.getStatus() == "303")
 	// 	this->_socketHandler->removeKeepAlive(clientFd); // just for testing !!!!!!!!
@@ -315,6 +330,7 @@ void Server::removeClientTraces(int clientFd)
 {
 	this->_response.removeFromReceiveMap(clientFd);
 	this->_response.removeFromResponseMap(clientFd);
+	this->_response.removeTempFile(clientFd);
 	this->_socketHandler->removeKeepAlive(clientFd);
 }
 
@@ -432,11 +448,21 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 	try
 	{
 		if (this->_response.isInReceiveMap(clientFd) == true)
+		{
 			this->_response.receiveChunk(clientFd);
+			if (this->_response.isFinished(clientFd) == true && this->_response.isCgi(clientFd) == true)
+			{
+				Request tempRequest(this->_response.getRequestHead(clientFd));
+				this->applyCurrentConfig(tempRequest);
+				this->cgi_handle(tempRequest, clientFd, this->_currentConfig, this->_response.getTempFile(clientFd));
+				this->_response.removeFromReceiveMap(clientFd);
+			}
+		}
 		else
 		{
 			this->_readRequestHead(clientFd); // read 1024 charackters or if less until /r/n/r/n is found
 			Request request(this->_requestHead);
+			this->_response.setRequestHead(this->_requestHead, clientFd);
 			this->_response.setRequestMethod(request.getMethod());
 			this->applyCurrentConfig(request);
 			//normalize target (in Request)
@@ -446,30 +472,39 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			//determine location
 			request.setDecodedTarget(percentDecoding(request.getRawTarget()));
 			request.setQuery(percentDecoding(request.getQuery()));
-			isCgi = this->_isCgiRequest(this->_requestHead);
+			this->_response.setIsCgi(clientFd, this->_isCgiRequest(this->_requestHead));
 			#ifdef SHOW_LOG
 				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
 			#endif
 			this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
 			// request.setRoutedTarget("." + request.getRoutedTarget());
 			//check method
-			checkLocationMethod(request);
-
-			if (request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive")
+			if (isCgi == false)
+				this->checkLocationMethod(request);
+			if ((request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive") || request.getHeaderFields().count("connection") == 0)
 				this->_socketHandler->addKeepAlive(clientFd);
 
-			if (isCgi == true)
-			{
-				this->applyCurrentConfig(request);
-				cgi_handle(request, clientFd, this->_currentConfig);
-			}
-			else if (request.getMethod() == "POST" || request.getMethod() == "PUT")
+			#ifdef FORTYTWO_TESTER
+			if (request.getMethod() == "POST" || request.getMethod() == "PUT")
+			#else
+			if (request.getMethod() == "POST)
+			#endif
 				this->handlePOST(clientFd, request);
 			else if (request.getMethod() == "DELETE")
+			{
 				this->handleDELETE(request);
+				this->_response.putToResponseMap(clientFd);
+				this->_response.removeFromReceiveMap(clientFd);
+				// this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_READ);
+				// this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
+			}
 			else
 			{
 				this->handleGET(request);
+				this->_response.putToResponseMap(clientFd);
+				this->_response.removeFromReceiveMap(clientFd);
+				// this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_READ);
+				// this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
 			}
 		}
 	}
@@ -519,7 +554,9 @@ void Server::_readRequestHead(int clientFd)
 			#ifdef SHOW_LOG_2
 				LOG_RED("Incomplete Request detected");
 			#endif
+			#ifndef FORTYTWO_TESTER
 			throw Server::BadRequestException();
+			#endif
 		}
 		else if (n < 0) // read had an error reading from fd, was failing PUT
 		{
@@ -575,43 +612,41 @@ void Server::_readRequestHead(int clientFd)
 	}
 }
 
-
-
-void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct)
+void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FILE *infile)
 {
-	#ifdef FORTYTWO_TESTER
-// was missing for the tester maybe????
-	_response.setProtocol(PROTOCOL);
-	_response.setStatus("200");
- //
-	#endif
-	int cgiPipe[2];
-	if (pipe(cgiPipe) == -1)
-	{
-		#ifdef SHOW_LOG
-			std::cerr << RED << "PIPE FAILED" << RESET << std::endl;
-		#endif
-		throw Server::InternalServerErrorException();
-	}
-	this->_socketHandler->setEvent(cgiPipe[1], EV_ADD | EV_CLEAR, EVFILT_READ);
-	// this->_socketHandler->setEvent(cgiPipe[0], EVFILT_READ);
-	this->_cgiSockets.push_back(cgiPipe[1]);
-
-	Cgi newCgi(request, configStruct);
+	LOG_YELLOW("\tcgi_handle");
+	FILE *outFile = tmpfile();
+	this->_cgiSockets[fd] = outFile;
+	int cgi_out = fileno(outFile);
+	Cgi newCgi(request, configStruct, infile);
 	#ifdef SHOW_LOG
 		newCgi.printEnv();
 	#endif
+	newCgi.init_cgi(fd, cgi_out);
+	// cgi_response_handle(fd);
+	// newCgi.cgi_response(fd);
+}
 
-	//initiate cgi response
-	//listen to event on cgiPipe[0]
-	//if event is read, read from cgiPipe[0] and write to fd
-	//if event is write, write to cgiPipe[1]
-	//if event is error, close cgiPipe[0] and cgiPipe[1]
-	//if event is hangup, close cgiPipe[0] and cgiPipe[1]
-	//if event is timeout, close cgiPipe[0] and cgiPipe[1]
-	//if event is terminate, close cgiPipe[0] and cgiPipe[1]
-	//if event is close, close cgiPipe[0] and cgiPipe[1]
+void Server::cgi_response_handle(int clientFd)
+{
+	LOG_GREEN("\tcgi_response_handle");
+	FILE *outFile = this->_cgiSockets[clientFd];
+	// long	lSize = ftell(outFile);
+	// cout << "lSize: " << lSize << endl;
+	// rewind(outFile);
+	int cgi_out = fileno(outFile);
+	lseek(cgi_out, 0, SEEK_SET);
 
+	CgiResponse cgiResponse(cgi_out, clientFd);
 
-	newCgi.cgi_response(fd);
+	// cgiResponse.getBody();
+	// cgiResponse.sendResponse();
+
+	this->_response.clear();
+	this->_response.setProtocol(PROTOCOL);
+	this->_response.setStatus("201");
+	this->_response.setBody(cgiResponse.getBody());
+	this->_response.addContentLengthHeaderField();
+	this->_response.putToResponseMap(clientFd);
+
 }

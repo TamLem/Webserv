@@ -5,6 +5,8 @@
 #include "Request.hpp"
 
 #include <iostream>
+#include <sstream> 
+#include <fstream>
 #include <string>
 #include <vector>
 #include <map>
@@ -33,21 +35,26 @@ class Cgi
 		string _docRoot;
 		std::map<string, string> _env;
 		string _method;
+		string _body;
 		string _scriptName;
 		string _pathInfo;
 		string _pathTranslated;
 		string _queryString;
 		bool	_selfExecuting;
 		ConfigStruct _confStruct;
+		FILE*  _infile;
+		bool   _chunked;
 	public:
-		Cgi(Request &request, ConfigStruct confStruct);
+		Cgi(Request &request, ConfigStruct confStruct, FILE *infile);
 
 		~Cgi();
 
 		void setEnv(Request &request);
+		void init_cgi(int client_fd, int cgi_out);
 		void cgi_response(int fd);
 		void phpHandler(Request &req);
 		void passAsInput();
+		void passAsOutput();
 		void printEnv();
 };
 #endif

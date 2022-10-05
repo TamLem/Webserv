@@ -20,6 +20,10 @@ void Response::receiveChunk(int i)
 	{
 		if (this->_receiveMap[i].total == 0 || (this->_receiveMap[i].total != 0 && this->_receiveMap[i].bytesLeft == 0))
 		{
+			if (this->_receiveMap[i].total == 0 && this->_receiveMap[i].isCgi == true)
+			{
+				this->_tempFile[clientFd] = tmpfile();
+			}
 			this->_receiveMap[i].total = this->_handleChunked(i);
 			if (this->_receiveMap[i].total == 0)
 			{
@@ -29,9 +33,16 @@ void Response::receiveChunk(int i)
 					throw Response::BadRequestException();
 				if (endBuffer[0] != '\r' || endBuffer[1] != '\n')
 					throw Response::BadRequestException();
-				this->_receiveMap.erase(i);
-				this->constructPostResponse();
-				this->putToResponseMap(clientFd);
+				if (this->_receiveMap[i].isCgi == false)
+				{
+					this->_receiveMap.erase(i);
+					this->constructPostResponse();
+					this->putToResponseMap(clientFd);
+				}
+				else
+				{
+					this->_receiveMap[i].end = true;
+				}
 				return ;
 			}
 			this->_receiveMap[i].bytesLeft = this->_receiveMap[i].total;
@@ -50,16 +61,119 @@ void Response::receiveChunk(int i)
 		bytesLeft = this->_receiveMap[i].bytesLeft;
 		bufferSize = this->_receiveMap[i].bufferSize;
 	// }
-	int n = 0;
-	std::ofstream buffer;
-	char chunk[bufferSize];
 // opening the file and checking if its open
-	buffer.open(this->_receiveMap[i].target.c_str(), std ::ios::out | std::ios_base::app | std::ios::binary);
+	if (this->_receiveMap[clientFd].isCgi == true)
+	{
+		this->_readForCgi(clientFd);
+	}
+	else
+	{
+		int n = 0;
+		std::ofstream buffer;
+		char chunk[bufferSize];
+		buffer.open(this->_receiveMap[i].target.c_str(), std ::ios::out | std::ios_base::app | std::ios::binary);
 
-	if (buffer.is_open() == false)
-		throw Response::ERROR_423(); // check if this makes sense, maybe 500 is more appropriate ????????
-// reading part
-	else if (total > bufferSize && bytesLeft > bufferSize)
+		if (buffer.is_open() == false)
+			throw Response::ERROR_423(); // check if this makes sense, maybe 500 is more appropriate ????????
+	// reading part
+		else if (total > bufferSize && bytesLeft > bufferSize)
+		{
+			#ifdef SHOW_LOG_2
+				std::cout << YELLOW << "bytesLeft: " << bytesLeft << RESET << std::endl;
+			#endif
+			n = read(clientFd, chunk, bufferSize);
+		}
+		else
+		{
+			#ifdef SHOW_LOG_2
+				std::cout << YELLOW << "last bytesLeft: " << bytesLeft << RESET << std::endl;
+			#endif
+			n = read(clientFd, chunk, bytesLeft);
+		}
+
+		#ifdef SHOW_LOG_2
+			std::cout << BOLD << GREEN << "Bytes received from " << clientFd << ": " << n << RESET << std::endl;
+			// LOG_YELLOW(chunk); // REMOVE AFTER TESTING, this might break the server if a non text file is in the body!!
+		#endif
+	// checking for errors of read
+		if (n > 0)
+		{
+			bytesLeft -= n;
+			#ifdef SHOW_LOG_2
+				std::cout << BOLD << YELLOW << "Bytes left to read from " << clientFd << ": " << bytesLeft << RESET << std::endl;
+			#endif
+		}
+		else if (n == -1)
+		{
+			#ifdef SHOW_LOG
+				std::cout << RED << "reading for POST on fd " << clientFd << " failed" << RESET << std::endl;
+			#endif
+			this->_receiveMap.erase(i);
+			bytesLeft = 0;
+			buffer.close();
+			throw Response::ClientDisconnect();
+		}
+	// writing the read contents to the file
+		// buffer[n] = '\0' // this would be needed for the next line
+		// buffer << chunk; // this will stop writing if encounters a '\0', wich can happen in binary data!
+		buffer.write(chunk, n); // with this there can even be a '\0' in there, it wont stop writing
+	// setting the bytesLeft and checking if all content was read
+		if (bytesLeft)
+		{
+			this->_receiveMap[i].bytesLeft = bytesLeft;
+			buffer.close();
+		}
+		else if (this->_receiveMap[i].isChunked)
+		{
+			char endBuffer[2];
+			int endReturn = read(clientFd, endBuffer, 2);
+			if (endReturn != 2)
+				throw Response::BadRequestException();
+			if (endBuffer[0] != '\r' || endBuffer[1] != '\n')
+				throw Response::BadRequestException();
+			this->_receiveMap[i].bytesLeft = bytesLeft;
+			buffer.close();
+		}
+		else /* if (this->_receiveMap[i].isChunked == false) */
+		{
+			buffer.close();
+			this->removeFromReceiveMap(clientFd);
+			this->constructPostResponse();
+			this->putToResponseMap(clientFd);
+			// std::string abc = this->_responseMap[clientFd].response;
+			// total = abc.length();
+			// this->_responseMap[clientFd].total = this->_responseMap[clientFd].response.length();
+			// this->_responseMap[clientFd].bytesLeft = this->_responseMap[clientFd].response.length();
+		}
+	}
+}
+
+void printSentBytes(int fd)
+{
+	std::cout << BOLD << GREEN << "Bytes sent from " << fd << ": " << RESET << std::endl;
+	char buffer[1000];
+	int n = 0;
+	for (int i = 0; n < 1000; i++)
+	{
+		n += read(fd, buffer, 1000 - n);
+		buffer[n] = '\0';
+	}
+	std::cout << buffer << std::endl;
+	exit(0);
+}
+
+void Response::_readForCgi(size_t clientFd)
+{
+	// printSentBytes(clientFd);
+	size_t total = this->_receiveMap[clientFd].total;
+	size_t bytesLeft = this->_receiveMap[clientFd].bytesLeft;
+	size_t bufferSize = this->_receiveMap[clientFd].bufferSize;
+	char chunk[bufferSize];
+	int n = 0;
+	if (this->_tempFile.count(clientFd) == 0)
+		this->_tempFile[clientFd] = tmpfile();
+
+	if (total > bufferSize && bytesLeft > bufferSize)
 	{
 		#ifdef SHOW_LOG_2
 			std::cout << YELLOW << "bytesLeft: " << bytesLeft << RESET << std::endl;
@@ -91,25 +205,23 @@ void Response::receiveChunk(int i)
 		#ifdef SHOW_LOG
 			std::cout << RED << "reading for POST on fd " << clientFd << " failed" << RESET << std::endl;
 		#endif
-		this->_receiveMap.erase(i);
+		this->_receiveMap.erase(clientFd);
 		bytesLeft = 0;
-		buffer.close();
+		fclose(this->_tempFile[clientFd]);
+		this->_tempFile.erase(clientFd);
 		throw Response::ClientDisconnect();
 	}
 // writing the read contents to the file
 	// buffer[n] = '\0' // this would be needed for the next line
 	// buffer << chunk; // this will stop writing if encounters a '\0', wich can happen in binary data!
-	buffer.write(chunk, n); // with this there can even be a '\0' in there, it wont stop writing
-	char debug[25] = {'\0'}; // REMOVE
-	int b = read(clientFd, debug, 24); // REMOVE
-	(void)b; // REMOVE
+	size_t count = n;
+	this->_receiveMap[clientFd].bytesWritten += fwrite(chunk, sizeof(char), count, this->_tempFile[clientFd]); // with this there can even be a '\0' in there, it wont stop writing
 // setting the bytesLeft and checking if all content was read
 	if (bytesLeft)
 	{
-		this->_receiveMap[i].bytesLeft = bytesLeft;
-		buffer.close();
+		this->_receiveMap[clientFd].bytesLeft = bytesLeft;
 	}
-	else if (this->_receiveMap[i].isChunked)
+	else if (this->_receiveMap[clientFd].isChunked)
 	{
 		char endBuffer[2];
 		int endReturn = read(clientFd, endBuffer, 2);
@@ -117,20 +229,13 @@ void Response::receiveChunk(int i)
 			throw Response::BadRequestException();
 		if (endBuffer[0] != '\r' || endBuffer[1] != '\n')
 			throw Response::BadRequestException();
-		this->_receiveMap[i].bytesLeft = bytesLeft;
-		buffer.close();
+		this->_receiveMap[clientFd].bytesLeft = bytesLeft;
 	}
 	else /* if (this->_receiveMap[i].isChunked == false) */
 	{
-		buffer.close();
-		this->_receiveMap.erase(i);
-		this->constructPostResponse();
-		this->putToResponseMap(clientFd);
-		// std::string abc = this->_responseMap[clientFd].response;
-		// total = abc.length();
-		// this->_responseMap[clientFd].total = this->_responseMap[clientFd].response.length();
-		// this->_responseMap[clientFd].bytesLeft = this->_responseMap[clientFd].response.length();
+		this->_receiveMap[clientFd].end = true;
 	}
+
 }
 
 // helper functions for POST
@@ -174,6 +279,44 @@ void Response::removeFromReceiveMap(int fd)
 		this->_receiveMap.erase(fd);
 }
 
+bool Response::isFinished(size_t clientFd)
+{
+	if (this->_receiveMap.count(clientFd))
+		return (this->_receiveMap[clientFd].end);
+	else
+		return (false);
+}
+
+bool Response::isCgi(size_t clientFd)
+{
+	if (this->_receiveMap.count(clientFd))
+		return (this->_receiveMap[clientFd].isCgi);
+	else
+		return (false);
+}
+
+bool Response::isChunked(size_t clientFd)
+{
+	if (this->_receiveMap.count(clientFd))
+		return (this->_receiveMap[clientFd].isChunked);
+	else
+		return (false);
+}
+
+FILE *Response::getTempFile(size_t clientFd)
+{
+	if (this->_tempFile.count(clientFd))
+		return (this->_tempFile[clientFd]);
+	else
+		return (NULL);
+}
+
+void Response::removeTempFile(size_t clientFd)
+{
+	if (this->_tempFile.count(clientFd))
+		this->_tempFile.erase(clientFd);
+}
+
 /**
  * @brief  read the first line of a chunked message including the \r\n and translate the hexadecimal number to size_t
  * @note
@@ -199,9 +342,21 @@ size_t Response::_handleChunked(int clientFd)
 	hexadecimal << hex;
 
 	size_t length = 0;
-	// int length2 = 0;
-	// length << std::hex << hexadecimal.str();
 	hexadecimal >> std::hex >> length;
+
+	#ifdef FORTYTWO_TESTER
+		if (this->_receiveMap[clientFd].target.find("post_body") != std::string::npos && length > this->_receiveMap[clientFd].maxBodySize)
+		{
+			char trashcan[2048];
+			int n = 0;
+			while (n >= 0)
+				n = read(clientFd, trashcan, 2048);
+			throw Response::ERROR_413();
+		}
+	#else
+		if (length > this->_receiveMap[clientFd].maxBodySize)
+			throw Response::ERROR_413();
+	#endif
 
 	return (length);
 }
@@ -216,9 +371,6 @@ size_t Response::_handleChunked(int clientFd)
 void Response::setPostTarget(int clientFd, std::string target)
 {
 	this->_receiveMap[clientFd].target = target;
-	// std::stringstream buffer;
-	// buffer << target << "." << clientFd << ".temp";
-	// this->_receiveMap[clientFd].tempTarget = buffer.str();
 }
 
 /**
@@ -289,27 +441,15 @@ static size_t _strToSizeT(std::string str)
  * @param  &headerFields: the header fields of the request
  * @retval None
  */
-void Response::setPostChunked(int clientFd/* , std::string target */, std::map<std::string, std::string> &headerFields) // don't do it with a temp file, just create it as normal file
+void Response::setPostChunked(int clientFd/* , std::string target */, std::map<std::string, std::string> &headerFields)
 {
 	if (this->_receiveMap.count(clientFd) && headerFields.count("transfer-encoding") && headerFields["transfer-encoding"] == "chunked")
+	{
 		this->_receiveMap[clientFd].isChunked = true;
-
-	// if (this->_receiveMap.count(clientFd) && this->_receiveMap[clientFd].isChunked == true)
-	// {
-	// 	std::stringstream fileName;
-	// 	fileName << target << "." << clientFd << ".temp"; // will result in a filename like: 7_larger.jpg.temp
-	// 	std::ofstream tempFile;
-	// 	tempFile.open(fileName.str(), std ::ios::out | std::ios_base::trunc | std::ios::binary);
-	// 	if (!tempFile.is_open())
-	// 	{
-	// 		LOG_RED("failed to create/open the temp file");
-	// 		throw Response::ERROR_423();
-	// 	}
-	// 	else
-	// 	{
-	// 		tempFile.close();
-	// 	}
-	// }
+		#ifdef SHOW_LOG_2
+			LOG_RED("was set to chunked true");
+		#endif
+	}
 }
 
 
@@ -323,12 +463,7 @@ void Response::setPostChunked(int clientFd/* , std::string target */, std::map<s
 void Response::setPostLength(int clientFd, std::map<std::string, std::string> &headerFields)
 {
 	size_t length = 0;
-	/* if (headerFields.count("Content-Length"))
-	{
-		std::cout << headerFields["Content-Length"] << std::endl;
-		length = _strToSizeT(headerFields["Content-Length"]);
-	}
-	else  */if (headerFields.count("content-length"))
+	if (headerFields.count("content-length"))
 	{
 		std::cout << headerFields["content-length"] << std::endl;
 		length = _strToSizeT(headerFields["content-length"]);
@@ -336,6 +471,7 @@ void Response::setPostLength(int clientFd, std::map<std::string, std::string> &h
 
 	this->_receiveMap[clientFd].total = length;
 	this->_receiveMap[clientFd].bytesLeft = length;
+	this->_receiveMap[clientFd].bytesWritten = 0;
 }
 
 /**
@@ -345,18 +481,20 @@ void Response::setPostLength(int clientFd, std::map<std::string, std::string> &h
  * @param  bufferSize: buffer size specified in the config
  * @retval None
  */
-void Response::setPostBufferSize(int clientFd, size_t bufferSize)
+void Response::setPostBufferSize(int clientFd, size_t bufferSize, size_t maxBodySize)
 {
 	this->_receiveMap[clientFd].bufferSize = bufferSize;
+	this->_receiveMap[clientFd].maxBodySize = maxBodySize;
 }
 
-// bool Response::checkReceiveExistance(int clientFd)
-// {
-// 	if (this->_receiveMap.count(clientFd) == 1)
-// 		return (true);
-// 	else
-// 		return (false);
-// }
+void Response::setIsCgi(int clientFd, bool state)
+{
+	this->_receiveMap[clientFd].isCgi = state;
+	#ifdef SHOW_LOG_2
+		std::cout << RED << BOLD << "set isCgi to " << state << RESET << std::endl;
+	#endif
+	this->_receiveMap[clientFd].end = false;
+}
 
 
 

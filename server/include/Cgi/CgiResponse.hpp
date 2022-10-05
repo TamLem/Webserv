@@ -15,15 +15,17 @@ private:
 	CgiResponse& operator=(const CgiResponse&);
 	CgiResponse(void);
 
+	string _body;
+
 public:
 	CgiResponse(int cgiFD, int clientFD);
 	~CgiResponse();
 
-	void parseCgiHeaders(std::string buf);
-	string& readline(int fd);
+	string &getBody();
+	string readline(int fd);
 	bool checkForMandatoryHeaders(string& headerLine);
 	void parseSingleHeaderField(string& headerLine);
-	string &getValue(std::string &keyValueString);
+	string getValue(std::string &keyValueString);
 	void sendResponse();
 	void tunnelResponse(int cgiFD, int clientFD);
 

@@ -12,7 +12,7 @@ endif
 
 CXXFLAGS	+=	-g# -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
 
-# CXXFLAGS	+=	-D FORTYTWO_TESTER
+CXXFLAGS	+=	-D FORTYTWO_TESTER
 
 # CXXFLAGS	+=	-D SHOW_CONSTRUCTION # enables the printing of constructor/destructor messages
 
@@ -49,6 +49,7 @@ SRC_FILES	=	main.cpp \
 				Send.cpp \
 				Receive.cpp \
 				Cgi.cpp	\
+				CgiResponse.cpp \
 				Request.cpp \
 				Config.cpp \
 				SingleServerConfig.cpp

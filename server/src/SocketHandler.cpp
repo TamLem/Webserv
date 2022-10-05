@@ -362,7 +362,12 @@ void SocketHandler::removeKeepAlive(int clientFd)
 
 bool SocketHandler::isKeepAlive(int clientFd)
 {
-	return (this->_keepalive.count(clientFd));
+	// #ifdef FORTYTWO_TESTER
+	// 	(void)clientFd;
+	// 	return (false);
+	// #else
+		return (this->_keepalive.count(clientFd));
+	// #endif
 }
 
 // Deconstructors

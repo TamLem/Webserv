@@ -278,7 +278,7 @@ void Server::handlePOST(int clientFd, const Request& request)
 	#ifndef FORTYTWO_TESTER
 	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize, this->_currentConfig.clientMaxBodySize);
 	#else
-		this->_response.setPostBufferSize(clientFd, 1000, this->_currentConfig.clientMaxBodySize); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
+		this->_response.setPostBufferSize(clientFd, 100, this->_currentConfig.clientMaxBodySize); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
 	#endif
 	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
 	// if (this->_response.getStatus() == "303")
@@ -374,6 +374,9 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
 			#endif
 			this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
+			#ifdef SHOW_LOG_ROUTING
+				std::cout  << GREEN << "Target after routing: " << request.getRoutedTarget() << RESET << std::endl;
+			#endif
 			// request.setRoutedTarget("." + request.getRoutedTarget());
 			//check method
 			if (isCgi == false)
@@ -407,7 +410,9 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 	}
 	catch (std::exception& exception)
 	{
+		#ifdef SHOW_LOG_EXCEPTION
 		std::cout << RED << "Exception: " << exception.what() << std::endl;
+		#endif
 		std::string code = exception.what();
 		if (std::string(exception.what()) == "client disconnect")
 		{
@@ -496,7 +501,7 @@ void Server::_readRequestHead(int clientFd)
 	}
 	if (charsRead <= MAX_REQUEST_HEADER_SIZE && this->_crlftwoFound() == true)
 	{
-		#ifdef SHOW_LOG
+		#ifdef SHOW_LOG_REQUEST
 			std::cout << YELLOW << "Received->" << RESET << this->_requestHead << YELLOW << "<-Received on fd: " << clientFd << RESET << std::endl;
 		#endif
 	}
@@ -504,7 +509,9 @@ void Server::_readRequestHead(int clientFd)
 	{
 		#ifdef SHOW_LOG
 			std::cout << RED << "HEAD BIGGER THAN " << MAX_REQUEST_HEADER_SIZE << " OR NO CRLFTWO FOUND (incomplete request)" << RESET << std::endl;
-			std:: cout << YELLOW << "received >" << RESET << this->_requestHead << YELLOW << "<" << RESET << std::endl;
+		#endif
+		#ifdef SHOW_LOG_REQUEST
+		std:: cout << YELLOW << "received >" << RESET << this->_requestHead << YELLOW << "<" << RESET << std::endl;
 		#endif
 		throw Server::BadRequestException();
 	}

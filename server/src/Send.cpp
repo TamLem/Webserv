@@ -17,7 +17,9 @@ bool Response::sendRes(int fd)
 {
 	// std::cout << "In SENDRES Request Method: " << this->_requestMethod << std::endl;
 
+	#ifdef SHOW_LOG
 	std::cout << GREEN << "Sending response to client " << fd << RESET << std::endl;
+	#endif
 	if (this->_responseMap.count(fd) == 0)
 	{
 		if (this->_requestMethod != "HEAD")
@@ -34,7 +36,9 @@ bool Response::sendRes(int fd)
 	{
 		std::stringstream errorMessage;
 		errorMessage << "send Error sending response for fd: " << fd;
+		#ifdef SHOW_LOG
 		LOG_RED(errorMessage.str());
+		#endif
 		// perror(NULL); // check if illegal!!!!!!
 		std::cerr << RESET;
 		return (true); // throw exception

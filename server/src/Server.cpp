@@ -357,6 +357,8 @@ void Server::handleRequest(int clientFd)
 		{
 			this->_readRequestHead(clientFd);
 			Request request(this->_requestHead);
+			if (request.getHeaderFields().count("content-length") && request.getHeaderFields().count("transfer-encoding"))
+				throw Server::BadRequestException();
 			this->_response.setRequestHead(this->_requestHead, clientFd);
 			this->_response.setRequestMethod(request.getMethod());
 			this->applyCurrentConfig(request);

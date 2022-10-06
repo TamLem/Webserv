@@ -119,7 +119,7 @@ void Server::runEventLoop()
 				{
 					this->_socketHandler->removeKeepAlive(clientFd); // needed so that the force remove works
 					#ifdef SHOW_LOG_EXCEPTION
-						std::cerr << YELLOW << "Exception: " << e.what() << RESET << '\n'; // AE @tam what is this?
+						std::cerr << YELLOW << "Exception: " << e.what() << RESET << '\n'; // AE @tim what is this?
 					#endif
 					this->_socketHandler->removeClient(i, true);
 					removeClientTraces(clientFd);
@@ -543,10 +543,7 @@ void Server::cgi_response_handle(int clientFd)
 	#endif
 	FILE *outFile = this->_cgiSockets[clientFd];
 	if (!outFile)
-	{
-		//construct a 500 response
-
-	}
+		throw Response::ERROR_500();
 	int cgi_out = fileno(outFile);
 	lseek(cgi_out, 0, SEEK_SET);
 

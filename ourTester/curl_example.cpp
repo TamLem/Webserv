@@ -238,7 +238,7 @@ int main(void)
 	// curl_get("http://server2:8080/route/file", "content of file in server2");
 	// curl_get("http://server2:8081/route/file", "content of file in server2");
 	// curl_get("http://server2:8080/route/dir/file", "content of file in dir");
-	curl_get("http://webserv/route/dir/file.cgi", "content of file.cgi in dir"); // only POST triggers cgi, GET only returns file
+	curl_get("http://webserv/route/dir/file.cgi", "CONTENT OF FILE.CGI IN DIR"); // only POST triggers cgi, GET only returns file WRONG!
 	curl_get("http://webserv/route/dir/file.ext", "content of file.ext in extdir");
 	curl_get("http://webserv/route/dir/norfile", "403");
 	curl_get("http://webserv/route/nordir/file", "content of file in nordir");
@@ -280,6 +280,9 @@ int main(void)
 	curl_delete("http://webserv/uploads/file.cgi.not", "204");
 	curl_delete("http://webserv/uploads/.cgi", "204");
 	curl_delete("http://webserv/uploads/doesnotexist", "404");
+	curl_delete("http://webserv/uploads/nonexisting.cgi", "???");
+	// curl_delete("http://webserv/uploads/nopermission.cgi", "???"); // would have to be created first
+	// curl_delete("http://webserv/uploads/todelete.cgi", "???"); // would have to be created first
 }
 
 //c++ curl_example.cpp -o curl_example -lcurl && ./curl_example

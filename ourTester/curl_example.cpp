@@ -259,12 +259,17 @@ int main(void)
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<POST>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/new.txt", "201");
+	curl_post("http://webserv/uploads/newdir/", "201");
+	curl_post("http://webserv/uploads/doesntexist/new.txt", "403");
+	curl_post("http://webserv/uploads/cgi/new.txt", "201");
 	curl_post("http://webserv/uploads/new.cgi", "THIS IS THE CONTENT OF MY NEW FILE.");
 	curl_post("http://webserv/uploads/file.cgi.not", "201");
 	curl_post("http://webserv/uploads/.cgi", "201");
 	//////// DELETE
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<DELETE>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_delete("http://webserv/uploads/new.txt", "204");
+	curl_delete("http://webserv/uploads/newdir/", "204");
+	curl_delete("http://webserv/uploads/cgi/new.txt", "204");
 	curl_delete("http://webserv/uploads/file.cgi.not", "204");
 	curl_delete("http://webserv/uploads/.cgi", "204");
 	curl_delete("http://webserv/uploads/doesnotexist", "404");

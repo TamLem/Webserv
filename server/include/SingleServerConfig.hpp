@@ -272,6 +272,12 @@ class SingleServerConfig
 			public:
 				virtual const char* what() const throw();
 		};
+
+		class DuplicateMethodException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
 };
 
 #endif // SINGLESERVER_HPP

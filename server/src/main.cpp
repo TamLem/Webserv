@@ -5,22 +5,22 @@
 
 static std::string parseArgv(int argc, char **argv)
 {
-	std::string defaultConfPath = "server/config/test.conf"; // !!!!!!!!!!!!!!!! test.conf is now default
+	std::string defaultConfPath = DEFAULT_CONFIG; // !!!!!!!!!!!!!!!! test.conf is now default
 	if (argc == 1)
 	{
 		return (defaultConfPath);
 	}
 	else if (argc > 2)
 	{
-		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename.conf>" << RESET << std::endl;
-		exit(EXIT_FAILURE); // maybe change to return or throw
+		std::cerr << RED << "Please use webserv with config file only as follows:" << std::endl << BLUE << "./webserv <config_filename.conf>" << RESET << std::endl;
+		exit(EXIT_FAILURE);
 	}
 	std::string sArgv = argv[1];
 	std::string ending = ".conf";
 	if ((argv[1] + sArgv.find_last_of(".")) != ending)
 	{
-		std::cerr << RED << "Please only use webserv with config file as follows:" << std::endl << BLUE << "./webserv <config_filename.conf>" << RESET << std::endl;
-		exit(EXIT_FAILURE); // maybe change to return or throw
+		std::cerr << RED << "Please use webserv with config file only as follows:" << std::endl << BLUE << "./webserv <config_filename.conf>" << RESET << std::endl;
+		exit(EXIT_FAILURE);
 	}
 	return (sArgv);
 }

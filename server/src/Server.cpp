@@ -520,10 +520,18 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FIL
 	#ifdef SHOW_LOG_2
 		newCgi.printEnv();
 	#endif
-	newCgi.init_cgi(fd, cgi_out);
+	try
+	{
+		newCgi.init_cgi(fd, cgi_out);
+	}
+	catch(const std::exception& e)
+	{
+		fclose(infile);
+		fclose(outFile);
+		this->_cgiSockets[fd] = nullptr;
+		std::cerr << e.what() << '\n';
+	}
 	fclose(infile);
-	// cgi_response_handle(fd);
-	// newCgi.cgi_response(fd);
 }
 
 void Server::cgi_response_handle(int clientFd)
@@ -532,16 +540,15 @@ void Server::cgi_response_handle(int clientFd)
 		LOG_GREEN("\tcgi_response_handle");
 	#endif
 	FILE *outFile = this->_cgiSockets[clientFd];
-	// long	lSize = ftell(outFile);
-	// cout << "lSize: " << lSize << endl;
-	// rewind(outFile);
+	if (!outFile)
+	{
+		//construct a 500 response
+
+	}
 	int cgi_out = fileno(outFile);
 	lseek(cgi_out, 0, SEEK_SET);
 
 	CgiResponse cgiResponse(cgi_out, clientFd);
-
-	// cgiResponse.getBody();
-	// cgiResponse.sendResponse();
 
 	this->_response.clear();
 	this->_response.setProtocol(PROTOCOL);

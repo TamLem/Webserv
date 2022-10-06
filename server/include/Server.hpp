@@ -106,7 +106,6 @@ class Server
 		bool _isCgiRequest(const Request& request) const;
 		void cgi_handle(Request& request, int fd, ConfigStruct configStruct, FILE *tempFile);
 		void cgi_response_handle(int clientFd);
-		bool isCgiSocket(int clientFd);
 
 
 	public:

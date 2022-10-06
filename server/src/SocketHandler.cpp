@@ -57,7 +57,9 @@ void SocketHandler::_initMainSockets()
 			std::cerr << RESET;
 			exit(EXIT_FAILURE); // maybe change to throw
 		}
-		std::cout << GREEN << "succeccfully bound socket " << *portsIt << RESET << std::endl;
+		#ifdef SHOW_LOG_SOCKET
+			std::cout << GREEN << "succeccfully bound socket " << *portsIt << RESET << std::endl;
+		#endif
 	}
 
 }
@@ -74,7 +76,11 @@ void SocketHandler::_listenMainSockets()
 			return; // throw error
 		}
 		else
-			std::cout << "Listening on port " << it->second << " with fd: " << it->first << std::endl;
+		{
+			#ifdef SHOW_LOG_SOCKET
+				std::cout << "Listening on port " << it->second << " with fd: " << it->first << std::endl;
+			#endif
+		}
 	}
 }
 

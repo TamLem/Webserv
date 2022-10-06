@@ -18,8 +18,7 @@ int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::c
 			result = it->second.root;
 		result += target.substr(target.find_last_of('/') + 1);
 		request.setRoutedTarget("." + result);
-		_currentLocationKey = it->first; // AE does it have to be "" instead?
-		// _currentLocationKey = "";
+		_currentLocationKey = it->first;
 		#ifdef SHOW_LOG_2
 			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << RESET << std::endl;
 		#endif

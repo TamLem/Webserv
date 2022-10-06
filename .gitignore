@@ -13,6 +13,15 @@
 # Unignore Makefile
 !Makefile
 
+# Unignore files for ourTester
+!testcases
+!%file
+!file
+!norfile
+!nowfile
+!autoindex123
+!noautoindex
+
 # Prerequisites
 *.d
 

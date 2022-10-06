@@ -246,7 +246,7 @@ void Server::handlePOST(int clientFd, const Request& request)
 		// if (this->_socketHandler->isKeepAlive(clientFd)) // only for testing!!!!
 		// 	this->_response.addHeaderField("Connection", "keep-alive"); // only for testing !!!!
 		this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
-		this->_response.setPostBufferSize(clientFd, 100000, 1000000); //AE here you changed the buffer size, but what was it before? !!!!!
+		this->_response.setPostBufferSize(clientFd, 100000, 1000000);
 		// this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize); // THIS IS THE ORIGINAL !!!!
 		this->_response.setPostChunked(clientFd, /* request.getRoutedTarget(), */ tempHeaderFields);
 		return ;
@@ -362,7 +362,7 @@ void Server::handleRequest(int clientFd)
 			this->applyCurrentConfig(request);
 			request.setDecodedTarget(percentDecoding(request.getRawTarget()));
 			request.setQuery(percentDecoding(request.getQuery()));
-			this->_response.setIsCgi(clientFd, this->_isCgiRequest(request)); // AE @tim can I use request
+			this->_response.setIsCgi(clientFd, this->_isCgiRequest(request));
 			#ifdef SHOW_LOG
 				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
 			#endif
@@ -370,7 +370,8 @@ void Server::handleRequest(int clientFd)
 			#ifdef SHOW_LOG_ROUTING
 				std::cout  << GREEN << "Target after routing: " << request.getRoutedTarget() << RESET << std::endl;
 			#endif
-			this->checkLocationMethod(request); // AE test if cgi gets checked against location method what if we would have a .cgi location block?
+			if (this->_response.isCgi(clientFd) == false)
+				this->checkLocationMethod(request);
 			if ((request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive") || request.getHeaderFields().count("connection") == 0)
 				this->_socketHandler->addKeepAlive(clientFd);
 

@@ -8,7 +8,7 @@
  * @param  i: clients filedescriptor
  * @retval None
  */
-void Response::receiveChunk(int i) //AE CHUNK
+void Response::receiveChunk(int i)
 {
 	const int clientFd = i;
 	size_t total;

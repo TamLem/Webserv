@@ -208,7 +208,7 @@ int main(void)
 	my_request("GET /route/dir/%25file HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of %file in dir");
 	my_request("GET /route/dir/%2file HTTP/1.1\r\nHost: webserv\r\n\r\n", "400"); // AE dangerous
 	my_request("GET /ü-ei HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
-	my_request("", "408"); // AE problem
+	// my_request("", "408"); // timeout
 	my_request("\n", "400"); // AE problem
 	my_request(" ", "400"); // AE problem
 	// my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
@@ -220,7 +220,7 @@ int main(void)
 	my_request("GET / HTTP/1.1\r\nHost: webserv\r\nHost: webserv\r\n\r\n", "400");
 	my_request("GET / HTTP/1.1\r\nHost: webserv\r\ncontent-length: 0\r\ntransfer-encoding: chunked\r\n\r\n", "400"); // AE is this even imlemented?
 	my_request("GET / HTTP/1.1\r\nUser-Agent: Go-http-client/1.1\r\n\r\n", "400");
-	// my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r", "400"); // AE this lets server wait 60 sec timeout?
+	// my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r", "408"); // timeout
 	my_request("GET / HTTP/1.1\nHost: webserv\r\n\r\n", "400");
 	my_request("PST / HTTP/1.1\r\nHost: webserv\r\n\r\n", "501");
 	my_request("POST / HTTP/1.1\r\nHost: webserv\r\n\r\n", "411");
@@ -230,7 +230,6 @@ int main(void)
 	curl_get("http://webserv", "content of index.html in root");
 	curl_get("http://webserv:80", "content of index.html in root");
 	curl_get("http://webserv/route/dir/file", "content of file in dir");
-	curl_get("http://webserv/route/dir/200charfile", "413"); //AE how to trigger client_body_buffer_size
 	curl_get("http://webserv/route/cgi/file", "content of file in cgi");
 	// curl_get("http://server1:6000", "content of file in server1");
 	// curl_get("http://server1/doesntexist", "MY_CUSTOM_PAGE");

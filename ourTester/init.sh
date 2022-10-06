@@ -11,6 +11,7 @@ chmod  0400 ./ourTesterRoot/original/dir/nowfile
 chmod  0400 ./ourTesterRoot/original/dir/nowfile.cgi
 chmod  0400 ./ourTesterRoot/original/dir/nowfile.ext
 chmod  0600 ./ourTesterRoot/original/dir/noxfile.cgi
+chmod  0600 ./ourTesterRoot/server1/myfakecgi
 
 # chmod  0644 ./ourTesterRoot/original/dir/file
 

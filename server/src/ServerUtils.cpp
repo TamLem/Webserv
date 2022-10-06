@@ -87,8 +87,8 @@ void Server::checkLocationMethod(const Request& request) const
 
 bool Server::_isCgiRequest(const Request& request) const// AE this function has to be included in locationMatching
 {
-	if(request.getMethod() != "POST")
-		return (false);
+	// if(request.getMethod() != "POST") //remove, to allow other cgi requests
+	// 	return (false);
 	std::string target = request.getDecodedTarget();
 	size_t targetlen = target.length();
 	if (this->_currentConfig.cgi.size() != 0)

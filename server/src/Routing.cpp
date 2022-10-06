@@ -34,7 +34,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 
 	path = it->first;
 	#ifdef SHOW_LOG_2
-		std::cout  << BLUE << "path: " << path << << RESET std::endl;
+		std::cout  << BLUE << "path: " << path << RESET << std::endl;
 	#endif
 	int i = 0;
 	int segments = 0;

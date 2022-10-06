@@ -391,6 +391,8 @@ void Server::handleRequest(int clientFd)
 			}
 			else
 			{
+				if (this->_response.isCgi(clientFd) == true)
+					this->cgi_handle(request, clientFd, this->_currentConfig, nullptr);
 				this->handleGET(request);
 				this->_response.putToResponseMap(clientFd);
 				this->_response.removeFromReceiveMap(clientFd);
@@ -529,7 +531,7 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FIL
 		fclose(infile);
 		fclose(outFile);
 		this->_cgiSockets[fd] = nullptr;
-		std::cerr << e.what() << '\n';
+		LOG_RED('\t' << e.what());
 	}
 	fclose(infile);
 }
@@ -543,7 +545,7 @@ void Server::cgi_response_handle(int clientFd)
 	if (!outFile)
 	{
 		//construct a 500 response
-
+		//remove client
 	}
 	int cgi_out = fileno(outFile);
 	lseek(cgi_out, 0, SEEK_SET);

@@ -208,8 +208,9 @@ int main(void)
 	my_request("GET /route/dir/%25file HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of %file in dir");
 	my_request("GET /route/dir/%2file HTTP/1.1\r\nHost: webserv\r\n\r\n", "400"); // AE dangerous
 	my_request("GET /ü-ei HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
-	// my_request("", "400"); // AE problem
-	// my_request(" ", "400"); // AE problem
+	my_request("", "408"); // AE problem
+	my_request("\n", "400"); // AE problem
+	my_request(" ", "400"); // AE problem
 	// my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
 	// my_request("GET .. HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
 	// my_request("GET ... HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage

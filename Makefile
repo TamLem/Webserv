@@ -8,7 +8,7 @@ CXXFLAGS	=	-std=c++98 -Wall -Wextra -Werror
 
 # CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
 
-CXXFLAGS	+=	-D FORTYTWO_TESTER
+# CXXFLAGS	+=	-D FORTYTWO_TESTER
 
 # CXXFLAGS	+=	-D SHOW_CONSTRUCTION # enables the printing of constructor/destructor messages
 

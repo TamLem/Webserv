@@ -148,5 +148,9 @@ tester:
 rmtester:
 	@make clean -C ./ourTester
 
+rm42tester:
+	-rm 42tester/multiple_same
+	-rm 42tester/post_body
+
 #phony
 .PHONY: all clean fclean re run tester

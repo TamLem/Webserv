@@ -257,6 +257,7 @@ int main(void)
 	curl_get("http://webserv/index/no/noautoindex/", "404");
 	//////// POST
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<POST>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
+	// curl_post("http://server2/new.txt", "405");
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/newdir/", "201");
@@ -269,6 +270,7 @@ int main(void)
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<DELETE>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_delete("http://webserv/uploads/new.txt", "204");
 	curl_delete("http://webserv/uploads/newdir/", "204");
+	curl_delete("http://webserv/uploads/abc/", "204");
 	curl_delete("http://webserv/uploads/cgi/new.txt", "204");
 	curl_delete("http://webserv/uploads/file.cgi.not", "204");
 	curl_delete("http://webserv/uploads/.cgi", "204");

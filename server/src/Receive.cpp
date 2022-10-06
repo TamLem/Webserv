@@ -461,7 +461,9 @@ void Response::setPostLength(int clientFd, std::map<std::string, std::string> &h
 	size_t length = 0;
 	if (headerFields.count("content-length"))
 	{
-		std::cout << headerFields["content-length"] << std::endl;
+		#ifdef SHOW_LOG_2
+			std::cout << "content-length for POST: " << headerFields["content-length"] << std::endl;
+		#endif
 		length = _strToSizeT(headerFields["content-length"]);
 	}
 

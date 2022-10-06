@@ -35,7 +35,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 
 	path = it->first;
 	#ifdef SHOW_LOG_2
-		std::cout  << BLUE << "path: " << path << std::endl;
+		std::cout  << BLUE << "path: " << path << << RESET std::endl;
 	#endif
 	int i = 0;
 	int segments = 0;
@@ -74,7 +74,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 		request.setRoutedTarget("." + result);
 		_currentLocationKey = it->first;
 		#ifdef SHOW_LOG_2
-			std::cout  << YELLOW << "DIR MATCH!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << std::endl;
+			std::cout  << YELLOW << "DIR MATCH!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << RESET << std::endl;
 		#endif
 	}
 }
@@ -92,7 +92,7 @@ void Server::routeDefault(Request& request)
 	request.setRoutedTarget("." + result);
 	_currentLocationKey = "";
 	#ifdef SHOW_LOG
-		std::cout  << YELLOW << "DEFAULT ";
+		std::cout  << YELLOW << "DEFAULT " << RESET ;
 	#endif
 }
 
@@ -101,7 +101,7 @@ void Server::matchLocation(Request& request)
 	int max_count = 0;
 	std::string target = request.getDecodedTarget();
 	#ifdef SHOW_LOG_2
-	std::cout  << RED << "target: " << target << std::endl;
+	std::cout  << RED << "target: " << target << RESET << std::endl;
 	for (std::map<std::string, LocationStruct>::const_iterator it = this->_currentConfig.location.begin(); it != this->_currentConfig.location.end(); ++it)
 	{
 		std::cout << RED << it->first << ": "
@@ -121,6 +121,6 @@ void Server::matchLocation(Request& request)
 	if (max_count == 0)
 		routeDefault(request);
 	#ifdef SHOW_LOG
-		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << std::endl;
+		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << RESET << std::endl;
 	#endif
 }

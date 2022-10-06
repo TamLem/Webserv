@@ -194,7 +194,8 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	}
 	if (this->_method == "POST")
 	{
-		long	lSize = ftell(this->_infile);
+		long	lSize = ftell(this->_infile); // AE @tam can this go into LOG? otherwise (void) is needed
+		(void)lSize;
 		#ifdef SHOW_LOG_CGI
 			cout << "lSize: " << lSize << endl;
 		#endif

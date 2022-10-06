@@ -260,23 +260,28 @@ int main(void)
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/new.cgi", "THIS IS THE CONTENT OF MY NEW FILE.");
+	curl_post("http://webserv/uploads/file.cgi.not", "201");
+	curl_post("http://webserv/uploads/.cgi", "201");
 	//////// DELETE
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<DELETE>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_delete("http://webserv/uploads/new.txt", "204");
+	curl_delete("http://webserv/uploads/file.cgi.not", "204");
+	curl_delete("http://webserv/uploads/.cgi", "204");
 	curl_delete("http://webserv/uploads/doesnotexist", "404");
-
 }
 
 //c++ curl_example.cpp -o curl_example -lcurl && ./curl_example
 
 /*
-Test GET http://localhost:8080/
+42teser testcases
+
+Test 1 GET http://localhost:8080/
 GET / HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
-Test POST http://localhost:8080/ with a size of 0
+Test 2 POST http://localhost:8080/ with a size of 0
 POST / HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
@@ -284,86 +289,86 @@ Transfer-Encoding: chunked
 Content-Type: test/file
 Accept-Encoding: gzip
 
-Test HEAD http://localhost:8080/
+Test 3 HEAD http://localhost:8080/
 HEAD / HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 
-Test GET http://localhost:8080/directory
+Test 4 GET http://localhost:8080/directory
 GET /directory HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
-Test GET http://localhost:8080/directory/youpi.bad_extension
+Test 5 GET http://localhost:8080/directory/youpi.bad_extension
 GET /directory/youpi.bad_extension HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
-Test GET http://localhost:8080/directory/youpi.bla
+Test 6 GET http://localhost:8080/directory/youpi.bla
 GET /directory/youpi.bla HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
-Test GET Expected 404 on http://localhost:8080/directory/oulalala
+Test 7 GET Expected 404 on http://localhost:8080/directory/oulalala
 GET /directory/oulalala HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
-Test GET http://localhost:8080/directory/nop
+Test 8 GET http://localhost:8080/directory/nop
 GET /directory/nop HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
-Test GET http://localhost:8080/directory/nop/
+Test 9 GET http://localhost:8080/directory/nop/
 GET /directory/nop/ HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
-Test GET http://localhost:8080/directory/nop/other.pouic
+Test 10 GET http://localhost:8080/directory/nop/other.pouic
 GET /directory/nop/other.pouic HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
-Test GET Expected 404 on http://localhost:8080/directory/nop/other.pouac
+Test 11 GET Expected 404 on http://localhost:8080/directory/nop/other.pouac
 GET /directory/nop/other.pouac HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
-Test GET Expected 404 on http://localhost:8080/directory/Yeah
+Test 12 GET Expected 404 on http://localhost:8080/directory/Yeah
 GET /directory/Yeah HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
-Test GET http://localhost:8080/directory/Yeah/not_happy.bad_extension
+Test 13 GET http://localhost:8080/directory/Yeah/not_happy.bad_extension
 GET /directory/Yeah/not_happy.bad_extension HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
-Test Put http://localhost:8080/put_test/file_should_exist_after with a size of 1000
+Test 14 Put http://localhost:8080/put_test/file_should_exist_after with a size of 1000
 PUT /put_test/file_should_exist_after HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Transfer-Encoding: chunked
 Accept-Encoding: gzip
 
-Test Put http://localhost:8080/put_test/file_should_exist_after with a size of 10000000
+Test 15 Put http://localhost:8080/put_test/file_should_exist_after with a size of 10000000
 PUT /put_test/file_should_exist_after HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Transfer-Encoding: chunked
 Accept-Encoding: gzip
 
-Test POST http://localhost:8080/directory/youpi.bla with a size of 100000000
+Test 16 POST http://localhost:8080/directory/youpi.bla with a size of 100000000
 POST /directory/youpi.bla HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
@@ -371,7 +376,7 @@ Transfer-Encoding: chunked
 Content-Type: test/file
 Accept-Encoding: gzip
 
-Test POST http://localhost:8080/directory/youpla.bla with a size of 100000000
+Test 17 POST http://localhost:8080/directory/youpla.bla with a size of 100000000
 POST /directory/youpla.bla HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
@@ -379,7 +384,7 @@ Transfer-Encoding: chunked
 Content-Type: test/file
 Accept-Encoding: gzip
 
-Test POST http://localhost:8080/directory/youpi.bla with a size of 100000 with special headers
+Test 18 POST http://localhost:8080/directory/youpi.bla with a size of 100000 with special headers
 POST /directory/youpi.bla HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
@@ -388,7 +393,7 @@ Content-Type: test/file
 X-Secret-Header-For-Test: 1
 Accept-Encoding: gzip
 
-Test POST http://localhost:8080/post_body with a size of 0
+Test 19 POST http://localhost:8080/post_body with a size of 0
 POST /post_body HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
@@ -396,7 +401,7 @@ Transfer-Encoding: chunked
 Content-Type: test/file
 Accept-Encoding: gzip
 
-Test POST http://localhost:8080/post_body with a size of 100
+Test 20 POST http://localhost:8080/post_body with a size of 100
 POST /post_body HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
@@ -404,7 +409,7 @@ Transfer-Encoding: chunked
 Content-Type: test/file
 Accept-Encoding: gzip
 
-Test POST http://localhost:8080/post_body with a size of 200
+Test 21 POST http://localhost:8080/post_body with a size of 200
 POST /post_body HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
@@ -412,11 +417,21 @@ Transfer-Encoding: chunked
 Content-Type: test/file
 Accept-Encoding: gzip
 
-Test POST http://localhost:8080/post_body with a size of 101
+Test 22 POST http://localhost:8080/post_body with a size of 101
 POST /post_body HTTP/1.1
 Host: localhost:8080
 User-Agent: Go-http-client/1.1
 Transfer-Encoding: chunked
 Content-Type: test/file
 Accept-Encoding: gzip
+
+Test 23 multiple workers(5) doing multiple times(15): GET on /
+
+Test 24 multiple workers(20) doing multiple times(5000): GET on /
+
+Test 25 multiple workers(128) doing multiple times(50): GET on /directory/nop
+
+Test 26 multiple workers(20) doing multiple times(5): Put on /put_test/multiple_same with size 1000000
+
+Test 27 multiple workers(20) doing multiple times(5): Post on /directory/youpi.bla with size 100000000
 */

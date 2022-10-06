@@ -26,6 +26,8 @@ CXXFLAGS	+=	-D FORTYTWO_TESTER
 
 # CXXFLAGS	+=	-D SHOW_LOG_ROUTING
 
+# CXXFLAGS	+=	-D SHOW_LOG_CGI
+
 #directories
 PWD			=	$(shell pwd)
 SRC_DIR		=	server/src/

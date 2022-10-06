@@ -519,7 +519,9 @@ void Server::_readRequestHead(int clientFd)
 
 void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FILE *infile)
 {
-	LOG_YELLOW("\tcgi_handle");
+	#ifdef SHOW_LOG_CGI
+		LOG_YELLOW("\tcgi_handle");
+	#endif
 	FILE *outFile = tmpfile();
 	this->_cgiSockets[fd] = outFile;
 	int cgi_out = fileno(outFile);
@@ -535,7 +537,9 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FIL
 
 void Server::cgi_response_handle(int clientFd)
 {
-	LOG_GREEN("\tcgi_response_handle");
+	#ifdef SHOW_LOG_CGI
+		LOG_GREEN("\tcgi_response_handle");
+	#endif
 	FILE *outFile = this->_cgiSockets[clientFd];
 	// long	lSize = ftell(outFile);
 	// cout << "lSize: " << lSize << endl;

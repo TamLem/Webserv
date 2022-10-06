@@ -183,7 +183,9 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	if (this->_chunked)
 		_handleChunked(client_fd);
 	pipe(pipefd);
-	std::cout << GREEN << "Init cgi..." << executable << endl;
+	#ifdef SHOW_LOG_CGI
+		std::cout << GREEN << "Init cgi..." << executable << endl;
+	#endif
 	if (!_selfExecuting && this->_method == "GET")
 	{
 		cout << "GET" << endl;
@@ -193,7 +195,9 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	if (this->_method == "POST")
 	{
 		long	lSize = ftell(this->_infile);
-		cout << "lSize: " << lSize << endl;
+		#ifdef SHOW_LOG_CGI
+			cout << "lSize: " << lSize << endl;
+		#endif
 		rewind(this->_infile);
 		int infileFd = fileno(this->_infile);
 		lseek(infileFd, 0, SEEK_SET);

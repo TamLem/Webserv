@@ -85,17 +85,21 @@ void Server::checkLocationMethod(const Request& request) const
 		throw MethodNotAllowed();
 }
 
-bool Server::_isCgiRequest(std::string requestHead) // AE this function has to be included in locationMatching
+bool Server::_isCgiRequest(const Request& request) const// AE this function has to be included in locationMatching
 {
-	requestHead = requestHead.substr(0, requestHead.find("HTTP/1.1")); // AE is formatting checked before?
-	if (requestHead.find("POST") == std::string::npos) // AE define this better (POST could also be at a random position, not as method)
+	if(request.getMethod() != "POST")
 		return (false);
+	std::string target = request.getDecodedTarget();
+	size_t targetlen = target.length();
 	if (this->_currentConfig.cgi.size() != 0)
 	{
 		std::map<std::string, std::string>::const_iterator it = this->_currentConfig.cgi.begin();
 		for (; it != this->_currentConfig.cgi.end(); ++it)
 		{
-			if (requestHead.find(it->first) != std::string::npos) // AE define this better (has to be ending, not just existing)
+			std::string ext = it->first;
+			size_t extlen = ext.length();
+			if(targetlen - target.find_last_of('/') > extlen + 1
+			&& target.substr(targetlen - extlen, extlen) == it->first)
 				return (true);
 		}
 	}

@@ -107,7 +107,7 @@ class Server
 		void handleDELETE(const Request& request);
 		void _handleResponse(int i);
 
-		bool _isCgiRequest(std::string requestHead);
+		bool _isCgiRequest(const Request& request) const;
 		void cgi_handle(Request& request, int fd, ConfigStruct configStruct, FILE *tempFile);
 		void cgi_response_handle(int clientFd);
 		bool isCgiSocket(int clientFd);

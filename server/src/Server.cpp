@@ -342,9 +342,8 @@ void Server::removeClientTraces(int clientFd)
 	this->_socketHandler->removeKeepAlive(clientFd);
 }
 
-void Server::handleRequest(int clientFd) // i is the index from the evList of the socketHandler
+void Server::handleRequest(int clientFd)
 {
-	bool isCgi = false;
 	this->_response.clear();
 	this->loopDetected = false;
 	try
@@ -369,18 +368,15 @@ void Server::handleRequest(int clientFd) // i is the index from the evList of th
 			this->applyCurrentConfig(request);
 			request.setDecodedTarget(percentDecoding(request.getRawTarget()));
 			request.setQuery(percentDecoding(request.getQuery()));
-			this->_response.setIsCgi(clientFd, this->_isCgiRequest(this->_requestHead));
+			this->_response.setIsCgi(clientFd, this->_isCgiRequest(request)); // AE @tim can I use request
 			#ifdef SHOW_LOG
 				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
 			#endif
-			this->matchLocation(request); // AE location with ü (first decode only unreserved chars?)
+			this->matchLocation(request);
 			#ifdef SHOW_LOG_ROUTING
 				std::cout  << GREEN << "Target after routing: " << request.getRoutedTarget() << RESET << std::endl;
 			#endif
-			// request.setRoutedTarget("." + request.getRoutedTarget());
-			//check method
-			if (isCgi == false)
-				this->checkLocationMethod(request);
+			this->checkLocationMethod(request); // AE test if cgi gets checked against location method what if we would have a .cgi location block?
 			if ((request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive") || request.getHeaderFields().count("connection") == 0)
 				this->_socketHandler->addKeepAlive(clientFd);
 

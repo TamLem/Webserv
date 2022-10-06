@@ -219,8 +219,13 @@ void Response::createIndex(const Request& request)
 	}
 	else
 	{
-		perror(NULL);
-		throw ERROR_404();
+		// std::cout << "errno: " << errno << std::endl; // AE remove
+		// throw ERROR_404();
+		if (errno == ENOENT)
+			throw ERROR_404();
+		if (errno == EACCES)
+			throw ERROR_403();
+		throw BadRequestException();
 	}
 }
 
@@ -242,11 +247,13 @@ void Response::createBodyFromFile(const std::string& target)
 	std::stringstream tempBody;
 	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
 	// if (access(target.c_str(), F_OK) != 0 && errno == EACCES)
-	if (access(target.c_str(), F_OK) != 0)
-		throw ERROR_404();
-	if (access(target.c_str(), R_OK) != 0)
-		throw ERROR_403();
-	if (targetExists(target) == false || staticTargetIsDir(target) == true)
+	// if (access(target.c_str(), F_OK) != 0)
+	// 	throw ERROR_404();
+	// if (access(target.c_str(), R_OK) != 0)
+	// 	throw ERROR_403();
+	// if (targetExists(target) == false || staticTargetIsDir(target) == true)
+	// 	throw ERROR_404();
+	if (staticTargetIsDir(target) == true)
 		throw ERROR_404();
 	std::ifstream file(target.c_str(), std::ios::binary);
 	if (file.is_open())
@@ -258,6 +265,13 @@ void Response::createBodyFromFile(const std::string& target)
 	}
 	else
 	{
+		// throw ERROR_500();
+		// std::cout << "errno: " << errno << std::endl; // AE remove
+		// throw ERROR_404();
+		if (errno == ENOENT)
+			throw ERROR_404();
+		if (errno == EACCES)
+			throw ERROR_403();
 		throw ERROR_500();
 	}
 }

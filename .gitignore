@@ -21,6 +21,7 @@
 !nowfile
 !autoindex123
 !noautoindex
+!42_cgi_binary
 
 # Prerequisites
 *.d

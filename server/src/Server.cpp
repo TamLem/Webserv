@@ -118,7 +118,9 @@ void Server::runEventLoop()
 				catch(const std::exception& e)
 				{
 					this->_socketHandler->removeKeepAlive(clientFd); // needed so that the force remove works
-					std::cerr << YELLOW << e.what() << RESET << '\n';
+					#ifdef SHOW_LOG_EXCEPTION
+						std::cerr << YELLOW << "Exception: " << e.what() << RESET << '\n'; // AE @tam what is this?
+					#endif
 					this->_socketHandler->removeClient(i, true);
 					removeClientTraces(clientFd);
 				}

@@ -20,5 +20,6 @@ chmod  0644 ./ourTesterRoot/original/dir/nowfile
 chmod  0644 ./ourTesterRoot/original/dir/nowfile.cgi
 chmod  0644 ./ourTesterRoot/original/dir/nowfile.ext
 chmod  0644 ./ourTesterRoot/original/dir/noxfile.cgi
+chmod  0644 ./ourTesterRoot/server1/myfakecgi
 
 # chmod  0644 ./ourTesterRoot/original/dir/file

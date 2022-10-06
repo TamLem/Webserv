@@ -225,7 +225,6 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	waitpid(pid, &wstatus, 0);
 	if (!WIFEXITED(wstatus)|| WEXITSTATUS(wstatus) != 0)
 	{
-		std::cerr << "error executing cgi" << std::endl;
 		throw std::runtime_error("error executing cgi");
 	}
 	dup2(stdin_init, STDIN_FILENO);

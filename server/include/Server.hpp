@@ -32,12 +32,8 @@
 
 #define UPLOAD_DIR "./server/data/uploads/"
 
-#ifdef __APPLE__
-	#include <sys/event.h>
-	#include "SocketHandler.hpp"
-#else
-	#include "LinuxSocketHandler.hpp"
-#endif
+#include <sys/event.h>
+#include "SocketHandler.hpp"
 
 // Forbidden includes maybe??????
 #include <errno.h>

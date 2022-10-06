@@ -34,12 +34,8 @@ void handle_signal(int sig)
 {
 	if (sig == SIGINT || sig == SIGQUIT)
 	{
-		#ifdef __APPLE__
-			std::cerr << BLUE << "SIGINT detected, terminating server now" << RESET << std::endl;
-			keep_running = 0;
-		#else
-			throw std::runtime_error("SIGINT detected, terminating server now");
-		#endif
+		std::cerr << BLUE << "SIGINT detected, terminating server now" << RESET << std::endl;
+		keep_running = 0;
 	}
 	else if (sig == SIGPIPE)
 	{
@@ -59,9 +55,6 @@ void handle_signals(void)
 
 int main(int argc, char **argv)
 {
-	#ifndef __APPLE__
-		handle_signals();
-	#endif
 	// atexit(my_leaks); // use this to check for leaks
 	Config *config = new Config();
 	try
@@ -79,24 +72,7 @@ int main(int argc, char **argv)
 	#ifdef SHOW_LOG_2
 		config->printCluster();
 	#endif
-	#ifdef __APPLE__
-		test->runEventLoop();
-	#else
-		try
-		{
-			test->runEventLoop();
-		}
-		catch (std::exception &e)
-		{
-			std::cerr << BLUE << e.what() << RESET << std::endl;
-			delete config;
-			delete test;
-			config = NULL;
-			test = NULL;
-			// system("leaks webserv"); // use this to check for leaks
-			return (0);
-		}
-	#endif
+	test->runEventLoop();
 	delete config;
 	delete test;
 	config = NULL;

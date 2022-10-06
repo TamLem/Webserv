@@ -406,11 +406,7 @@ static size_t _strToSizeT(std::string str)
 {
 	size_t out = 0;
 	std::stringstream buffer;
-	#ifdef __APPLE__
-		buffer << SIZE_T_MAX;
-	#else
-		buffer << "18446744073709551615"; // size_t max value
-	#endif
+	buffer << SIZE_T_MAX;
 	std::string sizeTMax = buffer.str();
 	if (str.find("-") != std::string::npos && str.find_first_of(DECIMAL) != std::string::npos && str.find("-") == str.find_first_of(DECIMAL) - 1)
 	{

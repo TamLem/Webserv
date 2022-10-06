@@ -4,13 +4,9 @@ CXX			=	c++
 
 UNAME		:=	$(shell uname)
 
-ifeq ($(UNAME), Darwin)
 CXXFLAGS	=	-std=c++98 -Wall -Wextra -Werror
-else
-CXXFLAGS	=	-std=c++98 -Wall -Wextra #-Werror // please fix this Tam
-endif
 
-CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
+# CXXFLAGS	+=	-g -fsanitize=address -fsanitize=alignment -fsanitize=unreachable -fsanitize=bounds # can be used to check for any memory faults
 
 CXXFLAGS	+=	-D FORTYTWO_TESTER
 
@@ -48,8 +44,6 @@ UP			=	\033[A
 CUT			=	\033[K
 
 #source files
-#				automaticly decides which Sources to use depending on the OS
-ifeq ($(UNAME), Darwin) #(Darwin is the used OS on school Macs, might be different on other Macs)
 SRC_FILES	=	main.cpp \
 				SocketHandler.cpp \
 				Server.cpp \
@@ -65,18 +59,6 @@ SRC_FILES	=	main.cpp \
 				Request.cpp \
 				Config.cpp \
 				SingleServerConfig.cpp
-else
-#(blocking server for testing on Linux)
-SRC_FILES	=	main.cpp \
-				LinuxSocketHandler.cpp \
-				Server.cpp \
-				Message.cpp \
-				Response.cpp \
-				Cgi.cpp	\
-				Request.cpp \
-				Config.cpp \
-				SingleServerConfig.cpp
-endif
 
 OBJ_FILES	=	$(SRC_FILES:.cpp=.o)
 
@@ -149,6 +131,7 @@ rmtester:
 	@make clean -C ./ourTester
 
 rm42tester:
+	-rm 42tester/file_should_exist_after
 	-rm 42tester/multiple_same
 	-rm 42tester/post_body
 

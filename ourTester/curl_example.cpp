@@ -106,6 +106,9 @@ static void curl_delete(const std::string& url, const std::string& expected)
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
+	curl_slist_append(host, "server2:8081:127.0.0.1");
+	curl_slist_append(host, "server2:127.0.0.1");
+	curl_slist_append(host, "nonexistingserver:8080:127.0.0.1");
 	CURLcode res;
 	std::string readBuffer;
 	curl = curl_easy_init();
@@ -138,6 +141,9 @@ static void curl_post(const std::string& url, const std::string& expected)
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
+	curl_slist_append(host, "server2:8081:127.0.0.1");
+	curl_slist_append(host, "server2:127.0.0.1");
+	curl_slist_append(host, "nonexistingserver:8080:127.0.0.1");
 	CURLcode res;
 	std::string readBuffer;
 	curl = curl_easy_init();
@@ -168,6 +174,9 @@ static void curl_get(const std::string& url, const std::string& expected)
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
+	curl_slist_append(host, "server2:8081:127.0.0.1");
+	curl_slist_append(host, "server2:127.0.0.1");
+	curl_slist_append(host, "nonexistingserver:8080:127.0.0.1");
 	CURLcode res;
 	std::string readBuffer;
 	curl = curl_easy_init();
@@ -232,12 +241,12 @@ int main(void)
 	curl_get("http://webserv:80", "content of index.html in root");
 	curl_get("http://webserv/route/dir/file", "content of file in dir");
 	curl_get("http://webserv/route/cgi/file", "content of file in cgi");
-	// curl_get("http://server1:6000", "content of file in server1");
-	// curl_get("http://server1/doesntexist", "MY_CUSTOM_PAGE");
-	// curl_get("http://server2/route/file", "content of file in server2");
-	// curl_get("http://server2:8080/route/file", "content of file in server2");
-	// curl_get("http://server2:8081/route/file", "content of file in server2");
-	// curl_get("http://server2:8080/route/dir/file", "content of file in dir");
+	curl_get("http://server1:6000/route/file", "content of file in server1");
+	curl_get("http://server1:6000/route/doesnotexist", "MY_CUSTOM_PAGE");
+	curl_get("http://server2/route/file", "404"); // what should happen?
+	curl_get("http://nonexistingserver:8080/route/file", "405"); // going for default server
+	curl_get("http://server2:8080/route/file", "content of file in server2");
+	curl_get("http://server2:8081/route/file", "content of file in server2");
 	curl_get("http://webserv/route/dir/file.cgi", "CONTENT OF FILE.CGI IN DIR"); // only POST triggers cgi, GET only returns file WRONG!
 	curl_get("http://webserv/route/dir/file.ext", "content of file.ext in extdir");
 	curl_get("http://webserv/route/dir/norfile", "403");
@@ -259,11 +268,11 @@ int main(void)
 	curl_get("http://webserv/index/no/noautoindex/", "404");
 	//////// POST
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<POST>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
-	// curl_post("http://server2:8080/new.txt", "405");
+	curl_post("http://server2:8080/new.txt", "405");
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/new.txt", "201");
 	curl_post("http://webserv/uploads/newdir/", "400"); // create directory is not possible
-	curl_post("http://webserv/uploads/doesntexist/new.txt", "403");
+	curl_post("http://webserv/uploads/doesnotexist/new.txt", "400");
 	curl_post("http://webserv/uploads/cgi/new.txt", "201"); // AE investigate
 	curl_post("http://webserv/uploads/new.cgi", "THIS IS THE CONTENT OF MY NEW FILE.");
 	curl_post("http://webserv/uploads/file.cgi.not", "201");
@@ -280,7 +289,7 @@ int main(void)
 	curl_delete("http://webserv/uploads/file.cgi.not", "204");
 	curl_delete("http://webserv/uploads/.cgi", "204");
 	curl_delete("http://webserv/uploads/doesnotexist", "404");
-	curl_delete("http://webserv/uploads/nonexisting.cgi", "???");
+	curl_delete("http://webserv/uploads/nonexisting.cgi", "404");
 	// curl_delete("http://webserv/uploads/nopermission.cgi", "???"); // would have to be created first
 	// curl_delete("http://webserv/uploads/todelete.cgi", "???"); // would have to be created first
 }

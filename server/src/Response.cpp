@@ -417,7 +417,7 @@ const char* Response::ClientDisconnectException::what() const throw()
 	return ("client disconnected");
 }
 
-bool targetExists(const std::string& target)
+bool targetExists(const std::string& target) // AE does this work when no x permission for parent dir
 {
 	struct stat statStruct;
 

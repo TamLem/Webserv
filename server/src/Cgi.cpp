@@ -188,7 +188,9 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	#endif
 	if (!_selfExecuting && this->_method == "GET")
 	{
-		cout << "GET" << endl;
+		#ifdef SHOW_LOG_CGI
+			cout << "GET" << endl;
+		#endif
 		passAsInput();
 		close(pipefd[1]);
 	}

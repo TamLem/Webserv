@@ -133,7 +133,7 @@ void Server::runEventLoop()
 				this->_socketHandler->setTimeout(clientFd);
 				if (this->_cgiSockets.find(clientFd) != this->_cgiSockets.end())
 				{
-					cgi_response_handle(clientFd);
+					cgi_response_handle(clientFd); // AE @tam @tim we have to catch te cgi exception
 					this->_cgiSockets.erase(clientFd);
 				}
 				if (this->_response.sendRes(clientFd) == true)

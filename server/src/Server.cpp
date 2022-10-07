@@ -465,8 +465,10 @@ void Server::handleRequest(int clientFd)
 		#ifdef SHOW_LOG_ROUTING
 			std::cout  << GREEN << "Target after routing: " << request.getRoutedTarget() << RESET << std::endl;
 		#endif
+		#ifndef FORTYTWO_TESTER
 			if (request.getMethod() == "POST" && request.isFile == false)
 				throw Server::BadRequestException();
+		#endif
 			if (this->_response.isCgi(clientFd) == false)
 				this->checkLocationMethod(request);
 			if ((request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive") || request.getHeaderFields().count("connection") == 0)

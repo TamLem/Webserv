@@ -96,7 +96,7 @@ string &CgiResponse::getBody()
 // 	// tunnelResponse(_cgiFD, _clientFD);
 // }
 
-void CgiResponse::tunnelResponse(int srcFD, int destFD)
+void CgiResponse::tunnelResponse(int srcFD, int destFD) // get rid of it
 {
 	cout << "tunneling response" << endl;
 	int n;

@@ -135,7 +135,7 @@ void Server::runEventLoop()
 				{
 					try
 					{
-						cgi_response_handle(clientFd); // AE @tam @tim we have to catch the cgi exception
+						cgi_response_handle(clientFd);
 					}
 					catch(const std::exception& exception)
 					{
@@ -391,7 +391,7 @@ void Server::errorResponse(const std::exception& exception, int clientFd)
 	std::cout << RED << "Exception: " << exception.what() << std::endl;
 	#endif
 	std::string code = exception.what();
-	if (std::string(exception.what()) == "client disconnect")
+	if (std::string(exception.what()) == "client disconnect") // check if it is used in any way
 	{
 		throw exception; // AE @tam why do you do this? (happens e.g. with testcase " ")
 	}
@@ -502,7 +502,6 @@ void Server::handleRequest(int clientFd)
 	{
 		errorResponse(exception, clientFd);
 	}
-	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 }
 
 

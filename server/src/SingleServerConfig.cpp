@@ -190,7 +190,7 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 			throw SingleServerConfig::InvalidWhitespaceException();
 		}
 		value = keyValue.substr(keyValue.find_first_of(WHITESPACE) + 1);
-		if (value == "default")
+		if (value == DEFAULT_SERVER_NAME)
 			throw SingleServerConfig::DefaultNotAllowedException();
 		this->_conf->serverName = value;
 		break;

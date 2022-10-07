@@ -260,12 +260,7 @@ void Server::handlePOST(int clientFd, const Request& request)
 
 	this->_response.setProtocol(PROTOCOL);
 	this->_response.addHeaderField("server", this->_currentConfig.serverName);
-	// if (this->_socketHandler->isKeepAlive(clientFd) == true) // 201 is still missing the headerfields...!!!!!
-	// 	this->_response.addHeaderField("Connection", "keep-alive");
 	this->_response.setStatus("201");
-
-	// this->_response.createBodyFromFile("./server/data/pages/post_success.html");
-	// put this info into the receiveStruct maybe ????
 
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 	this->_response.setPostLength(clientFd, tempHeaderFields);
@@ -274,9 +269,11 @@ void Server::handlePOST(int clientFd, const Request& request)
 	#else
 		this->_response.setPostBufferSize(clientFd, 1000, this->_currentConfig.clientMaxBodySize); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
 	#endif
+// LEGACY CONTENT
 	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
 	// if (this->_response.getStatus() == "303")
 	// 	this->_socketHandler->removeKeepAlive(clientFd); // just for testing !!!!!!!!
+//
 	this->_response.setPostChunked(clientFd/* , request.getRoutedTarget() */, tempHeaderFields);
 }
 
@@ -327,7 +324,7 @@ void Server::applyCurrentConfig(const Request& request)
 	this->_currentConfig = this->_config->getConfigStruct(host);
 }
 
-// removes any data of the client from _responseMap, _receiveMap and _keepalive
+// removes any data of the client from _responseMap, _receiveMap, _tempFile and _keepalive
 void Server::removeClientTraces(int clientFd)
 {
 	this->_response.removeFromReceiveMap(clientFd);
@@ -365,23 +362,25 @@ void Server::handleRequest(int clientFd)
 			request.setDecodedTarget(percentDecoding(request.getRawTarget()));
 			request.setQuery(percentDecoding(request.getQuery()));
 			this->_response.setIsCgi(clientFd, this->_isCgiRequest(request));
-			#ifdef SHOW_LOG
-				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
-			#endif
+		#ifdef SHOW_LOG
+			std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
+		#endif
 			this->matchLocation(request);
-			#ifdef SHOW_LOG_ROUTING
-				std::cout  << GREEN << "Target after routing: " << request.getRoutedTarget() << RESET << std::endl;
-			#endif
+		#ifdef SHOW_LOG_ROUTING
+			std::cout  << GREEN << "Target after routing: " << request.getRoutedTarget() << RESET << std::endl;
+		#endif
+			if (request.getMethod() == "POST" && request.isFile == false)
+				throw Server::BadRequestException();
 			if (this->_response.isCgi(clientFd) == false)
 				this->checkLocationMethod(request);
 			if ((request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive") || request.getHeaderFields().count("connection") == 0)
 				this->_socketHandler->addKeepAlive(clientFd);
 
-			#ifdef FORTYTWO_TESTER
+		#ifdef FORTYTWO_TESTER
 			if (request.getMethod() == "POST" || request.getMethod() == "PUT")
-			#else
+		#else
 			if (request.getMethod() == "POST")
-			#endif
+		#endif
 				this->handlePOST(clientFd, request);
 			else if (request.getMethod() == "DELETE")
 			{
@@ -403,9 +402,9 @@ void Server::handleRequest(int clientFd)
 	}
 	catch (std::exception& exception)
 	{
-		#ifdef SHOW_LOG_EXCEPTION
+	#ifdef SHOW_LOG_EXCEPTION
 		std::cout << RED << "Exception: " << exception.what() << std::endl;
-		#endif
+	#endif
 		std::string code = exception.what();
 		if (std::string(exception.what()) == "client disconnect")
 		{
@@ -429,10 +428,7 @@ void Server::handleRequest(int clientFd)
 		this->_response.putToResponseMap(clientFd);
 		this->_socketHandler->removeKeepAlive(clientFd);
 	}
-	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 }
-
-
 
 // read 1024 charackters or if less until /r/n/r/n is found
 void Server::_readRequestHead(int clientFd)
@@ -451,16 +447,16 @@ void Server::_readRequestHead(int clientFd)
 				LOG_RED("Incomplete Request detected");
 			#endif
 			#ifndef FORTYTWO_TESTER
-			throw Server::BadRequestException();
+				throw Server::BadRequestException();
 			#endif
 		}
 		else if (n < 0) // read had an error reading from fd, was failing PUT
 		{
 			#ifdef SHOW_LOG_2
-				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED" << std::endl;
+				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED, EOF OR CLIENT DISCONNECT" << std::endl;
 			#endif
 			#ifndef FORTYTWO_TESTER
-				throw Server::ClientDisconnect(); // only for testing!!!!!
+				throw Server::BadRequestException(); // check if this is correct!!!!!!!
 			#endif
 		}
 		else if (n == 0) // read reached eof

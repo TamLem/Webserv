@@ -398,11 +398,6 @@ const char* Response::ERROR_500::what() const throw()
 	return ("500");
 }
 
-const char* Response::ClientDisconnectException::what() const throw()
-{
-	return ("client disconnected");
-}
-
 bool targetExists(const std::string& target)
 {
 	struct stat statStruct;
@@ -424,7 +419,7 @@ const char* Response::NegativeDecimalsNotAllowedException::what(void) const thro
 
 const char* Response::ClientDisconnect::what(void) const throw()
 {
-	return ("client disconnected");
+	return ("client disconnect");
 }
 
 const char* Response::MissingChunkContentLengthException::what(void) const throw()

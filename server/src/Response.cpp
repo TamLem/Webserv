@@ -229,7 +229,7 @@ void Response::createIndex(const Request& request)
 	}
 }
 
-static bool staticTargetIsDir(const std::string& target)
+static bool staticTargetIsDir(const std::string& target) // AE does this work when no x permission for parent dir?
 {
 	struct stat statStruct;
 

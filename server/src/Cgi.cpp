@@ -219,7 +219,9 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 		close(cgi_out);
 		if (execve(executable.c_str(), args, mapToStringArray(_env)) == -1)
 		{
+			#ifdef SHOW_LOG_CGI
 			std::cerr << "error executing cgi" << std::endl;
+			#endif
 		}
 		exit(1); // throw internal server error if this occurs
 	}

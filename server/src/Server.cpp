@@ -133,7 +133,14 @@ void Server::runEventLoop()
 				this->_socketHandler->setTimeout(clientFd);
 				if (this->_cgiSockets.find(clientFd) != this->_cgiSockets.end())
 				{
-					cgi_response_handle(clientFd); // AE @tam @tim we have to catch te cgi exception
+					try
+					{
+						cgi_response_handle(clientFd); // AE @tam @tim we have to catch the cgi exception
+					}
+					catch(const std::exception& exception)
+					{
+						errorResponse(exception, clientFd);
+					}
 					this->_cgiSockets.erase(clientFd);
 				}
 				if (this->_response.sendRes(clientFd) == true)
@@ -381,6 +388,35 @@ void Server::removeClientTraces(int clientFd)
 	this->_socketHandler->removeKeepAlive(clientFd);
 }
 
+void Server::errorResponse(const std::exception& exception, int clientFd)
+{
+	#ifdef SHOW_LOG_EXCEPTION
+	std::cout << RED << "Exception: " << exception.what() << std::endl;
+	#endif
+	std::string code = exception.what();
+	if (std::string(exception.what()) == "client disconnect")
+	{
+		throw exception; // AE @tam why do you do this? (happens e.g. with testcase " ")
+	}
+	if (_response.getMessageMap().count(code) != 1)
+		code = "500";
+	try
+	{
+		handleERROR(code);
+	}
+	catch(const std::exception& exception)
+	{
+		std::string code = exception.what();
+		if (_response.getMessageMap().count(code) != 1)
+			code = "500";
+		handleERROR(code);
+	}
+	if (this->_response.isInReceiveMap(clientFd) == true)
+		this->_response.removeFromReceiveMap(clientFd);
+	this->_response.putToResponseMap(clientFd);
+	this->_socketHandler->removeKeepAlive(clientFd);
+}
+
 void Server::handleRequest(int clientFd)
 {
 	this->_response.clear();
@@ -461,33 +497,9 @@ void Server::handleRequest(int clientFd)
 			}
 		}
 	}
-	catch (std::exception& exception)
+	catch (std::exception& exception) // AE convert this block into function, so it can be called in cgi_response_handle catch block (has yet to be created)
 	{
-		#ifdef SHOW_LOG_EXCEPTION
-		std::cout << RED << "Exception: " << exception.what() << std::endl;
-		#endif
-		std::string code = exception.what();
-		if (std::string(exception.what()) == "client disconnect")
-		{
-			throw exception;
-		}
-		if (_response.getMessageMap().count(code) != 1)
-			code = "500";
-		try
-		{
-			handleERROR(code);
-		}
-		catch(const std::exception& exception)
-		{
-			std::string code = exception.what();
-			if (_response.getMessageMap().count(code) != 1)
-				code = "500";
-			handleERROR(code);
-		}
-		if (this->_response.isInReceiveMap(clientFd) == true)
-			this->_response.removeFromReceiveMap(clientFd);
-		this->_response.putToResponseMap(clientFd);
-		this->_socketHandler->removeKeepAlive(clientFd);
+		errorResponse(exception, clientFd);
 	}
 	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 }
@@ -591,7 +603,9 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FIL
 		fclose(infile);
 		fclose(outFile);
 		this->_cgiSockets[fd] = nullptr;
-		LOG_RED('\t' << e.what());
+		#ifdef SHOW_LOG_CGI
+			LOG_RED('\t' << e.what());
+		#endif
 	}
 	fclose(infile);
 }

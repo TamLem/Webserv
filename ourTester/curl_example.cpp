@@ -106,6 +106,7 @@ static void curl_delete(const std::string& url, const std::string& expected)
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
 	curl_slist_append(host, "webserv:5500:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
+	curl_slist_append(host, "server2:80:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
 	curl_slist_append(host, "server2:8081:127.0.0.1");
 	curl_slist_append(host, "server2:127.0.0.1");
@@ -142,6 +143,7 @@ static void curl_post(const std::string& url, const std::string& expected)
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
 	curl_slist_append(host, "webserv:5500:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
+	curl_slist_append(host, "server2:80:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
 	curl_slist_append(host, "server2:8081:127.0.0.1");
 	curl_slist_append(host, "server2:127.0.0.1");
@@ -176,6 +178,7 @@ static void curl_get(const std::string& url, const std::string& expected)
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
 	curl_slist_append(host, "webserv:5500:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
+	curl_slist_append(host, "server2:80:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
 	curl_slist_append(host, "server2:8081:127.0.0.1");
 	curl_slist_append(host, "server2:127.0.0.1");
@@ -242,12 +245,12 @@ int main(void)
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<GET>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_get("http://webserv", "content of index.html in root");
 	curl_get("http://webserv:80", "content of index.html in root");
-	curl_get("http://webserv:5500", ""); // correct?
+	curl_get("http://webserv:5500", ""); //  can't connect
 	curl_get("http://webserv/route/dir/file", "content of file in dir");
 	curl_get("http://webserv/route/cgi/file", "content of file in cgi");
 	curl_get("http://server1:6000/route/file", "content of file in server1");
 	curl_get("http://server1:6000/route/doesnotexist", "MY_CUSTOM_PAGE");
-	curl_get("http://server2/route/file", "404"); // what should happen?
+	curl_get("http://server2/route/file", "405"); // going for default server
 	curl_get("http://nonexistingserver:8080/route/file", "405"); // going for default server
 	curl_get("http://server2:8080/route/file", "content of file in server2");
 	curl_get("http://server2:8081/route/file", "content of file in server2");
@@ -281,8 +284,8 @@ int main(void)
 	curl_post("http://webserv/uploads/new.cgi", "THIS IS THE CONTENT OF MY NEW FILE.");
 	curl_post("http://webserv/uploads/file.cgi.not", "201");
 	curl_post("http://webserv/uploads/.cgi", "201");
-	// curl_post("http://server2:8080/route/file.cgi", "500");
-	// curl_post("http://server1:6000/route/file.cgi", "403");
+	curl_post("http://server1:6000/route/file.cgi", "500"); //no executepermission for cgi executable
+	curl_post("http://server2:8080/route/file.cgi", "500"); //cgi executable doesn't exist
 	//no cgi executable
 	// no cgi permission
 	//////// DELETE

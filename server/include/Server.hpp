@@ -101,6 +101,7 @@ class Server
 		void handlePOST(int clientFd, const Request&); // maybe passs fd to this function
 		void handleERROR(const std::string&);
 		void handleDELETE(const Request& request);
+		void errorResponse(const std::exception& exception, int clientFd);
 		void _handleResponse(int i);
 
 		bool _isCgiRequest(const Request& request) const;

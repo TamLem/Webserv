@@ -104,6 +104,7 @@ static void curl_delete(const std::string& url, const std::string& expected)
 	CURL *curl;
 	struct curl_slist *host = NULL;
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
+	curl_slist_append(host, "webserv:5500:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
 	curl_slist_append(host, "server2:8081:127.0.0.1");
@@ -139,6 +140,7 @@ static void curl_post(const std::string& url, const std::string& expected)
 	CURL *curl;
 	struct curl_slist *host = NULL;
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
+	curl_slist_append(host, "webserv:5500:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
 	curl_slist_append(host, "server2:8081:127.0.0.1");
@@ -172,6 +174,7 @@ static void curl_get(const std::string& url, const std::string& expected)
 	CURL *curl;
 	struct curl_slist *host = NULL;
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
+	curl_slist_append(host, "webserv:5500:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
 	curl_slist_append(host, "server2:8081:127.0.0.1");
@@ -239,6 +242,7 @@ int main(void)
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<GET>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_get("http://webserv", "content of index.html in root");
 	curl_get("http://webserv:80", "content of index.html in root");
+	curl_get("http://webserv:5500", ""); // correct?
 	curl_get("http://webserv/route/dir/file", "content of file in dir");
 	curl_get("http://webserv/route/cgi/file", "content of file in cgi");
 	curl_get("http://server1:6000/route/file", "content of file in server1");

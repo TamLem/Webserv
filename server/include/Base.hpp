@@ -40,6 +40,7 @@
 #define MAX_EVENTS 128
 #define MAX_SEND_CHUNK_SIZE (1024 * 1024) // this controlls the size of the chunks we are sending back to the client
 #define CLIENT_TIMEOUT 60 // this will kick clients after X amount of inactivity
+#define DEFAULT_SERVER_NAME "default"
 #define DEFAULT_CONFIG "server/config/test.conf" // this is the default config files path if no config file was provided on startup
 
 // ClientStruct

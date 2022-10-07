@@ -17,7 +17,7 @@ bool Response::sendRes(int fd)
 {
 	// std::cout << "In SENDRES Request Method: " << this->_requestMethod << std::endl;
 
-	#ifdef SHOW_LOG
+	#ifdef SHOW_LOG_RESPONSE
 	std::cout << GREEN << "Sending response to client " << fd << RESET << std::endl;
 	#endif
 	if (this->_responseMap.count(fd) == 0)
@@ -30,7 +30,11 @@ bool Response::sendRes(int fd)
 	int sendSize = MAX_SEND_CHUNK_SIZE;
 	if (this->_responseMap[fd].response.size() < MAX_SEND_CHUNK_SIZE)
 		sendSize = this->_responseMap[fd].response.size();
-	// LOG_BLUE(this->_responseMap[fd].response); // REMOVE AFTER TESTING, will print the send response, carefull with images/videos!!!!!
+	#ifdef SHOW_LOG_RESPONSE
+		if (this->_responseMap[fd].response.length() > 2000)
+			LOG_RED("Response got truncated!!!"); // REMOVE AFTER TESTING, will print the send response, carefull with images/videos!!!!!
+		LOG_BLUE(this->_responseMap[fd].response.substr(0, 2000)); // REMOVE AFTER TESTING, will print the send response, carefull with images/videos!!!!!
+	#endif
 	int n = send(fd, this->_responseMap[fd].response.c_str(), sendSize, 0);
 	if (n == -1)
 	{

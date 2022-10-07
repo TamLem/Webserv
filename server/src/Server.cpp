@@ -270,9 +270,9 @@ void Server::handlePOST(int clientFd, const Request& request)
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 	this->_response.setPostLength(clientFd, tempHeaderFields);
 	#ifndef FORTYTWO_TESTER
-	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize, this->_currentConfig.clientMaxBodySize);
+		this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize, this->_currentConfig.clientMaxBodySize);
 	#else
-		this->_response.setPostBufferSize(clientFd, 100, this->_currentConfig.clientMaxBodySize); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
+		this->_response.setPostBufferSize(clientFd, 1000, this->_currentConfig.clientMaxBodySize); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
 	#endif
 	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
 	// if (this->_response.getStatus() == "303")

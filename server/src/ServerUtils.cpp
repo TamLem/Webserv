@@ -85,6 +85,66 @@ void Server::checkLocationMethod(const Request& request) const
 		throw MethodNotAllowed();
 }
 
+std::list<std::string> Server::splitStringOnDelimiter(const std::string& str, const std::string& delimiter)
+{
+	std::list<std::string> list;
+	size_t last = 0;
+	size_t next = 0;
+	while ((next = str.find(delimiter, last)) != std::string::npos)
+	{
+		list.push_back(str.substr(last, next-last));
+		last = next + delimiter.length();
+	}
+	list.push_back(str.substr(last));
+	return (list);
+}
+
+std::string Server::resoluteTarget(const std::string& input)
+{
+	std::string target;
+	std::list<std::string> tokens;
+	bool isDir = false;
+
+	if (*input.rbegin() == '/')
+		isDir = true;
+
+	tokens = splitStringOnDelimiter(input, "/");
+
+	
+	std::list<std::string>::iterator it = tokens.begin();
+	while (it != tokens.end())
+	{
+		if ((*it).empty() == true || (*it) == ".")
+			it = tokens.erase(it);
+		else if ((*it) == "..")
+		{
+			it = tokens.erase(it);
+			if (it != tokens.begin())
+			{
+				it--;
+				it = tokens.erase(it);
+			}
+		}
+		else
+			it++;
+	}
+
+	it = tokens.begin();
+	for (; it != tokens.end(); ++it)
+	{
+		target += "/";
+		target += *it;
+	}
+
+	if (isDir)
+		target += "/";
+
+	if (*input.begin() != '/')
+		target = "/" + target;
+
+	return (target);
+}
+
 bool Server::_isCgiRequest(const Request& request) const// AE this function has to be included in locationMatching
 {
 	// if(request.getMethod() != "POST") //remove, to allow other cgi requests

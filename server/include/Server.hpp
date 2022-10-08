@@ -95,7 +95,9 @@ class Server
 		int routeFile(Request&, std::map<std::string, LocationStruct>::const_iterator, const std::string&);
 		void routeDir(Request&, std::map<std::string, LocationStruct>::const_iterator, const std::string&, int&);
 		void routeDefault(Request&);
+		std::list<std::string> splitStringOnDelimiter(const std::string&, const std::string&);
 		std::string percentDecoding(const std::string&);
+		std::string resoluteTarget(const std::string&);
 		void checkLocationMethod(const Request& request) const;
 		void handleGET(const Request&);
 		void handlePOST(int clientFd, const Request&); // maybe passs fd to this function

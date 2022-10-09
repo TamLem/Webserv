@@ -604,10 +604,15 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FIL
 	{
 		fclose(infile);
 		fclose(outFile);
-		this->_cgiSockets[fd] = nullptr;
+		this->_cgiSockets.erase(fd);
+		// this->_cgiSockets[fd] = nullptr;
 		#ifdef SHOW_LOG_CGI
 			LOG_RED('\t' << e.what());
 		#endif
+		if (std::string(e.what()) == "400")
+			throw Response::ERROR_404(); //@tblaase, can you catch this exceptions and send error response
+		else
+			throw Response::ERROR_500();
 	}
 	fclose(infile);
 }
@@ -618,19 +623,29 @@ void Server::cgi_response_handle(int clientFd)
 		LOG_GREEN("\tcgi_response_handle");
 	#endif
 	FILE *outFile = this->_cgiSockets[clientFd];
-	if (!outFile)
+	if (!outFile) 
 		throw Response::ERROR_500();
 	int cgi_out = fileno(outFile);
 	lseek(cgi_out, 0, SEEK_SET);
 
 	CgiResponse cgiResponse(cgi_out, clientFd);
 
-	this->_response.clear();
-	this->_response.setProtocol(PROTOCOL);
-	this->_response.setStatus("200");
-	this->_response.setBody(cgiResponse.getBody());
-	this->_response.addContentLengthHeaderField();
-	this->_response.putToResponseMap(clientFd);
-	fclose(outFile);
+	try
+	{
+		this->_response.clear();
+		this->_response.setProtocol(PROTOCOL);
+		this->_response.setStatus("200");
+		this->_response.setBody(cgiResponse.getBody());
+		this->_response.addContentLengthHeaderField();
+		this->_response.putToResponseMap(clientFd);
+		this->_cgiSockets.erase(clientFd);
+		fclose(outFile);
+	}
+	catch(const std::exception& e)
+	{
+		fclose(outFile);
+		this->_cgiSockets.erase(clientFd);
+		throw Response::ERROR_500();	
+	}
 
 }

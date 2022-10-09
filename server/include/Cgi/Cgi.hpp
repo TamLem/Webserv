@@ -43,7 +43,6 @@ class Cgi
 		bool	_selfExecuting;
 		ConfigStruct _confStruct;
 		FILE*  _infile;
-		bool   _chunked;
 	public:
 		Cgi(Request &request, ConfigStruct confStruct, FILE *infile);
 
@@ -51,10 +50,15 @@ class Cgi
 
 		void setEnv(Request &request);
 		void init_cgi(int client_fd, int cgi_out);
-		// void cgi_response(int fd);
 		void phpHandler(Request &req);
 		void passAsInput();
 		void passAsOutput();
 		void printEnv();
+
+		class CgiExceptionNotFound : public std::exception
+		{
+			public:
+				virtual const char *what() const throw();
+		};
 };
 #endif

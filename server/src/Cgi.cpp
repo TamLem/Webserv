@@ -160,7 +160,7 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	executable = _scriptName;
 	pipe(pipefd);
 	#ifdef SHOW_LOG_CGI
-		std::cout << GREEN << "Init cgi..." << executable << endl;
+		LOG_GREEN("Init cgi executable: " << executable);
 	#endif
 	if (!_selfExecuting && this->_method == "GET")
 	{
@@ -178,9 +178,8 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 		if (dup2(infileFd, STDIN_FILENO == -1))
 		{
 			std::cout << "dup2 failed" << std::endl;
-			return ; //add 500
+			throw std::exception();
 		}
-		// passAsOutput();
 	}
 	file = _pathInfo;
 	int pid = fork();

@@ -627,7 +627,7 @@ void Server::cgi_response_handle(int clientFd)
 
 	this->_response.clear();
 	this->_response.setProtocol(PROTOCOL);
-	this->_response.setStatus("201");
+	this->_response.setStatus("200");
 	this->_response.setBody(cgiResponse.getBody());
 	this->_response.addContentLengthHeaderField();
 	this->_response.putToResponseMap(clientFd);

@@ -68,18 +68,19 @@ bool Response::sendRes(int fd)
 	return (false);
 }
 
-bool Response::handleClientDisconnect(int fd)
-{
-	char buf[100];
-
-	while(read(fd, buf, 100)); // this is bad, might lead to hanging connections if a lot of data was put on the fd, but maybe not that bad since a fd can only hold 64kb at once !!!!!!!!!
-
-	close(fd);
-	this->_responseMap.erase(fd);
-	throw Response::ClientDisconnectException();
-}
 
 /********** LEGACY CODE BELOW **********/
+
+// bool Response::handleClientDisconnect(int fd)
+// {
+// 	// char buf[100];
+
+// 	// while(read(fd, buf, 100)); // this is bad, might lead to hanging connections if a lot of data was put on the fd, but maybe not that bad since a fd can only hold 64kb at once !!!!!!!!!
+
+// 	// close(fd);
+// 	this->_responseMap.erase(fd);
+// 	throw Response::ClientDisconnect();
+// }
 
 // bool Response::sendResponse(int fd)
 // {

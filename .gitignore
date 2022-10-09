@@ -23,6 +23,7 @@
 !autoindex123
 !noautoindex
 !myfakecgi
+!42_cgi_binary
 
 # Prerequisites
 *.d

@@ -111,7 +111,7 @@ void Response::receiveChunk(int i)
 			this->_receiveMap.erase(i);
 			bytesLeft = 0;
 			buffer.close();
-			throw Response::ClientDisconnect();
+			throw Response::BadRequestException();
 		}
 	// writing the read contents to the file
 		// buffer[n] = '\0' // this would be needed for the next line
@@ -209,7 +209,7 @@ void Response::_readForCgi(size_t clientFd)
 		bytesLeft = 0;
 		fclose(this->_tempFile[clientFd]);
 		this->_tempFile.erase(clientFd);
-		throw Response::ClientDisconnect();
+		throw Response::BadRequestException();
 	}
 // writing the read contents to the file
 	// buffer[n] = '\0' // this would be needed for the next line

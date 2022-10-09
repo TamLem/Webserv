@@ -6,43 +6,6 @@ cgi_bin should be removed from config
 found bugs:
 space needed between server keyword and bracket, errormessage not helpful
 
-08_twoservers.conf
-	is it supposed to work with identical ports?
-
-12_twoservernames.conf
-	is it supposed to overwrite servername?
-	default client_body_buffer_size 65536 random number? ok 64kb
-	default client_max_body_size 1073741824 random number? ok 1 gb
-	default cgi empty? problems?
-	default cgi_bin empty? problems?
-	cgi_bin still active? should it be?
-	default error page empty? problems?
-
-14_minimalwithlocationblockinvalidroot.conf
-	errormessage missleading "no use of '.'" better message: has to start with /
-
-18_duplicateport.conf
-	should return an error
-
-19_multipleroot.conf
-	should return an error
-
-20_multipleservername.conf
-	should return an error
-
-21_multipleautoindex.conf
-	should return an error
-
-23_multipleclientbodybuffersize.conf
-	should return an error
-
-24_multipleclientmaxbodysize.conf
-	should return an error
-
 25_multiplecgis.conf
-	should be blocked?
+	should be blocked? NO, is part of bonus
 
-30_multiplelocationblockmethod.conf
-	multiple mentionings of method keyword in location block should be blocked? two times the same method gets blocked, but different ones don't
-
-	

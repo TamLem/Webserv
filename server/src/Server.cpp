@@ -135,7 +135,7 @@ void Server::runEventLoop()
 				{
 					try
 					{
-						cgi_response_handle(clientFd); // AE @tam @tim we have to catch the cgi exception
+						cgi_response_handle(clientFd);
 					}
 					catch(const std::exception& exception)
 					{
@@ -269,23 +269,20 @@ void Server::handlePOST(int clientFd, const Request& request)
 
 	this->_response.setProtocol(PROTOCOL);
 	this->_response.addHeaderField("server", this->_currentConfig.serverName);
-	// if (this->_socketHandler->isKeepAlive(clientFd) == true) // 201 is still missing the headerfields...!!!!!
-	// 	this->_response.addHeaderField("Connection", "keep-alive");
 	this->_response.setStatus("201");
-
-	// this->_response.createBodyFromFile("./server/data/pages/post_success.html");
-	// put this info into the receiveStruct maybe ????
 
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 	this->_response.setPostLength(clientFd, tempHeaderFields);
 	#ifndef FORTYTWO_TESTER
-	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize, this->_currentConfig.clientMaxBodySize);
+		this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize, this->_currentConfig.clientMaxBodySize);
 	#else
-		this->_response.setPostBufferSize(clientFd, 100, this->_currentConfig.clientMaxBodySize); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
+		this->_response.setPostBufferSize(clientFd, 1000, this->_currentConfig.clientMaxBodySize); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
 	#endif
+// LEGACY CONTENT
 	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
 	// if (this->_response.getStatus() == "303")
 	// 	this->_socketHandler->removeKeepAlive(clientFd); // just for testing !!!!!!!!
+//
 	this->_response.setPostChunked(clientFd/* , request.getRoutedTarget() */, tempHeaderFields);
 }
 
@@ -379,7 +376,7 @@ void Server::applyCurrentConfig(const Request& request)
 	//if server_name wrong -> default DEFAULT_SERVER_NAME
 }
 
-// removes any data of the client from _responseMap, _receiveMap and _keepalive
+// removes any data of the client from _responseMap, _receiveMap, _tempFile and _keepalive
 void Server::removeClientTraces(int clientFd)
 {
 	this->_response.removeFromReceiveMap(clientFd);
@@ -394,7 +391,7 @@ void Server::errorResponse(const std::exception& exception, int clientFd)
 	std::cout << RED << "Exception: " << exception.what() << std::endl;
 	#endif
 	std::string code = exception.what();
-	if (std::string(exception.what()) == "client disconnect")
+	if (std::string(exception.what()) == "client disconnect") // check if it is used in any way
 	{
 		throw exception; // AE @tam why do you do this? (happens e.g. with testcase " ")
 	}
@@ -438,6 +435,8 @@ void Server::handleRequest(int clientFd)
 		{
 			this->_readRequestHead(clientFd);
 			Request request(this->_requestHead);
+			if (request.getHeaderFields().count("content-length") && request.getHeaderFields().count("transfer-encoding"))
+				throw Server::BadRequestException();
 			this->_response.setRequestHead(this->_requestHead, clientFd);
 			this->_response.setRequestMethod(request.getMethod());
 			this->applyCurrentConfig(request);
@@ -465,19 +464,23 @@ void Server::handleRequest(int clientFd)
 				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
 			#endif
 			this->matchLocation(request);
-			#ifdef SHOW_LOG_ROUTING
-				std::cout  << GREEN << "Target after routing: " << request.getRoutedTarget() << RESET << std::endl;
-			#endif
+		#ifdef SHOW_LOG_ROUTING
+			std::cout  << GREEN << "Target after routing: " << request.getRoutedTarget() << RESET << std::endl;
+		#endif
+		#ifndef FORTYTWO_TESTER
+			if (request.getMethod() == "POST" && request.isFile == false)
+				throw Server::BadRequestException();
+		#endif
 			if (this->_response.isCgi(clientFd) == false)
 				this->checkLocationMethod(request);
 			if ((request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive") || request.getHeaderFields().count("connection") == 0)
 				this->_socketHandler->addKeepAlive(clientFd);
 
-			#ifdef FORTYTWO_TESTER
+		#ifdef FORTYTWO_TESTER
 			if (request.getMethod() == "POST" || request.getMethod() == "PUT")
-			#else
+		#else
 			if (request.getMethod() == "POST")
-			#endif
+		#endif
 				this->handlePOST(clientFd, request);
 			else if (request.getMethod() == "DELETE")
 			{
@@ -503,7 +506,6 @@ void Server::handleRequest(int clientFd)
 	{
 		errorResponse(exception, clientFd);
 	}
-	// std::cerr << BLUE << "Remember and fix: Tam may not send response inside of cgi!!!" << RESET << std::endl;
 }
 
 
@@ -525,16 +527,16 @@ void Server::_readRequestHead(int clientFd)
 				LOG_RED("Incomplete Request detected");
 			#endif
 			#ifndef FORTYTWO_TESTER
-			throw Server::BadRequestException();
+				throw Server::BadRequestException();
 			#endif
 		}
 		else if (n < 0) // read had an error reading from fd, was failing PUT
 		{
 			#ifdef SHOW_LOG_2
-				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED" << std::endl;
+				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED, EOF OR CLIENT DISCONNECT" << std::endl;
 			#endif
 			#ifndef FORTYTWO_TESTER
-				throw Server::ClientDisconnect(); // only for testing!!!!!
+				throw Server::BadRequestException(); // check if this is correct!!!!!!!
 			#endif
 		}
 		else if (n == 0) // read reached eof
@@ -604,10 +606,15 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FIL
 	{
 		fclose(infile);
 		fclose(outFile);
-		this->_cgiSockets[fd] = nullptr;
+		this->_cgiSockets.erase(fd);
+		// this->_cgiSockets[fd] = nullptr;
 		#ifdef SHOW_LOG_CGI
 			LOG_RED('\t' << e.what());
 		#endif
+		if (std::string(e.what()) == "400")
+			throw Response::ERROR_404(); //@tblaase, can you catch this exceptions and send error response
+		else
+			throw Response::ERROR_500();
 	}
 	fclose(infile);
 }
@@ -618,19 +625,29 @@ void Server::cgi_response_handle(int clientFd)
 		LOG_GREEN("\tcgi_response_handle");
 	#endif
 	FILE *outFile = this->_cgiSockets[clientFd];
-	if (!outFile)
+	if (!outFile) 
 		throw Response::ERROR_500();
 	int cgi_out = fileno(outFile);
 	lseek(cgi_out, 0, SEEK_SET);
 
 	CgiResponse cgiResponse(cgi_out, clientFd);
 
-	this->_response.clear();
-	this->_response.setProtocol(PROTOCOL);
-	this->_response.setStatus("201");
-	this->_response.setBody(cgiResponse.getBody());
-	this->_response.addContentLengthHeaderField();
-	this->_response.putToResponseMap(clientFd);
-	fclose(outFile);
+	try
+	{
+		this->_response.clear();
+		this->_response.setProtocol(PROTOCOL);
+		this->_response.setStatus("200");
+		this->_response.setBody(cgiResponse.getBody());
+		this->_response.addContentLengthHeaderField();
+		this->_response.putToResponseMap(clientFd);
+		this->_cgiSockets.erase(clientFd);
+		fclose(outFile);
+	}
+	catch(const std::exception& e)
+	{
+		fclose(outFile);
+		this->_cgiSockets.erase(clientFd);
+		throw Response::ERROR_500();	
+	}
 
 }

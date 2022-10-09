@@ -520,6 +520,11 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 
 		case (location_method):
 		{
+			if (foundMethod == true)
+			{
+				std::cout << RED << keyValue << RESET << std::endl;
+				throw SingleServerConfig::DuplicateMethodException();
+			}
 			if (keyValue.find_last_not_of(WHITESPACE) - keyValue.find_first_of(WHITESPACE) > 15)
 			{
 				std::cout << RED << keyValue << RESET << std::endl;
@@ -971,7 +976,7 @@ const char* SingleServerConfig::MissingIndexException::what(void) const throw()
 
 const char* SingleServerConfig::InvalidPathException::what(void) const throw()
 {
-	return ("↑↑↑ this path is invalid, no use of '.' and has to be like : \"/path/\"");
+	return ("↑↑↑ this path is invalid, has to be like : \"/path/ and no use of '.'\"");
 }
 
 const char* SingleServerConfig::DuplicateCgiExtensionException::what(void) const throw()
@@ -1027,4 +1032,9 @@ const char* SingleServerConfig::DuplicateCMBSException::what(void) const throw()
 const char* SingleServerConfig::DuplicateCGIBinException::what(void) const throw()
 {
 	return ("↑↑↑ duplicate, cgi_bin is already set up");
+}
+
+const char* SingleServerConfig::DuplicateMethodException::what(void) const throw()
+{
+	return ("↑↑↑ duplicate, method is already set up");
 }

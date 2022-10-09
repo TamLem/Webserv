@@ -101,7 +101,6 @@ class Response : public Message
 		void createErrorBody(void);
 		bool sendRes(int);
 
-	bool handleClientDisconnect(int fd);
 
 	class InvalidStatus : public std::exception
 	{
@@ -139,11 +138,6 @@ class Response : public Message
 	};
 
 	class InternalServerErrorException : public std::exception
-	{
-		const char* what() const throw();
-	};
-
-	class ClientDisconnectException : public std::exception
 	{
 		const char* what() const throw();
 	};
@@ -188,6 +182,7 @@ bool targetExists(const std::string&);
 
 /********** LEGACY CONTENT **********/
 
+		// bool handleClientDisconnect(int fd);
 		// int sendall(const int sock_fd, char *buffer, const int len) const; // LEGACY
 		// void sendChunk(int i);// i is the fd // LEGACY
 		// void endChunkedMessage(int i, int n); // LEGACY

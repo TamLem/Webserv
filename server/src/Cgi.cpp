@@ -24,12 +24,7 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct, FILE *infile):
 
 	_docRoot = configStruct.root;
 	_method = request.getMethod();
-	_chunked = false;
-	if(request.getHeaderFields().find("transfer-encoding")->second == "chunked")
-		_chunked = true;
-	// string url = request.getDecodedTarget(); //returning empty string fix in request
-	string url = request.getUrl(); // AE @tam do you need the decoded or routed target?
-	// string url = request.getRoutedTarget();
+	string url = request.getRoutedTarget();
 	string extension = url.substr(url.find_last_of("."));
 
 	if (url.find("/cgi/") != string::npos)
@@ -54,7 +49,8 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct, FILE *infile):
 			_scriptName = _confStruct.cgi[extension];
 		}
 		_pathInfo = url;
-		_pathTranslated = "." + _docRoot + _pathInfo.substr(1);
+		// _pathTranslated = "." + _docRoot + _pathInfo.substr(1);
+		_pathTranslated = _pathInfo;
 	}
 	_queryString = request.getQuery().length() > 1 ? request.getQuery().substr(1) : "";
 	setEnv(request);
@@ -121,11 +117,11 @@ void Cgi::printEnv()
 
 void Cgi::passAsInput(void)
 {
-	int fileFd = open("./42tester/YoupiBanane/youpi.bla", O_RDONLY);
+	int fileFd = open(this->_pathTranslated.c_str(), O_RDONLY);
 	if (fileFd == -1)
 	{
-		cout << "path not found" << endl;
-		return;
+		LOG_RED("cgi resource not found");
+		throw CgiExceptionNotFound();
 	}
 	dup2(fileFd, STDIN_FILENO);
 	close(fileFd);
@@ -133,40 +129,21 @@ void Cgi::passAsInput(void)
 
 void Cgi::passAsOutput(void)
 {
-	int fileFd = open("./42tester/YoupiBanane/youpi.bla", O_WRONLY);
+	int fileFd = open(this->_pathTranslated.c_str(), O_WRONLY);
 	if (fileFd == -1)
 	{
-		cout << "path not found" << endl;
-		return;
+		LOG_RED("cgi resource not found");
+		throw CgiExceptionNotFound();
 	}
 	dup2(fileFd, STDOUT_FILENO);
 	close(fileFd);
 }
 
-static size_t _handleChunked(int clientFd)
+static void free_env(char **env)
 {
-	// read the line until /r/n is read
-	char buffer[2];
-	std::string hex = "";
-	while (hex.find("\r\n") == std::string::npos)
-	{
-		int returnvalue = read(clientFd, buffer, 1);
-		buffer[1] = '\0';
-		if (returnvalue < 1)
-			return -1;
-		hex.append(buffer);
-	}
-	hex.resize(hex.size() - 2);
-
-	std::stringstream hexadecimal;
-	hexadecimal << hex;
-
-	size_t length = 0;
-	// int length2 = 0;
-	// length << std::hex << hexadecimal.str();
-	hexadecimal >> std::hex >> length;
-
-	return (length);
+	for (int i = 0; env[i]; i++)
+		free(env[i]);
+	delete[] env;
 }
 
 void Cgi::init_cgi(int client_fd, int cgi_out)
@@ -177,11 +154,10 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	int pipefd[2];
 
 	args = NULL;
+	(void)client_fd;
 	int stdout_init = dup(STDOUT_FILENO);
 	int stdin_init = dup(STDIN_FILENO);
 	executable = _scriptName;
-	if (this->_chunked)
-		_handleChunked(client_fd);
 	pipe(pipefd);
 	#ifdef SHOW_LOG_CGI
 		std::cout << GREEN << "Init cgi..." << executable << endl;
@@ -217,12 +193,14 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	{
 		dup2(cgi_out, STDOUT_FILENO);
 		close(cgi_out);
-		if (execve(executable.c_str(), args, mapToStringArray(_env)) == -1)
+		char **env = mapToStringArray(this->_env);
+		if (execve(executable.c_str(), args, env) == -1)
 		{
 			#ifdef SHOW_LOG_CGI
 			std::cerr << "error executing cgi" << std::endl;
 			#endif
 		}
+		free_env(env);
 		exit(1); // throw internal server error if this occurs
 	}
 	int wstatus;
@@ -233,4 +211,9 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	}
 	dup2(stdin_init, STDIN_FILENO);
 	dup2(stdout_init, STDOUT_FILENO);
+}
+
+const char *Cgi::CgiExceptionNotFound::what() const throw()
+{
+	return "400";
 }

@@ -28,8 +28,8 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct, FILE *infile):
 	if(request.getHeaderFields().find("transfer-encoding")->second == "chunked")
 		_chunked = true;
 	// string url = request.getDecodedTarget(); //returning empty string fix in request
-	string url = request.getUrl(); // AE @tam do you need the decoded or routed target?
-	// string url = request.getRoutedTarget();
+	// string url = request.getUrl(); // AE @tam do you need the decoded or routed target?
+	string url = request.getRoutedTarget();
 	string extension = url.substr(url.find_last_of("."));
 
 	if (url.find("/cgi/") != string::npos)
@@ -54,7 +54,8 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct, FILE *infile):
 			_scriptName = _confStruct.cgi[extension];
 		}
 		_pathInfo = url;
-		_pathTranslated = "." + _docRoot + _pathInfo.substr(1);
+		// _pathTranslated = "." + _docRoot + _pathInfo.substr(1);
+		_pathTranslated = _pathInfo;
 	}
 	_queryString = request.getQuery().length() > 1 ? request.getQuery().substr(1) : "";
 	setEnv(request);
@@ -121,7 +122,7 @@ void Cgi::printEnv()
 
 void Cgi::passAsInput(void)
 {
-	int fileFd = open("./42tester/YoupiBanane/youpi.bla", O_RDONLY);
+	int fileFd = open(this->_pathTranslated.c_str(), O_RDONLY);
 	if (fileFd == -1)
 	{
 		cout << "path not found" << endl;
@@ -133,7 +134,7 @@ void Cgi::passAsInput(void)
 
 void Cgi::passAsOutput(void)
 {
-	int fileFd = open("./42tester/YoupiBanane/youpi.bla", O_WRONLY);
+	int fileFd = open(this->_pathTranslated.c_str(), O_WRONLY);
 	if (fileFd == -1)
 	{
 		cout << "path not found" << endl;

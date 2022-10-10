@@ -158,16 +158,19 @@ int SocketHandler::getEvents()
 
 	timeout.tv_sec = 1;
 	timeout.tv_nsec = 0;
-	#ifdef SHOW_LOG_2
+	#ifdef SHOW_LOG
 		std::cout << "num clients: " << _clients.size() << std::endl;
 	#endif
 	// memset(this->_evList, 0, sizeof(this->_evList)); // just for testing!!!!!!
 	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, &timeout); // use this for final working version
 	// int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL); // use this only for testing !!!!!!
-	#ifdef SHOW_LOG_2
+	#ifdef SHOW_LOG
 		std::stringstream debug;
-		debug << this->_evList[0].ident;
-		LOG_GREEN(debug.str());
+		if (numEvents > 0)
+		{
+			debug << this->_evList[0].ident;
+			LOG_GREEN(debug.str());
+		}
 		LOG_GREEN(numEvents);
 	#endif
 	this->_eventsChanges.clear();

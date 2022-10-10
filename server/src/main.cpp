@@ -73,8 +73,8 @@ int main(int argc, char **argv)
 		config->printCluster();
 	#endif
 	test->runEventLoop();
-	delete config;
 	delete test;
+	delete config;
 	config = NULL;
 	test = NULL;
 	// system("leaks webserv"); // use this to check for leaks

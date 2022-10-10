@@ -10,6 +10,7 @@
 #define RED "\033[31m"
 #define BOLD "\033[1m"
 #define UNDERLINED "\033[4m"
+#define FILE_LINE (std::string(__FILE__) + std::string(":") + std::to_string(__LINE__))
 
 
 #include <stdio.h>
@@ -37,11 +38,11 @@ static long nothrow_stol(const std::string& string)
 	return (ret);
 }
 
-static void evaluation(const std::string& testcase, const std::string& readBuffer, const std::string& expected, long statuscode)
+static void evaluation(const std::string& testcase, const std::string& readBuffer, const std::string& expected, long statuscode, const std::string &testLocation)
 {
 	static int i = 1;
-	
-	std::cout << YELLOW << "Test " << i << ": " << testcase << RESET << std::endl;
+
+	std::cout << YELLOW << "Test " << i << ": " << testcase << BLUE << "\tfrom: " << testLocation << RESET << std::endl;
 	if (readBuffer.compare(expected) == 0)
 		std::cout << GREEN << "OK" << RESET << std::endl;
 	else if (nothrow_stol(expected) == statuscode)
@@ -57,7 +58,7 @@ static void evaluation(const std::string& testcase, const std::string& readBuffe
 	i++;
 }
 
-static void my_request(const std::string& request, const std::string& expected)
+static void my_request(const std::string& request, const std::string& expected, const std::string &testLocation)
 {
 	int sock = 0;
 	long valread;
@@ -68,19 +69,19 @@ static void my_request(const std::string& request, const std::string& expected)
 		std::cout << "\n Socket creation error" << std::endl;
 		return ;
 	}
-	
+
 	memset(&serv_addr, '0', sizeof(serv_addr));
-	
+
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(PORT);
-	
+
 	// Convert IPv4 and IPv6 addresses from text to binary form
 	if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0)
 	{
 		std::cout << "\nInvalid address/ Address not supported" << std::endl;
 		return ;
 	}
-	
+
 	if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
 	{
 		std::cout << "\nConnection Failed" << std::endl;
@@ -88,7 +89,7 @@ static void my_request(const std::string& request, const std::string& expected)
 	}
 	send(sock, request.c_str(), request.length(), 0);
 	valread = read( sock , readBuffer, 1024);
-	evaluation(request.substr(0, request.find_first_of('\n')), readBuffer, expected, EMPTY);
+	evaluation(request.substr(0, request.find_first_of('\n') - 1), readBuffer, expected, EMPTY, testLocation);
 }
 
 
@@ -98,14 +99,19 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
 	return size * nmemb;
 }
 
-static void curl_delete(const std::string& url, const std::string& expected)
+static void curl_delete(const std::string& url, const std::string& expected, const std::string &testLocation)
 {
 	long statuscode;
 	CURL *curl;
 	struct curl_slist *host = NULL;
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
+	curl_slist_append(host, "webserv:5500:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
+	curl_slist_append(host, "server2:80:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
+	curl_slist_append(host, "server2:8081:127.0.0.1");
+	curl_slist_append(host, "server2:127.0.0.1");
+	curl_slist_append(host, "nonexistingserver:8080:127.0.0.1");
 	CURLcode res;
 	std::string readBuffer;
 	curl = curl_easy_init();
@@ -124,20 +130,25 @@ static void curl_delete(const std::string& url, const std::string& expected)
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statuscode);
 		}
 		curl_easy_cleanup(curl);
-		evaluation(url, readBuffer, expected, statuscode);
+		evaluation(url, readBuffer, expected, statuscode, testLocation);
 	}
 	else
 		std::cout << RED << "ERROR with curl" << RESET << std::endl;
 }
 
-static void curl_post(const std::string& url, const std::string& expected)
+static void curl_post(const std::string& url, const std::string& expected, const std::string &testLocation)
 {
 	long statuscode;
 	CURL *curl;
 	struct curl_slist *host = NULL;
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
+	curl_slist_append(host, "webserv:5500:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
+	curl_slist_append(host, "server2:80:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
+	curl_slist_append(host, "server2:8081:127.0.0.1");
+	curl_slist_append(host, "server2:127.0.0.1");
+	curl_slist_append(host, "nonexistingserver:8080:127.0.0.1");
 	CURLcode res;
 	std::string readBuffer;
 	curl = curl_easy_init();
@@ -154,20 +165,25 @@ static void curl_post(const std::string& url, const std::string& expected)
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statuscode);
 		}
 		curl_easy_cleanup(curl);
-		evaluation(url, readBuffer, expected, statuscode);
+		evaluation(url, readBuffer, expected, statuscode, testLocation);
 	}
 	else
 		std::cout << RED << "ERROR with curl" << RESET << std::endl;
 }
 
-static void curl_get(const std::string& url, const std::string& expected)
+static void curl_get(const std::string& url, const std::string& expected, const std::string &testLocation)
 {
 	long statuscode;
 	CURL *curl;
 	struct curl_slist *host = NULL;
 	host = curl_slist_append(NULL, "webserv:80:127.0.0.1");
+	curl_slist_append(host, "webserv:5500:127.0.0.1");
 	curl_slist_append(host, "server1:6000:127.0.0.1");
+	curl_slist_append(host, "server2:80:127.0.0.1");
 	curl_slist_append(host, "server2:8080:127.0.0.1");
+	curl_slist_append(host, "server2:8081:127.0.0.1");
+	curl_slist_append(host, "server2:127.0.0.1");
+	curl_slist_append(host, "nonexistingserver:8080:127.0.0.1");
 	CURLcode res;
 	std::string readBuffer;
 	curl = curl_easy_init();
@@ -184,97 +200,110 @@ static void curl_get(const std::string& url, const std::string& expected)
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statuscode);
 		}
 		curl_easy_cleanup(curl);
-		evaluation(url, readBuffer, expected, statuscode);
+		evaluation(url, readBuffer, expected, statuscode, testLocation);
 	}
 	else
 		std::cout << RED << "ERROR with curl" << RESET << std::endl;
 }
 
-
-
 int main(void)
 {
 	// BAD REQUEST TESTS
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<INPUT>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
-	my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "200");
-	my_request("GET /  HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
-	my_request("GET  / HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
-	my_request(" GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
-	my_request("GET / HTTP/1.1\r\nHost:webserv\r\n\r\n", "200");
-	my_request("GET / HTTP/1.1\r\n Host: webserv\r\n\r\n", "400");
-	my_request("GET / HTTP/1.1\r\nHost: webserv \r\n\r\n", "200");
-	my_request("GET / HTTP/1.1\r\nHost:  webserv  \r\n\r\n", "400"); // AE only one whitespace
-	my_request("GET / HTTP/1.1\r\nHost : webserv\r\n\r\n", "400");
-	my_request("GET /route/dir/%25file HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of %file in dir");
-	my_request("GET /route/dir/%2file HTTP/1.1\r\nHost: webserv\r\n\r\n", "400"); // AE dangerous
-	my_request("GET /ü-ei HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
-	// my_request("", "408"); // timeout
-	my_request("\n", "400"); // AE problem
-	my_request(" ", "400"); // AE problem
-	// my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
-	// my_request("GET .. HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
-	// my_request("GET ... HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
-	my_request("GET .../README.md HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE ultra dangerous!!!
-	my_request("GET HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
-	my_request("GET / HTTP/1.0\r\nHost: webserv\r\n\r\n", "505");
-	my_request("GET / HTTP/1.1\r\nHost: webserv\r\nHost: webserv\r\n\r\n", "400");
-	my_request("GET / HTTP/1.1\r\nHost: webserv\r\ncontent-length: 0\r\ntransfer-encoding: chunked\r\n\r\n", "400"); // AE is this even imlemented?
-	my_request("GET / HTTP/1.1\r\nUser-Agent: Go-http-client/1.1\r\n\r\n", "400");
-	// my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r", "408"); // timeout
-	my_request("GET / HTTP/1.1\nHost: webserv\r\n\r\n", "400");
-	my_request("PST / HTTP/1.1\r\nHost: webserv\r\n\r\n", "501");
-	my_request("POST / HTTP/1.1\r\nHost: webserv\r\n\r\n", "411");
-	my_request("POST /uploads/big.txt HTTP/1.1\r\nHost: webserv\r\ncontent-length: 200\r\n\r\n01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789", "413");
+	my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of index.html in root", FILE_LINE);
+	my_request("GET /  HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
+	my_request("GET  / HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
+	my_request(" GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
+	my_request("GET / HTTP/1.1\r\nHost:webserv\r\n\r\n", "content of index.html in root", FILE_LINE);
+	my_request("GET / HTTP/1.1\r\n Host: webserv\r\n\r\n", "400", FILE_LINE);
+	my_request("GET / HTTP/1.1\r\nHost: webserv \r\n\r\n", "content of index.html in root", FILE_LINE);
+	my_request("GET / HTTP/1.1\r\nHost:  webserv  \r\n\r\n", "400", FILE_LINE); // AE only one whitespace
+	my_request("GET / HTTP/1.1\r\nHost:      webserv      \r\n\r\n", "400", FILE_LINE); // AE only one whitespace
+	my_request("GET / HTTP/1.1\r\nHost:webserv      \r\n\r\n", "400", FILE_LINE); // AE only one whitespace
+	my_request("GET / HTTP/1.1\r\nHost:    webserv\r\n\r\n", "400", FILE_LINE); // AE only one whitespace
+	my_request("GET / HTTP/1.1\r\nHost : webserv\r\n\r\n", "400", FILE_LINE);
+	my_request("GET /route/dir/%25file HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of %file in dir", FILE_LINE);
+	my_request("GET /route/dir/%2file HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
+	my_request("GET /ü-ei HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
+	// my_request("", "408", FILE_LINE); // timeout
+	my_request("\n", "400", FILE_LINE);
+	my_request(" ", "400", FILE_LINE); // AE problem
+	my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of index.html in root", FILE_LINE); // AE garbage
+	my_request("GET .. HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of index.html in root", FILE_LINE); // AE garbage
+	my_request("GET ... HTTP/1.1\r\nHost: webserv\r\n\r\n", "404", FILE_LINE); // AE garbage
+	my_request("GET .../README.md HTTP/1.1\r\nHost: webserv\r\n\r\n", "404", FILE_LINE); // AE ultra dangerous!!!
+	my_request("GET HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
+	my_request("GET / HTTP/1.0\r\nHost: webserv\r\n\r\n", "505", FILE_LINE);
+	my_request("GET / HTTP/1.1\r\nHost: webserv\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
+	my_request("GET / HTTP/1.1\r\nHost: webserv\r\ncontent-length: 0\r\ntransfer-encoding: chunked\r\n\r\n", "400", FILE_LINE); // AE is this even imlemented?
+	my_request("GET / HTTP/1.1\r\nUser-Agent: Go-http-client/1.1\r\n\r\n", "400", FILE_LINE);
+	// my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r", "408", FILE_LINE); // timeout
+	my_request("GET / HTTP/1.1\nHost: webserv\r\n\r\n", "400", FILE_LINE);
+	my_request("PST / HTTP/1.1\r\nHost: webserv\r\n\r\n", "501", FILE_LINE);
+	my_request("POST /new.txt HTTP/1.1\r\nHost: webserv\r\n\r\n", "411", FILE_LINE);
+	my_request("GET 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 HTTP/1.1\r\nHost: webserv\r\n\r\n", "414", FILE_LINE);
+	my_request("POST /uploads/big.txt HTTP/1.1\r\nHost: webserv\r\ncontent-length: 200\r\n\r\n01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789", "413", FILE_LINE);
 	//////// GET
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<GET>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
-	curl_get("http://webserv", "content of index.html in root");
-	curl_get("http://webserv:80", "content of index.html in root");
-	curl_get("http://webserv/route/dir/file", "content of file in dir");
-	curl_get("http://webserv/route/cgi/file", "content of file in cgi");
-	// curl_get("http://server1:6000", "content of file in server1");
-	// curl_get("http://server1/doesntexist", "MY_CUSTOM_PAGE");
-	// curl_get("http://server2/route/file", "content of file in server2");
-	// curl_get("http://server2:8080/route/file", "content of file in server2");
-	// curl_get("http://server2:8081/route/file", "content of file in server2");
-	// curl_get("http://server2/route/dir/file", "content of file in dir");
-	curl_get("http://webserv/route/dir/file.cgi", "content of file.cgi in dir"); // only POST triggers cgi, GET only returns file
-	curl_get("http://webserv/route/dir/file.ext", "content of file.ext in extdir");
-	curl_get("http://webserv/route/dir/norfile", "403");
-	curl_get("http://webserv/route/nordir/file", "content of file in nordir");
-	curl_get("http://webserv/route/nowdir/file", "content of file in nowdir");
-	curl_get("http://webserv/route/noxdir/file", "404"); // kind of special
-	curl_get("http://webserv/route/nordir/subdir/file", "content of file in nordirsubdir");
-	curl_get("http://webserv/route/nowdir/subdir/file", "content of file in nowdirsubdir");
-	curl_get("http://webserv/route/noxdir/subdir/file", "404"); // kind of special
-	curl_get("http://webserv/route/dir/nowfile", "content of nowfile in dir");
-	curl_get("http://webserv/route/dir/nonexistingfile", "404");
-	curl_get("http://webserv/route/dir/nonexistingdir/", "404");
-	curl_get("http://webserv/index", "404");
-	curl_get("http://webserv/index/", "content of index.html in index");
-	curl_get("http://webserv/index/custom/", "content of custom_index.html in custom");
-	curl_get("http://webserv/index/no/autoindex/", "autoindex123");
-	curl_get("http://webserv/index/no/autoindex/nopermission/", "404"); // kind of special
-	curl_get("http://webserv/index/no/noautoindex/", "404");
+	curl_get("http://webserv", "content of index.html in root", FILE_LINE);
+	curl_get("http://webserv:80", "content of index.html in root", FILE_LINE);
+	curl_get("http://webserv:5500", "", FILE_LINE); //  can't connect
+	curl_get("http://webserv/route/dir/file", "content of file in dir", FILE_LINE);
+	curl_get("http://webserv/route/cgi/file", "content of file in cgi", FILE_LINE);
+	curl_get("http://server1:6000/route/file", "content of file in server1", FILE_LINE);
+	curl_get("http://server1:6000/route/doesnotexist", "MY_CUSTOM_PAGE", FILE_LINE);
+	curl_get("http://server2/route/file", "405", FILE_LINE); // going for default server
+	curl_get("http://nonexistingserver:8080/route/file", "405", FILE_LINE); // going for default server
+	curl_get("http://server2:8080/route/file", "content of file in server2", FILE_LINE);
+	curl_get("http://server2:8081/route/file", "content of file in server2", FILE_LINE);
+	curl_get("http://webserv/route/dir/file.cgi", "CONTENT OF FILE.CGI IN DIR", FILE_LINE); // only POST triggers cgi, GET only returns file WRONG!
+	curl_get("http://webserv/route/dir/file.ext", "content of file.ext in extdir", FILE_LINE);
+	curl_get("http://webserv/route/dir/norfile", "403", FILE_LINE);
+	curl_get("http://webserv/route/nordir/file", "content of file in nordir", FILE_LINE);
+	curl_get("http://webserv/route/nowdir/file", "content of file in nowdir", FILE_LINE);
+	curl_get("http://webserv/route/noxdir/file", "403", FILE_LINE);
+	curl_get("http://webserv/route/nordir/subdir/file", "content of file in nordirsubdir", FILE_LINE);
+	curl_get("http://webserv/route/nowdir/subdir/file", "content of file in nowdirsubdir", FILE_LINE);
+	curl_get("http://webserv/route/noxdir/subdir/file", "403", FILE_LINE);
+	curl_get("http://webserv/route/dir/nowfile", "content of nowfile in dir", FILE_LINE);
+	curl_get("http://webserv/route/dir/nonexistingfile", "404", FILE_LINE);
+	curl_get("http://webserv/route/dir/nonexistingdir/", "404", FILE_LINE);
+	curl_get("http://webserv/index", "404", FILE_LINE);
+	curl_get("http://webserv/index/", "content of index.html in index", FILE_LINE);
+	curl_get("http://webserv/index/custom/", "content of custom_index.html in custom", FILE_LINE);
+	curl_get("http://webserv/index/no/autoindex/", "autoindex123", FILE_LINE);
+	curl_get("http://webserv/index/no/autoindex/nopermission/", "403", FILE_LINE);
+	curl_get("http://webserv/index/no/autoindex/nonexisting/", "404", FILE_LINE);
+	curl_get("http://webserv/index/no/noautoindex/", "404", FILE_LINE);
 	//////// POST
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<POST>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
-	// curl_post("http://server2/new.txt", "405");
-	curl_post("http://webserv/uploads/new.txt", "201");
-	curl_post("http://webserv/uploads/new.txt", "201");
-	curl_post("http://webserv/uploads/newdir/", "201");
-	curl_post("http://webserv/uploads/doesntexist/new.txt", "403");
-	curl_post("http://webserv/uploads/cgi/new.txt", "201");
-	curl_post("http://webserv/uploads/new.cgi", "THIS IS THE CONTENT OF MY NEW FILE.");
-	curl_post("http://webserv/uploads/file.cgi.not", "201");
-	curl_post("http://webserv/uploads/.cgi", "201");
+	curl_post("http://server2:8080/new.txt", "405", FILE_LINE);
+	curl_post("http://webserv/uploads/new.txt", "201", FILE_LINE);
+	curl_post("http://webserv/uploads/new.txt", "201", FILE_LINE);
+	curl_post("http://webserv/uploads/newdir/", "400", FILE_LINE); // create directory is not possible
+	curl_post("http://webserv/uploads/doesnotexist/new.txt", "404", FILE_LINE); // changed to be 404 instead of 400
+	curl_post("http://webserv/uploads/cgi/new.txt", "403", FILE_LINE); // 403 because cgi directory has no permissions
+	curl_post("http://webserv/uploads/new.cgi", "THIS IS THE CONTENT OF MY NEW FILE.", FILE_LINE);
+	curl_post("http://webserv/uploads/new.cgi", "200", FILE_LINE); // RFC says 201 should only be returned on cration of a ressource, so no reason to return 201 on a cgi POST
+	curl_post("http://webserv/uploads/file.cgi.not", "201", FILE_LINE);
+	curl_post("http://webserv/uploads/.cgi", "201", FILE_LINE);
+	curl_post("http://server1:6000/route/file.cgi", "500", FILE_LINE); //no executepermission for cgi executable
+	curl_post("http://server2:8080/route/file.cgi", "500", FILE_LINE); //cgi executable doesn't exist
+	//no cgi executable
+	// no cgi permission
 	//////// DELETE
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<DELETE>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
-	curl_delete("http://webserv/uploads/new.txt", "204");
-	curl_delete("http://webserv/uploads/newdir/", "204");
-	curl_delete("http://webserv/uploads/abc/", "204");
-	curl_delete("http://webserv/uploads/cgi/new.txt", "204");
-	curl_delete("http://webserv/uploads/file.cgi.not", "204");
-	curl_delete("http://webserv/uploads/.cgi", "204");
-	curl_delete("http://webserv/uploads/doesnotexist", "404");
+	curl_delete("http://webserv/uploads/new.txt", "204", FILE_LINE);
+	curl_delete("http://webserv/uploads/newdir/", "204", FILE_LINE); // would have to be created first
+	curl_delete("http://webserv/uploads/cgi/new.txt", "404", FILE_LINE); // cgi directory has no permissions
+	curl_delete("http://webserv/uploads/file.cgi.not", "204", FILE_LINE);
+	curl_delete("http://webserv/uploads/.cgi", "204", FILE_LINE);
+	curl_delete("http://webserv/uploads/doesnotexist", "404", FILE_LINE);
+	curl_delete("http://webserv/uploads/nonexisting.cgi", "404", FILE_LINE); // file to call the cgi on is not existing
+	curl_get("http://webserv/uploads/nopermissionfile.cgi", "403", FILE_LINE); // file to call the cgi on has no permissions
+	curl_post("http://webserv/uploads/nopermissionfile.cgi", "THIS IS THE CONTENT OF MY NEW FILE.", FILE_LINE); // file to call the cgi on has no permissions
+	curl_delete("http://webserv/uploads/cgi/nopermissionfile.cgi", "404", FILE_LINE); // has no permissions inside the cgi directory
+	curl_delete("http://webserv/uploads/todelete.cgi", "204", FILE_LINE);
 }
 
 //c++ curl_example.cpp -o curl_example -lcurl && ./curl_example

@@ -19,7 +19,7 @@ int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::c
 		result += target.substr(target.find_last_of('/') + 1);
 		request.setRoutedTarget("." + result);
 		_currentLocationKey = it->first;
-		#ifdef SHOW_LOG_2
+		#ifdef SHOW_LOG_ROUTING
 			std::cout  << YELLOW << "FILE ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << RESET << std::endl;
 		#endif
 		return (0);
@@ -72,7 +72,7 @@ void Server::routeDir(Request& request, std::map<std::string, LocationStruct>::c
 		}
 		request.setRoutedTarget("." + result);
 		_currentLocationKey = it->first;
-		#ifdef SHOW_LOG_2
+		#ifdef SHOW_LOG_ROUTING
 			std::cout  << YELLOW << "DIR MATCH!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey << RESET << std::endl;
 		#endif
 	}
@@ -90,7 +90,7 @@ void Server::routeDefault(Request& request)
 	}
 	request.setRoutedTarget("." + result);
 	_currentLocationKey = "";
-	#ifdef SHOW_LOG
+	#ifdef SHOW_LOG_ROUTING
 		std::cout  << YELLOW << "DEFAULT " << RESET ;
 	#endif
 }
@@ -119,7 +119,7 @@ void Server::matchLocation(Request& request)
 	}
 	if (max_count == 0)
 		routeDefault(request);
-	#ifdef SHOW_LOG
+	#ifdef SHOW_LOG_ROUTING
 		std::cout  << YELLOW << "DIR ROUTING RESULT!: " << request.getRoutedTarget() << " for location: " << _currentLocationKey  << RESET << std::endl;
 	#endif
 }

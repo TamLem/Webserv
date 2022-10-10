@@ -72,9 +72,23 @@ void Response::receiveChunk(int i)
 		std::ofstream buffer;
 		char chunk[bufferSize];
 		buffer.open(this->_receiveMap[i].target.c_str(), std ::ios::out | std::ios_base::app | std::ios::binary);
+		if (access(this->_receiveMap[i].target.c_str(), W_OK) != 0)
+		{
+			if (errno == ENOENT)
+			{
+				throw ERROR_404();
+			}
+			else if (errno == EACCES)
+				throw ERROR_403();
+			else
+				throw ERROR_500();
+		}
 
 		if (buffer.is_open() == false)
-			throw Response::ERROR_423(); // check if this makes sense, maybe 500 is more appropriate ????????
+		{
+			throw ERROR_500();
+			// throw Response::ERROR_423();
+		}
 	// reading part
 		else if (total > bufferSize && bytesLeft > bufferSize)
 		{

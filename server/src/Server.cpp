@@ -118,7 +118,9 @@ void Server::runEventLoop()
 				catch(const std::exception& e)
 				{
 					this->_socketHandler->removeKeepAlive(clientFd); // needed so that the force remove works
-					std::cerr << YELLOW << e.what() << RESET << '\n';
+					#ifdef SHOW_LOG_EXCEPTION
+						std::cerr << YELLOW << "Exception: " << e.what() << RESET << '\n'; // AE @tim what is this?
+					#endif
 					this->_socketHandler->removeClient(i, true);
 					removeClientTraces(clientFd);
 				}
@@ -131,7 +133,14 @@ void Server::runEventLoop()
 				this->_socketHandler->setTimeout(clientFd);
 				if (this->_cgiSockets.find(clientFd) != this->_cgiSockets.end())
 				{
-					cgi_response_handle(clientFd);
+					try
+					{
+						cgi_response_handle(clientFd);
+					}
+					catch(const std::exception& exception)
+					{
+						errorResponse(exception, clientFd);
+					}
 					this->_cgiSockets.erase(clientFd);
 				}
 				if (this->_response.sendRes(clientFd) == true)
@@ -317,11 +326,54 @@ void Server::handleERROR(const std::string& status)
 	_response.addContentLengthHeaderField();
 }
 
+static void createHostTokens(std::vector<std::string>& tokens, const std::string& host)
+{
+	size_t last = 0;
+	size_t next = 0;
+	const std::string delim = ":";
+
+	while ((next = host.find(delim, last)) != std::string::npos)
+	{
+		// std::cout << BLUE << host.substr(last, next - last) << RESET << std::endl; // AE remove
+		tokens.push_back(host.substr(last, next - last));
+		last = next + 1;
+	}
+	// std::cout << GREEN << host.substr(last, host.length() - last) << RESET << std::endl; // AE remove
+	tokens.push_back(host.substr(last, host.length() - last));
+}
+
 void Server::applyCurrentConfig(const Request& request)
 {
+	std::vector<std::string> tokens;
 	std::map<std::string, std::string> headerFields = request.getHeaderFields();
 	std::string host = headerFields["host"];
-	this->_currentConfig = this->_config->getConfigStruct(host);
+	std::string port;
+	// split host in host_name and port
+	createHostTokens(tokens, host);
+	if (tokens.size() > 2)
+		throw Server::BadRequestException();
+	std::string server_name = tokens[0];
+	this->_currentConfig = this->_config->getConfigStruct(server_name);
+	// std::cout << YELLOW << server_name << RESET << std::endl; // AE remove
+	if (this->_currentConfig.serverName == server_name)
+	{
+		if (tokens.size() == 2)
+			port = tokens[1];
+		else
+			port = "80";
+		// std::cout << YELLOW << port << RESET << std::endl; // AE remove
+		std::map<std::string, unsigned short>::const_iterator it = this->_currentConfig.listen.begin();
+		for (; it != this->_currentConfig.listen.end(); ++it)
+		{
+			if(port == it->first)
+				return ;
+		}
+		// std::cout << YELLOW << "selected DEFAULT" << RESET << std::endl; // AE remove
+		this->_currentConfig = this->_config->getConfigStruct(DEFAULT_SERVER_NAME);
+	}
+	// if (tokens.size() == 2)
+	// check port against portlist from config
+	//if server_name wrong -> default DEFAULT_SERVER_NAME
 }
 
 // removes any data of the client from _responseMap, _receiveMap, _tempFile and _keepalive
@@ -330,6 +382,35 @@ void Server::removeClientTraces(int clientFd)
 	this->_response.removeFromReceiveMap(clientFd);
 	this->_response.removeFromResponseMap(clientFd);
 	this->_response.removeTempFile(clientFd);
+	this->_socketHandler->removeKeepAlive(clientFd);
+}
+
+void Server::errorResponse(const std::exception& exception, int clientFd)
+{
+	#ifdef SHOW_LOG_EXCEPTION
+	std::cout << RED << "Exception: " << exception.what() << std::endl;
+	#endif
+	std::string code = exception.what();
+	if (std::string(exception.what()) == "client disconnect") // check if it is used in any way
+	{
+		throw exception; // AE @tam why do you do this? (happens e.g. with testcase " ")
+	}
+	if (_response.getMessageMap().count(code) != 1)
+		code = "500";
+	try
+	{
+		handleERROR(code);
+	}
+	catch(const std::exception& exception)
+	{
+		std::string code = exception.what();
+		if (_response.getMessageMap().count(code) != 1)
+			code = "500";
+		handleERROR(code);
+	}
+	if (this->_response.isInReceiveMap(clientFd) == true)
+		this->_response.removeFromReceiveMap(clientFd);
+	this->_response.putToResponseMap(clientFd);
 	this->_socketHandler->removeKeepAlive(clientFd);
 }
 
@@ -346,6 +427,9 @@ void Server::handleRequest(int clientFd)
 			{
 				Request tempRequest(this->_response.getRequestHead(clientFd));
 				this->applyCurrentConfig(tempRequest);
+				tempRequest.setDecodedTarget(percentDecoding(tempRequest.getRawTarget()));
+				tempRequest.setQuery(percentDecoding(tempRequest.getQuery()));
+				this->matchLocation(tempRequest);
 				this->cgi_handle(tempRequest, clientFd, this->_currentConfig, this->_response.getTempFile(clientFd));
 				this->_response.removeFromReceiveMap(clientFd);
 			}
@@ -359,18 +443,37 @@ void Server::handleRequest(int clientFd)
 			this->_response.setRequestHead(this->_requestHead, clientFd);
 			this->_response.setRequestMethod(request.getMethod());
 			this->applyCurrentConfig(request);
-			request.setDecodedTarget(percentDecoding(request.getRawTarget()));
+
+			// AE remove
+			// std::cout << RED << this->_currentConfig.serverName << RESET << std::endl; // AE remove
+			// std::map<std::string, unsigned short>::const_iterator it = this->_currentConfig.listen.begin();
+			// for (; it != this->_currentConfig.listen.end(); ++it)
+			// {
+			// 	std::cout << RED << it->first << RESET << std::endl;
+			// }
+			// std::map<std::string, std::string>::const_iterator it2 = this->_currentConfig.errorPage.begin();
+			// for (; it2 != this->_currentConfig.errorPage.end(); ++it2)
+			// {
+			// 	std::cout << RED << it2->first << " " << it2->second << RESET << std::endl;
+			// }
+			// std::cout << RED << this->_currentConfig.indexPage << RESET << std::endl;
+			std::string tmp;
+			tmp = percentDecoding(request.getRawTarget());
+			tmp = resoluteTarget(tmp);
+			request.setDecodedTarget(tmp);
 			request.setQuery(percentDecoding(request.getQuery()));
 			this->_response.setIsCgi(clientFd, this->_isCgiRequest(request));
-		#ifdef SHOW_LOG
-			std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
-		#endif
+			#ifdef SHOW_LOG_ROUTING
+				std::cout  << YELLOW << "URI after percent-decoding: " << request.getDecodedTarget() << std::endl;
+			#endif
 			this->matchLocation(request);
 		#ifdef SHOW_LOG_ROUTING
 			std::cout  << GREEN << "Target after routing: " << request.getRoutedTarget() << RESET << std::endl;
 		#endif
+		#ifndef FORTYTWO_TESTER
 			if (request.getMethod() == "POST" && request.isFile == false)
 				throw Server::BadRequestException();
+		#endif
 			if (this->_response.isCgi(clientFd) == false)
 				this->checkLocationMethod(request);
 			if ((request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive") || request.getHeaderFields().count("connection") == 0)
@@ -392,6 +495,10 @@ void Server::handleRequest(int clientFd)
 			}
 			else
 			{
+				if (this->_socketHandler->isKeepAlive(clientFd))
+					this->_response.addHeaderField("connection", "keep-alive");
+				if (this->_response.isCgi(clientFd) == true)
+					this->cgi_handle(request, clientFd, this->_currentConfig, NULL);
 				this->handleGET(request);
 				this->_response.putToResponseMap(clientFd);
 				this->_response.removeFromReceiveMap(clientFd);
@@ -400,35 +507,13 @@ void Server::handleRequest(int clientFd)
 			}
 		}
 	}
-	catch (std::exception& exception)
+	catch (std::exception& exception) // AE convert this block into function, so it can be called in cgi_response_handle catch block (has yet to be created)
 	{
-	#ifdef SHOW_LOG_EXCEPTION
-		std::cout << RED << "Exception: " << exception.what() << std::endl;
-	#endif
-		std::string code = exception.what();
-		if (std::string(exception.what()) == "client disconnect")
-		{
-			throw exception;
-		}
-		if (_response.getMessageMap().count(code) != 1)
-			code = "500";
-		try
-		{
-			handleERROR(code);
-		}
-		catch(const std::exception& exception)
-		{
-			std::string code = exception.what();
-			if (_response.getMessageMap().count(code) != 1)
-				code = "500";
-			handleERROR(code);
-		}
-		if (this->_response.isInReceiveMap(clientFd) == true)
-			this->_response.removeFromReceiveMap(clientFd);
-		this->_response.putToResponseMap(clientFd);
-		this->_socketHandler->removeKeepAlive(clientFd);
+		errorResponse(exception, clientFd);
 	}
 }
+
+
 
 // read 1024 charackters or if less until /r/n/r/n is found
 void Server::_readRequestHead(int clientFd)
@@ -518,10 +603,30 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FIL
 	#ifdef SHOW_LOG_2
 		newCgi.printEnv();
 	#endif
-	newCgi.init_cgi(fd, cgi_out);
+	try
+	{
+		newCgi.init_cgi(fd, cgi_out);
+	}
+	catch(const std::exception& e)
+	{
+		fclose(infile);
+		infile = NULL;
+		fclose(outFile);
+		outFile = NULL;
+		this->_cgiSockets.erase(fd);
+		// this->_cgiSockets[fd] = nullptr;
+		#ifdef SHOW_LOG_CGI
+			LOG_RED('\t' << e.what());
+		#endif
+		if (std::string(e.what()) == "403")
+			throw Response::ERROR_403();
+		else if (std::string(e.what()) == "404")
+			throw Response::ERROR_404();
+		else
+			throw Response::ERROR_500();
+	}
 	fclose(infile);
-	// cgi_response_handle(fd);
-	// newCgi.cgi_response(fd);
+	infile = NULL;
 }
 
 void Server::cgi_response_handle(int clientFd)
@@ -530,23 +635,31 @@ void Server::cgi_response_handle(int clientFd)
 		LOG_GREEN("\tcgi_response_handle");
 	#endif
 	FILE *outFile = this->_cgiSockets[clientFd];
-	// long	lSize = ftell(outFile);
-	// cout << "lSize: " << lSize << endl;
-	// rewind(outFile);
+	if (!outFile)
+		throw Response::ERROR_500();
 	int cgi_out = fileno(outFile);
 	lseek(cgi_out, 0, SEEK_SET);
 
 	CgiResponse cgiResponse(cgi_out, clientFd);
 
-	// cgiResponse.getBody();
-	// cgiResponse.sendResponse();
-
-	this->_response.clear();
-	this->_response.setProtocol(PROTOCOL);
-	this->_response.setStatus("201");
-	this->_response.setBody(cgiResponse.getBody());
-	this->_response.addContentLengthHeaderField();
-	this->_response.putToResponseMap(clientFd);
-	fclose(outFile);
+	try
+	{
+		this->_response.clear();
+		this->_response.setProtocol(PROTOCOL);
+		this->_response.setStatus("200");
+		this->_response.setBody(cgiResponse.getBody());
+		this->_response.addContentLengthHeaderField();
+		this->_response.putToResponseMap(clientFd);
+		this->_cgiSockets.erase(clientFd);
+		fclose(outFile);
+		outFile = NULL;
+	}
+	catch(const std::exception& e)
+	{
+		fclose(outFile);
+		outFile = NULL;
+		this->_cgiSockets.erase(clientFd);
+		throw Response::ERROR_500();
+	}
 
 }

@@ -24,12 +24,7 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct, FILE *infile):
 
 	_docRoot = configStruct.root;
 	_method = request.getMethod();
-	_chunked = false;
-	if(request.getHeaderFields().find("transfer-encoding")->second == "chunked")
-		_chunked = true;
-	// string url = request.getDecodedTarget(); //returning empty string fix in request
-	string url = request.getUrl(); // AE @tam do you need the decoded or routed target?
-	// string url = request.getRoutedTarget();
+	string url = request.getRoutedTarget();
 	string extension = url.substr(url.find_last_of("."));
 
 	if (url.find("/cgi/") != string::npos)
@@ -54,7 +49,8 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct, FILE *infile):
 			_scriptName = _confStruct.cgi[extension];
 		}
 		_pathInfo = url;
-		_pathTranslated = "." + _docRoot + _pathInfo.substr(1);
+		// _pathTranslated = "." + _docRoot + _pathInfo.substr(1);
+		_pathTranslated = _pathInfo;
 	}
 	_queryString = request.getQuery().length() > 1 ? request.getQuery().substr(1) : "";
 	setEnv(request);
@@ -121,11 +117,18 @@ void Cgi::printEnv()
 
 void Cgi::passAsInput(void)
 {
-	int fileFd = open("./42tester/YoupiBanane/youpi.bla", O_RDONLY);
+	int fileFd = open(this->_pathTranslated.c_str(), O_RDONLY);
 	if (fileFd == -1)
 	{
-		cout << "path not found" << endl;
-		return;
+		#ifdef SHOW_LOG_CGI
+			std::cerr << RED << "cgi resource in not found" << RESET << std::endl;
+		#endif
+		if (errno == ENOENT)
+			throw ERROR_404();
+		else if (errno == EACCES)
+			throw ERROR_403();
+		else
+			throw ERROR_500();
 	}
 	dup2(fileFd, STDIN_FILENO);
 	close(fileFd);
@@ -133,40 +136,22 @@ void Cgi::passAsInput(void)
 
 void Cgi::passAsOutput(void)
 {
-	int fileFd = open("./42tester/YoupiBanane/youpi.bla", O_WRONLY);
+	int fileFd = open(this->_pathTranslated.c_str(), O_WRONLY);
 	if (fileFd == -1)
 	{
-		cout << "path not found" << endl;
-		return;
+		LOG_RED("cgi resource not found"); // disappeares into the child
+		std::cerr << RED << "cgi resource out not found" << RESET << std::endl;
+		throw ERROR_500();
 	}
 	dup2(fileFd, STDOUT_FILENO);
 	close(fileFd);
 }
 
-static size_t _handleChunked(int clientFd)
+static void free_env(char **env)
 {
-	// read the line until /r/n is read
-	char buffer[2];
-	std::string hex = "";
-	while (hex.find("\r\n") == std::string::npos)
-	{
-		int returnvalue = read(clientFd, buffer, 1);
-		buffer[1] = '\0';
-		if (returnvalue < 1)
-			return -1;
-		hex.append(buffer);
-	}
-	hex.resize(hex.size() - 2);
-
-	std::stringstream hexadecimal;
-	hexadecimal << hex;
-
-	size_t length = 0;
-	// int length2 = 0;
-	// length << std::hex << hexadecimal.str();
-	hexadecimal >> std::hex >> length;
-
-	return (length);
+	for (int i = 0; env[i]; i++)
+		free(env[i]);
+	delete[] env;
 }
 
 void Cgi::init_cgi(int client_fd, int cgi_out)
@@ -177,120 +162,102 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	int pipefd[2];
 
 	args = NULL;
+	(void)client_fd;
 	int stdout_init = dup(STDOUT_FILENO);
 	int stdin_init = dup(STDIN_FILENO);
 	executable = _scriptName;
-	if (this->_chunked)
-		_handleChunked(client_fd);
 	pipe(pipefd);
 	#ifdef SHOW_LOG_CGI
-		std::cout << GREEN << "Init cgi..." << executable << endl;
+		LOG_GREEN("Init cgi executable: " << executable); // might disappear into nothingness aka dup
 	#endif
 	if (!_selfExecuting && this->_method == "GET")
 	{
-		cout << "GET" << endl;
+		#ifdef SHOW_LOG_CGI
+			cout << "GET" << endl;
+		#endif
 		passAsInput();
 		close(pipefd[1]);
 	}
 	if (this->_method == "POST")
 	{
-		long	lSize = ftell(this->_infile); // AE @tam can this go into LOG? otherwise (void) is needed
-		(void)lSize;
-		#ifdef SHOW_LOG_CGI
-			cout << "lSize: " << lSize << endl;
-		#endif
 		rewind(this->_infile);
 		int infileFd = fileno(this->_infile);
 		lseek(infileFd, 0, SEEK_SET);
 		if (dup2(infileFd, STDIN_FILENO == -1))
 		{
-			std::cout << "dup2 failed" << std::endl;
-			return ; //add 500
+			std::cout << "dup2 failed" << std::endl; // better error printing please!
+			throw std::exception();
 		}
-		// passAsOutput();
 	}
 	file = _pathInfo;
-	int pid = fork();
-	if (pid == -1)
+	int pid_cgi;
+	int pid_timer = fork();
+	if (pid_timer == 0)
 	{
-		close(cgi_out);
-		close(pipefd[0]);
+		sleep(2);
+		exit(0);
 	}
-	if (pid == 0)
+	else if (pid_timer == -1)
+		throw std::runtime_error("error executing cgi");
+	else
 	{
-		dup2(cgi_out, STDOUT_FILENO);
-		close(cgi_out);
-		if (execve(executable.c_str(), args, mapToStringArray(_env)) == -1)
+		pid_cgi = fork();
+		if (pid_cgi == -1)
 		{
-			std::cerr << "error executing cgi" << std::endl;
+			close(cgi_out);
+			close(pipefd[0]);
 		}
-		exit(1); // throw internal server error if this occurs
+		if (pid_cgi == 0)
+		{
+			dup2(cgi_out, STDOUT_FILENO);
+			close(cgi_out);
+			char **env = mapToStringArray(this->_env);
+			if (execve(executable.c_str(), args, env) == -1)
+			{
+				#ifdef SHOW_LOG_CGI
+				std::cerr << "error executing cgi" << std::endl;
+				#endif
+			}
+			free_env(env);
+			exit(1); // throw internal server error if this occurs
+		}
 	}
-	wait(NULL);
+	cgi_exit(pid_timer, pid_cgi);
 	dup2(stdin_init, STDIN_FILENO);
 	dup2(stdout_init, STDOUT_FILENO);
 }
 
-// void Cgi::cgi_response(int fd)
-// {
-// 	std::string file;
-// 	std::string executable;
-// 	char **args;
-// 	int pipefd[2];
+void Cgi::cgi_exit(int pid_timer, int pid_cgi)
+{
+	int wstatus;
+	while (waitpid(pid_timer, NULL, WNOHANG) == 0)
+	{
+		if (waitpid(pid_cgi, &wstatus, WNOHANG) == pid_cgi)
+			break;
+	}
+	if (!WIFEXITED(wstatus)|| WEXITSTATUS(wstatus) != 0)
+	{
+		kill(pid_cgi, SIGKILL);
+		throw std::runtime_error("error executing cgi");
+	}
+}
 
-// 	args = NULL;
-// 	executable = _scriptName;
-// 	if (this->_chunked)
-// 		_handleChunked(fd);
-// 	pipe(pipefd);
-// 	int stdout_init = dup(STDOUT_FILENO);
-// 	int stdin_init = dup(STDIN_FILENO);
-// 	std::cout << GREEN << "Executing CGI..." << std::endl;
-// 	cout << "executable: " << executable << endl;
-// 	if (!_selfExecuting && this->_method == "GET")
-// 	{
-// 		cout << "GET" << endl;
-// 		passAsInput();
-// 		dup2(pipefd[1], STDOUT_FILENO);
-// 		close(pipefd[1]);
-// 	}
-// 	if (this->_method == "POST")
-// 	{
-// 		dup2(fd, STDIN_FILENO);
-// 		passAsOutput();
-// 	}
-// 	file = _pathInfo;
-// 	int pid = fork();
-// 	if (pid == 0)
-// 	{
-// 		if (execve(executable.c_str(), args, mapToStringArray(_env)) == -1)
-// 		{
-// 			std::cerr << "error executing cgi" << std::endl;
-// 		}
-// 		exit(0);
-// 	}
-// 	wait(NULL);
-// 	dup2(stdin_init, STDIN_FILENO);
-// 	dup2(stdout_init, STDOUT_FILENO);
-// 	cout << "cgi response done" << endl;
-// 	std::string header = "HTTP/1.1 200 OK\r\n"; //cgi status code
-// 	send(fd, header.c_str(), header.size(), 0);
-// 	if (this->_method == "POST")
-// 	{
-// 		close(pipefd[0]);
-// 		close(fd);
-// 		return ;
-// 	}
-// 	char buf[1024];
-// 	buf[1023] = '\0';
-// 	int n;
-// 	while((n = read(pipefd[0], buf, 1023)) > 0)
-// 	{
-// 		#ifdef SHOW_LOG
-// 			cout << "cgi output: " << buf << endl;
-// 		#endif
-// 		send(fd, buf, n, 0); // make sure to not send any data to the client here!!! you need to put the data into the responseMap[clientFd] and then add a write event !!!!! @Tam
-// 	}
-// 	close(pipefd[0]);
-// 	close(fd);
+// const char *Cgi::CgiExceptionNotFound::what() const throw()
+// {
+// 	return "400";
 // }
+
+const char *Cgi::ERROR_403::what() const throw()
+{
+	return "403";
+}
+
+const char *Cgi::ERROR_404::what() const throw()
+{
+	return "404";
+}
+
+const char *Cgi::ERROR_500::what() const throw()
+{
+	return "500";
+}

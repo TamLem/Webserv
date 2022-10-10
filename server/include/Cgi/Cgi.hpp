@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 using std::string;
 using std::map;
@@ -43,7 +44,6 @@ class Cgi
 		bool	_selfExecuting;
 		ConfigStruct _confStruct;
 		FILE*  _infile;
-		bool   _chunked;
 	public:
 		Cgi(Request &request, ConfigStruct confStruct, FILE *infile);
 
@@ -51,10 +51,29 @@ class Cgi
 
 		void setEnv(Request &request);
 		void init_cgi(int client_fd, int cgi_out);
-		// void cgi_response(int fd);
 		void phpHandler(Request &req);
 		void passAsInput();
 		void passAsOutput();
 		void printEnv();
+		void cgi_exit(int pid_timer, int pid_cgi);
+
+
+		class ERROR_403 : public std::exception
+		{
+			public:
+				virtual const char *what() const throw();
+		};
+
+		class ERROR_404 : public std::exception
+		{
+			public:
+				virtual const char *what() const throw();
+		};
+
+		class ERROR_500 : public std::exception
+		{
+			public:
+				virtual const char *what() const throw();
+		};
 };
 #endif

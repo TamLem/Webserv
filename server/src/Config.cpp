@@ -167,7 +167,7 @@ void Config::_createConfigStruct(std::string server)
 	++structsCreated;
 	if (structsCreated == 1)
 	{
-		serverName = "default";
+		serverName = DEFAULT_SERVER_NAME;
 		this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
 	}
 	#ifdef SHOW_LOG_2
@@ -281,7 +281,7 @@ std::map<std::string, ConfigStruct> Config::getCluster()
 // returns the correct ConfigStruct for the supplied hostName, returns default if hostName was not found
 const ConfigStruct& Config::getConfigStruct(std::string hostName)
 {
-	std::string defaultConfig = "default";
+	std::string defaultConfig = DEFAULT_SERVER_NAME;
 	if (this->applyConfig(hostName) == true)
 		return (this->_conf);
 	else

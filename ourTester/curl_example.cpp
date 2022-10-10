@@ -298,6 +298,7 @@ int main(void)
 	curl_delete("http://webserv/uploads/doesnotexist", "404", FILE_LINE);
 	curl_delete("http://webserv/uploads/nonexisting.cgi", "404", FILE_LINE); // file to call the cgi on is not existing
 	curl_get("http://webserv/uploads/nopermissionfile.cgi", "403", FILE_LINE); // file to call the cgi on has no permissions
+	curl_post("http://webserv/uploads/nopermissionfile.cgi", "THIS IS THE CONTENT OF MY NEW FILE.", FILE_LINE); // file to call the cgi on has no permissions
 	curl_delete("http://webserv/uploads/cgi/nopermissionfile.cgi", "404", FILE_LINE); // has no permissions inside the cgi directory
 	curl_delete("http://webserv/uploads/todelete.cgi", "204", FILE_LINE);
 }

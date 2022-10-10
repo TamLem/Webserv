@@ -207,7 +207,7 @@ const std::string Request::removeLeadingAndTrailingWhilespaces(const std::string
 	if (start == std::string::npos || start > pos + 2)
 		throw InvalidHeaderField();
 	size_t end = message.find_last_not_of(WHITESPACE);
-	if (message.length() > end + 2)
+	if (message.length() - start + 1 > end + 1)
 		throw InvalidHeaderField();
 	return (message.substr(start, end - start + 1));
 }

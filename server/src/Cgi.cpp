@@ -120,8 +120,15 @@ void Cgi::passAsInput(void)
 	int fileFd = open(this->_pathTranslated.c_str(), O_RDONLY);
 	if (fileFd == -1)
 	{
-		LOG_RED("cgi resource not found");
-		throw CgiExceptionNotFound();
+		#ifdef SHOW_LOG_CGI
+			std::cerr << RED << "cgi resource in not found" << RESET << std::endl;
+		#endif
+		if (errno == ENOENT)
+			throw ERROR_404();
+		else if (errno == EACCES)
+			throw ERROR_403();
+		else
+			throw ERROR_500();
 	}
 	dup2(fileFd, STDIN_FILENO);
 	close(fileFd);
@@ -133,7 +140,8 @@ void Cgi::passAsOutput(void)
 	if (fileFd == -1)
 	{
 		LOG_RED("cgi resource not found");
-		throw CgiExceptionNotFound();
+		std::cerr << RED << "cgi resource out not found" << RESET << std::endl;
+		throw ERROR_500();
 	}
 	dup2(fileFd, STDOUT_FILENO);
 	close(fileFd);
@@ -213,7 +221,22 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	dup2(stdout_init, STDOUT_FILENO);
 }
 
-const char *Cgi::CgiExceptionNotFound::what() const throw()
+// const char *Cgi::CgiExceptionNotFound::what() const throw()
+// {
+// 	return "400";
+// }
+
+const char *Cgi::ERROR_403::what() const throw()
 {
-	return "400";
+	return "403";
+}
+
+const char *Cgi::ERROR_404::what() const throw()
+{
+	return "404";
+}
+
+const char *Cgi::ERROR_500::what() const throw()
+{
+	return "500";
 }

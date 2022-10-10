@@ -55,7 +55,19 @@ class Cgi
 		void passAsOutput();
 		void printEnv();
 
-		class CgiExceptionNotFound : public std::exception
+		class ERROR_403 : public std::exception
+		{
+			public:
+				virtual const char *what() const throw();
+		};
+
+		class ERROR_404 : public std::exception
+		{
+			public:
+				virtual const char *what() const throw();
+		};
+
+		class ERROR_500 : public std::exception
 		{
 			public:
 				virtual const char *what() const throw();

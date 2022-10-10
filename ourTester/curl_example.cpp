@@ -219,6 +219,9 @@ int main(void)
 	my_request("GET / HTTP/1.1\r\n Host: webserv\r\n\r\n", "400");
 	my_request("GET / HTTP/1.1\r\nHost: webserv \r\n\r\n", "content of index.html in root");
 	my_request("GET / HTTP/1.1\r\nHost:  webserv  \r\n\r\n", "400"); // AE only one whitespace
+	my_request("GET / HTTP/1.1\r\nHost:      webserv      \r\n\r\n", "400"); // AE only one whitespace
+	my_request("GET / HTTP/1.1\r\nHost:webserv      \r\n\r\n", "400"); // AE only one whitespace
+	my_request("GET / HTTP/1.1\r\nHost:    webserv\r\n\r\n", "400"); // AE only one whitespace
 	my_request("GET / HTTP/1.1\r\nHost : webserv\r\n\r\n", "400");
 	my_request("GET /route/dir/%25file HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of %file in dir");
 	my_request("GET /route/dir/%2file HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");

@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 using std::string;
 using std::map;
@@ -54,6 +55,8 @@ class Cgi
 		void passAsInput();
 		void passAsOutput();
 		void printEnv();
+		void cgi_exit(int pid_timer, int pid_cgi);
+
 
 		class ERROR_403 : public std::exception
 		{

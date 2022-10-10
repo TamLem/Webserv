@@ -485,7 +485,7 @@ void Server::handleRequest(int clientFd)
 			if (request.getMethod() == "POST")
 		#endif
 				this->handlePOST(clientFd, request);
-			else if (request.getMethod() == "DELETE")
+			else if (request.getMethod() == "DELETE" && this->_response.isCgi(clientFd) == false)
 			{
 				this->handleDELETE(request);
 				this->_response.putToResponseMap(clientFd);
@@ -498,7 +498,7 @@ void Server::handleRequest(int clientFd)
 				if (this->_socketHandler->isKeepAlive(clientFd))
 					this->_response.addHeaderField("connection", "keep-alive");
 				if (this->_response.isCgi(clientFd) == true)
-					this->cgi_handle(request, clientFd, this->_currentConfig, nullptr);
+					this->cgi_handle(request, clientFd, this->_currentConfig, NULL);
 				this->handleGET(request);
 				this->_response.putToResponseMap(clientFd);
 				this->_response.removeFromReceiveMap(clientFd);

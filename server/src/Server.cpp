@@ -485,7 +485,7 @@ void Server::handleRequest(int clientFd)
 			if (request.getMethod() == "POST")
 		#endif
 				this->handlePOST(clientFd, request);
-			else if (request.getMethod() == "DELETE" && this->_response.isCgi(clientFd) == false)
+			else if (request.getMethod() == "DELETE")
 			{
 				this->handleDELETE(request);
 				this->_response.putToResponseMap(clientFd);

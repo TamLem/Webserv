@@ -211,25 +211,25 @@ int main(void)
 {
 	// BAD REQUEST TESTS
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<INPUT>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
-	my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "200");
+	my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of index.html in root");
 	my_request("GET /  HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
 	my_request("GET  / HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
 	my_request(" GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
-	my_request("GET / HTTP/1.1\r\nHost:webserv\r\n\r\n", "200");
+	my_request("GET / HTTP/1.1\r\nHost:webserv\r\n\r\n", "content of index.html in root");
 	my_request("GET / HTTP/1.1\r\n Host: webserv\r\n\r\n", "400");
-	my_request("GET / HTTP/1.1\r\nHost: webserv \r\n\r\n", "200");
+	my_request("GET / HTTP/1.1\r\nHost: webserv \r\n\r\n", "content of index.html in root");
 	my_request("GET / HTTP/1.1\r\nHost:  webserv  \r\n\r\n", "400"); // AE only one whitespace
 	my_request("GET / HTTP/1.1\r\nHost : webserv\r\n\r\n", "400");
 	my_request("GET /route/dir/%25file HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of %file in dir");
-	my_request("GET /route/dir/%2file HTTP/1.1\r\nHost: webserv\r\n\r\n", "400"); // AE dangerous
+	my_request("GET /route/dir/%2file HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
 	my_request("GET /ü-ei HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
 	// my_request("", "408"); // timeout
-	my_request("\n", "400"); // AE problem
+	my_request("\n", "400");
 	my_request(" ", "400"); // AE problem
-	// my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
-	// my_request("GET .. HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
-	// my_request("GET ... HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE garbage
-	my_request("GET .../README.md HTTP/1.1\r\nHost: webserv\r\n\r\n", "200"); // AE ultra dangerous!!!
+	my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of index.html in root"); // AE garbage
+	my_request("GET .. HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of index.html in root"); // AE garbage
+	my_request("GET ... HTTP/1.1\r\nHost: webserv\r\n\r\n", "404"); // AE garbage
+	my_request("GET .../README.md HTTP/1.1\r\nHost: webserv\r\n\r\n", "404"); // AE ultra dangerous!!!
 	my_request("GET HTTP/1.1\r\nHost: webserv\r\n\r\n", "400");
 	my_request("GET / HTTP/1.0\r\nHost: webserv\r\n\r\n", "505");
 	my_request("GET / HTTP/1.1\r\nHost: webserv\r\nHost: webserv\r\n\r\n", "400");

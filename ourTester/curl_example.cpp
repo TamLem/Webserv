@@ -210,25 +210,25 @@ int main(void)
 {
 	// BAD REQUEST TESTS
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<INPUT>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
-	my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE);
+	my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of index.html in root", FILE_LINE);
 	my_request("GET /  HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
 	my_request("GET  / HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
 	my_request(" GET / HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
-	my_request("GET / HTTP/1.1\r\nHost:webserv\r\n\r\n", "200", FILE_LINE);
+	my_request("GET / HTTP/1.1\r\nHost:webserv\r\n\r\n", "content of index.html in root", FILE_LINE);
 	my_request("GET / HTTP/1.1\r\n Host: webserv\r\n\r\n", "400", FILE_LINE);
-	my_request("GET / HTTP/1.1\r\nHost: webserv \r\n\r\n", "200", FILE_LINE);
+	my_request("GET / HTTP/1.1\r\nHost: webserv \r\n\r\n", "content of index.html in root", FILE_LINE);
 	my_request("GET / HTTP/1.1\r\nHost:  webserv  \r\n\r\n", "400", FILE_LINE); // AE only one whitespace
 	my_request("GET / HTTP/1.1\r\nHost : webserv\r\n\r\n", "400", FILE_LINE);
 	my_request("GET /route/dir/%25file HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of %file in dir", FILE_LINE);
-	my_request("GET /route/dir/%2file HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE); // AE dangerous
+	my_request("GET /route/dir/%2file HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
 	my_request("GET /ü-ei HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
 	// my_request("", "408", FILE_LINE); // timeout
-	my_request("\n", "400", FILE_LINE); // AE problem
+	my_request("\n", "400", FILE_LINE);
 	my_request(" ", "400", FILE_LINE); // AE problem
-	my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE); // AE garbage
-	my_request("GET .. HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE); // AE garbage
-	my_request("GET ... HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE); // AE garbage
-	my_request("GET .../README.md HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE); // AE ultra dangerous!!!
+	my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of index.html in root", FILE_LINE); // AE garbage
+	my_request("GET .. HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of index.html in root", FILE_LINE); // AE garbage
+	my_request("GET ... HTTP/1.1\r\nHost: webserv\r\n\r\n", "404", FILE_LINE); // AE garbage
+	my_request("GET .../README.md HTTP/1.1\r\nHost: webserv\r\n\r\n", "404", FILE_LINE); // AE ultra dangerous!!!
 	my_request("GET HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
 	my_request("GET / HTTP/1.0\r\nHost: webserv\r\n\r\n", "505", FILE_LINE);
 	my_request("GET / HTTP/1.1\r\nHost: webserv\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
@@ -236,8 +236,8 @@ int main(void)
 	my_request("GET / HTTP/1.1\r\nUser-Agent: Go-http-client/1.1\r\n\r\n", "400", FILE_LINE);
 	// my_request("GET / HTTP/1.1\r\nHost: webserv\r\n\r", "408", FILE_LINE); // timeout
 	my_request("GET / HTTP/1.1\nHost: webserv\r\n\r\n", "400", FILE_LINE);
-	my_request("PST / HTTP/1.1\r\nHost: webserv\r\n\r\n", "501", FILE_LINE); // @AE not a valid HTTP method, so BadRequest should be here maybe?
-	my_request("POST /test.txt HTTP/1.1\r\nHost: webserv\r\n\r\n", "411", FILE_LINE);
+	my_request("PST / HTTP/1.1\r\nHost: webserv\r\n\r\n", "501", FILE_LINE);
+	my_request("POST /new.txt HTTP/1.1\r\nHost: webserv\r\n\r\n", "411", FILE_LINE);
 	my_request("GET 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 HTTP/1.1\r\nHost: webserv\r\n\r\n", "414", FILE_LINE);
 	my_request("POST /uploads/big.txt HTTP/1.1\r\nHost: webserv\r\ncontent-length: 200\r\n\r\n01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789", "413", FILE_LINE);
 	//////// GET

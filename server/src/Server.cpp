@@ -457,8 +457,10 @@ void Server::handleRequest(int clientFd)
 			// 	std::cout << RED << it2->first << " " << it2->second << RESET << std::endl;
 			// }
 			// std::cout << RED << this->_currentConfig.indexPage << RESET << std::endl;
-
-			request.setDecodedTarget(percentDecoding(request.getRawTarget()));
+			std::string tmp;
+			tmp = percentDecoding(request.getRawTarget());
+			tmp = resoluteTarget(tmp);
+			request.setDecodedTarget(tmp);
 			request.setQuery(percentDecoding(request.getQuery()));
 			this->_response.setIsCgi(clientFd, this->_isCgiRequest(request));
 			#ifdef SHOW_LOG_ROUTING

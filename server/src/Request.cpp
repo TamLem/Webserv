@@ -202,11 +202,14 @@ const std::string Request::createHeaderFieldValue(const std::string& message, co
 
 const std::string Request::removeLeadingAndTrailingWhilespaces(const std::string& message, size_t pos) const
 {
-	pos = message.find_first_not_of(WHITESPACE, pos + 1);
-	if (pos == std::string::npos)
+	size_t start;
+	start = message.find_first_not_of(WHITESPACE, pos + 1);
+	if (start == std::string::npos || start > pos + 2)
 		throw InvalidHeaderField();
 	size_t end = message.find_last_not_of(WHITESPACE);
-	return (message.substr(pos, end - pos + 1));
+	if (message.length() > end + 2)
+		throw InvalidHeaderField();
+	return (message.substr(start, end - start + 1));
 }
 
 bool Request::isValidHeaderFieldValue(const std::string& token) const

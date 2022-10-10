@@ -182,34 +182,56 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 		}
 	}
 	file = _pathInfo;
-	int pid = fork();
-	if (pid == -1)
+	int pid_cgi;
+	int pid_timer = fork();
+	if (pid_timer == 0)
 	{
-		close(cgi_out);
-		close(pipefd[0]);
+		sleep(2);
+		exit(0);
 	}
-	if (pid == 0)
-	{
-		dup2(cgi_out, STDOUT_FILENO);
-		close(cgi_out);
-		char **env = mapToStringArray(this->_env);
-		if (execve(executable.c_str(), args, env) == -1)
-		{
-			#ifdef SHOW_LOG_CGI
-			std::cerr << "error executing cgi" << std::endl;
-			#endif
-		}
-		free_env(env);
-		exit(1); // throw internal server error if this occurs
-	}
-	int wstatus;
-	waitpid(pid, &wstatus, 0);
-	if (!WIFEXITED(wstatus)|| WEXITSTATUS(wstatus) != 0)
-	{
+	else if (pid_timer == -1)
 		throw std::runtime_error("error executing cgi");
+	else
+	{
+		pid_cgi = fork();
+		if (pid_cgi == -1)
+		{
+			close(cgi_out);
+			close(pipefd[0]);
+		}
+		if (pid_cgi == 0)
+		{
+			dup2(cgi_out, STDOUT_FILENO);
+			close(cgi_out);
+			char **env = mapToStringArray(this->_env);
+			if (execve(executable.c_str(), args, env) == -1)
+			{
+				#ifdef SHOW_LOG_CGI
+				std::cerr << "error executing cgi" << std::endl;
+				#endif
+			}
+			free_env(env);
+			exit(1); // throw internal server error if this occurs
+		}
 	}
+	cgi_exit(pid_timer, pid_cgi);
 	dup2(stdin_init, STDIN_FILENO);
 	dup2(stdout_init, STDOUT_FILENO);
+}
+
+void Cgi::cgi_exit(int pid_timer, int pid_cgi)
+{
+	int wstatus;
+	while (waitpid(pid_timer, NULL, WNOHANG) == 0)
+	{
+		if (waitpid(pid_cgi, &wstatus, WNOHANG) == pid_cgi)
+			break;
+	}
+	if (!WIFEXITED(wstatus)|| WEXITSTATUS(wstatus) != 0)
+	{
+		kill(pid_cgi, SIGKILL);
+		throw std::runtime_error("error executing cgi");
+	}
 }
 
 const char *Cgi::CgiExceptionNotFound::what() const throw()

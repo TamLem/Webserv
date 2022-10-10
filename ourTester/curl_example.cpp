@@ -225,9 +225,9 @@ int main(void)
 	// my_request("", "408", FILE_LINE); // timeout
 	my_request("\n", "400", FILE_LINE); // AE problem
 	my_request(" ", "400", FILE_LINE); // AE problem
-	// my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE); // AE garbage
-	// my_request("GET .. HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE); // AE garbage
-	// my_request("GET ... HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE); // AE garbage
+	my_request("GET . HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE); // AE garbage
+	my_request("GET .. HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE); // AE garbage
+	my_request("GET ... HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE); // AE garbage
 	my_request("GET .../README.md HTTP/1.1\r\nHost: webserv\r\n\r\n", "200", FILE_LINE); // AE ultra dangerous!!!
 	my_request("GET HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
 	my_request("GET / HTTP/1.0\r\nHost: webserv\r\n\r\n", "505", FILE_LINE);
@@ -278,9 +278,10 @@ int main(void)
 	curl_post("http://webserv/uploads/new.txt", "201", FILE_LINE);
 	curl_post("http://webserv/uploads/new.txt", "201", FILE_LINE);
 	curl_post("http://webserv/uploads/newdir/", "400", FILE_LINE); // create directory is not possible
-	curl_post("http://webserv/uploads/doesnotexist/new.txt", "400", FILE_LINE);
-	curl_post("http://webserv/uploads/cgi/new.txt", "201", FILE_LINE); // AE investigate
+	curl_post("http://webserv/uploads/doesnotexist/new.txt", "404", FILE_LINE); // changed to be 404 instead of 400
+	curl_post("http://webserv/uploads/cgi/new.txt", "403", FILE_LINE); // 403 because cgi directory has no permissions
 	curl_post("http://webserv/uploads/new.cgi", "THIS IS THE CONTENT OF MY NEW FILE.", FILE_LINE);
+	curl_post("http://webserv/uploads/new.cgi", "200", FILE_LINE); // RFC says 201 should only be returned on cration of a ressource, so no reason to return 201 on a cgi POST
 	curl_post("http://webserv/uploads/file.cgi.not", "201", FILE_LINE);
 	curl_post("http://webserv/uploads/.cgi", "201", FILE_LINE);
 	curl_post("http://server1:6000/route/file.cgi", "500", FILE_LINE); //no executepermission for cgi executable
@@ -290,14 +291,15 @@ int main(void)
 	//////// DELETE
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<DELETE>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_delete("http://webserv/uploads/new.txt", "204", FILE_LINE);
-	// curl_delete("http://webserv/uploads/newdir/", "204", FILE_LINE); // would have to be created first
-	curl_delete("http://webserv/uploads/cgi/new.txt", "204", FILE_LINE);
+	curl_delete("http://webserv/uploads/newdir/", "204", FILE_LINE); // would have to be created first
+	curl_delete("http://webserv/uploads/cgi/new.txt", "404", FILE_LINE); // cgi directory has no permissions
 	curl_delete("http://webserv/uploads/file.cgi.not", "204", FILE_LINE);
 	curl_delete("http://webserv/uploads/.cgi", "204", FILE_LINE);
 	curl_delete("http://webserv/uploads/doesnotexist", "404", FILE_LINE);
-	curl_delete("http://webserv/uploads/nonexisting.cgi", "404", FILE_LINE);
-	curl_delete("http://webserv/uploads/nopermission.cgi", "???", FILE_LINE); // would have to be created first
-	curl_delete("http://webserv/uploads/todelete.cgi", "???", FILE_LINE); // would have to be created first
+	curl_delete("http://webserv/uploads/nonexisting.cgi", "404", FILE_LINE); // file to call the cgi on is not existing
+	curl_get("http://webserv/uploads/nopermissionfile.cgi", "403", FILE_LINE); // file to call the cgi on has no permissions
+	curl_delete("http://webserv/uploads/cgi/nopermissionfile.cgi", "404", FILE_LINE); // has no permissions inside the cgi directory
+	curl_delete("http://webserv/uploads/todelete.cgi", "204", FILE_LINE);
 }
 
 //c++ curl_example.cpp -o curl_example -lcurl && ./curl_example

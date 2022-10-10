@@ -139,7 +139,7 @@ void Cgi::passAsOutput(void)
 	int fileFd = open(this->_pathTranslated.c_str(), O_WRONLY);
 	if (fileFd == -1)
 	{
-		LOG_RED("cgi resource not found");
+		LOG_RED("cgi resource not found"); // disappeares into the child
 		std::cerr << RED << "cgi resource out not found" << RESET << std::endl;
 		throw ERROR_500();
 	}
@@ -168,7 +168,7 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 	executable = _scriptName;
 	pipe(pipefd);
 	#ifdef SHOW_LOG_CGI
-		LOG_GREEN("Init cgi executable: " << executable);
+		LOG_GREEN("Init cgi executable: " << executable); // might disappear into nothingness aka dup
 	#endif
 	if (!_selfExecuting && this->_method == "GET")
 	{
@@ -185,7 +185,7 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 		lseek(infileFd, 0, SEEK_SET);
 		if (dup2(infileFd, STDIN_FILENO == -1))
 		{
-			std::cout << "dup2 failed" << std::endl;
+			std::cout << "dup2 failed" << std::endl; // better error printing please!
 			throw std::exception();
 		}
 	}

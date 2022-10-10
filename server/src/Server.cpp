@@ -493,7 +493,7 @@ void Server::handleRequest(int clientFd)
 			else
 			{
 				if (this->_response.isCgi(clientFd) == true)
-					this->cgi_handle(request, clientFd, this->_currentConfig, nullptr);
+					this->cgi_handle(request, clientFd, this->_currentConfig, NULL);
 				this->handleGET(request);
 				this->_response.putToResponseMap(clientFd);
 				this->_response.removeFromReceiveMap(clientFd);

@@ -72,13 +72,20 @@ void Response::receiveChunk(int i)
 		std::ofstream buffer;
 		char chunk[bufferSize];
 		buffer.open(this->_receiveMap[i].target.c_str(), std ::ios::out | std::ios_base::app | std::ios::binary);
+		if (access(this->_receiveMap[i].target.c_str(), W_OK) != 0)
+		{
+			if (errno == ENOENT)
+			{
+				throw ERROR_404();
+			}
+			else if (errno == EACCES)
+				throw ERROR_403();
+			else
+				throw ERROR_500();
+		}
 
 		if (buffer.is_open() == false)
 		{
-			if (errno == ENOENT)
-				throw ERROR_404();
-			if (errno == EACCES)
-				throw ERROR_403();
 			throw ERROR_500();
 			// throw Response::ERROR_423();
 		}

@@ -427,6 +427,9 @@ void Server::handleRequest(int clientFd)
 			{
 				Request tempRequest(this->_response.getRequestHead(clientFd));
 				this->applyCurrentConfig(tempRequest);
+				tempRequest.setDecodedTarget(percentDecoding(tempRequest.getRawTarget()));
+				tempRequest.setQuery(percentDecoding(tempRequest.getQuery()));
+				this->matchLocation(tempRequest);
 				this->cgi_handle(tempRequest, clientFd, this->_currentConfig, this->_response.getTempFile(clientFd));
 				this->_response.removeFromReceiveMap(clientFd);
 			}
@@ -490,6 +493,8 @@ void Server::handleRequest(int clientFd)
 			}
 			else
 			{
+				if (this->_socketHandler->isKeepAlive(clientFd))
+					this->_response.addHeaderField("connection", "keep-alive");
 				if (this->_response.isCgi(clientFd) == true)
 					this->cgi_handle(request, clientFd, this->_currentConfig, nullptr);
 				this->handleGET(request);
@@ -603,18 +608,23 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FIL
 	catch(const std::exception& e)
 	{
 		fclose(infile);
+		infile = NULL;
 		fclose(outFile);
+		outFile = NULL;
 		this->_cgiSockets.erase(fd);
 		// this->_cgiSockets[fd] = nullptr;
 		#ifdef SHOW_LOG_CGI
 			LOG_RED('\t' << e.what());
 		#endif
-		if (std::string(e.what()) == "400")
-			throw Response::ERROR_404(); //@tblaase, can you catch this exceptions and send error response
+		if (std::string(e.what()) == "403")
+			throw Response::ERROR_403();
+		else if (std::string(e.what()) == "404")
+			throw Response::ERROR_404();
 		else
 			throw Response::ERROR_500();
 	}
 	fclose(infile);
+	infile = NULL;
 }
 
 void Server::cgi_response_handle(int clientFd)
@@ -623,7 +633,7 @@ void Server::cgi_response_handle(int clientFd)
 		LOG_GREEN("\tcgi_response_handle");
 	#endif
 	FILE *outFile = this->_cgiSockets[clientFd];
-	if (!outFile) 
+	if (!outFile)
 		throw Response::ERROR_500();
 	int cgi_out = fileno(outFile);
 	lseek(cgi_out, 0, SEEK_SET);
@@ -640,12 +650,14 @@ void Server::cgi_response_handle(int clientFd)
 		this->_response.putToResponseMap(clientFd);
 		this->_cgiSockets.erase(clientFd);
 		fclose(outFile);
+		outFile = NULL;
 	}
 	catch(const std::exception& e)
 	{
 		fclose(outFile);
+		outFile = NULL;
 		this->_cgiSockets.erase(clientFd);
-		throw Response::ERROR_500();	
+		throw Response::ERROR_500();
 	}
 
 }

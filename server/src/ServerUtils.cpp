@@ -62,6 +62,8 @@ std::string Server::percentDecoding(const std::string& str)
 		{
 			if (str[i + 1] == '\0' || str[i + 2] == '\0')
 				throw InvalidHex();
+			if (isdigit(str[i + 1]) != true || isdigit(str[i + 2]) != true)
+				throw InvalidHex();
 			c = char(strtol(str.substr(i + 1, 2).c_str(), NULL, 16));
 			if (c == 0)
 				throw InvalidHex();

@@ -4,6 +4,8 @@
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="style.css">
 	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+	<script src="script.js" defer></script>
+
 	<!-- Latest compiled and minified CSS -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
 
@@ -39,31 +41,27 @@
 			</div>
 		</div>
 
+		<iframe name="hidden-frame" src="" frameborder="0"></iframe>
+
 		<!-- file upload form -->
 		<div class="row justify-content-center" style="width:100%;">
-			<div class="col-4 form-div">
-				<form action="" id='upload-form' method="post" enctype="multipart/form-data">
+			<form action="" autocomplete="off">
+				<div class="col-2 form-div">
 					<div class="form-group">
-						<label for="file" style="margin-bottom: 20px; font-size: 16px;">File Upload</label>
-						<input type="file" name="file" id="file">
-						<p class="help-block">Upload a file</p>
+						<h4 for="file" style="margin-bottom: 20px; font-size: 16px;">File Upload</h4>
+						<input type="file" class="form-control" name="file" id="file" value="" required>
+						<label for="file" class="help-block">Upload a file</p>
 					</div>
-					<button id="upload-btn "type="submit" class="btn btn-default">Upload</button>
-				</form>
-			</div>
+					<button id="upload-btn" class="btn btn-primary" type="submit" class="btn btn-default">Upload</button>
+				</div>
+			</form>
 		</div>
+
+		<h4 id="upload-msg" style="display: none; color: green; text-align: center;"></h4>
 	</div>
 	
 	<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
-	<script>
-		document.getElementById('file').addEventListener('change', function() {
-			const uploadPath = '/uploads/' + this.value.substr(this.value.lastIndexOf('\\') + 1);
-			console.log('upload path: ', uploadPath);
-			document.getElementById('upload-form').setAttribute('action', uploadPath);
-
-		});
-	</script>
 </body>
 
 </html>

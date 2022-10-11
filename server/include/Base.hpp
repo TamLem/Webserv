@@ -33,6 +33,7 @@
 #define SP ' '
 #define CR '\r'
 #define TCHAR "!#$%&'*+-.^_`|~"
+#define HTTP_PORT "80"
 
 // defines for reading from client
 #define MAX_REQUEST_LINE_SIZE 512 // change this to increase the max length of accepted URI

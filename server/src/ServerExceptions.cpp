@@ -36,7 +36,7 @@ const char* Server::ContentTooLargeException::what() const throw()
 	return ("413");
 }
 
-const char* Server::ClientDisconnect::what() const throw()
-{
-	return ("client disconnect");
-}
+// const char* Server::ClientDisconnect::what() const throw()
+// {
+// 	return ("client disconnect");
+// }

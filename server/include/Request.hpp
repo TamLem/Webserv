@@ -23,7 +23,6 @@ class Request : public Message
 	// private Members
 		std::set<std::string> validMethods;
 		std::string method;
-		std::string url; // AE remove
 		std::string decodedTarget;
 		std::string routedTarget;
 		std::string query;
@@ -59,7 +58,6 @@ class Request : public Message
 		void setQuery(const std::string&);
 
 		const std::string& getMethod(void) const;
-		const std::string& getUrl(void) const;
 		const std::string& getRawTarget(void) const;
 		const std::string& getDecodedTarget(void) const;
 		const std::string& getRoutedTarget(void) const;

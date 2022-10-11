@@ -55,7 +55,7 @@ void SocketHandler::_initMainSockets()
 			std::cerr << RED << "Error binding socket: " << tempFD << std::endl;
 			perror(NULL);
 			std::cerr << RESET;
-			exit(EXIT_FAILURE); // maybe change to throw
+			throw std::exception();
 		}
 		std::cout << GREEN << "succeccfully bound socket " << *portsIt << RESET << std::endl;
 	}
@@ -226,7 +226,7 @@ bool SocketHandler::removeClient(int i, bool force)
 			else
 			{
 				std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl;
-				exit(112); // carefull with exit please!!!! THIS IS BAD, NEVER EXIT!!!!
+				// exit(112); // carefull with exit please!!!! THIS IS BAD, NEVER EXIT!!!!
 			}
 		}
 	// }

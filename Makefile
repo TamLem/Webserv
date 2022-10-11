@@ -118,6 +118,12 @@ run: all
 ae: all
 	./$(NAME) server/config/ae.conf
 
+site: all
+	./$(NAME) server/config/site.conf
+
+trans: all
+	./$(NAME) server/config/trans.conf
+
 42: all
 	./$(NAME) server/config/42tester.conf
 
@@ -136,4 +142,4 @@ rm42tester:
 	-rm 42tester/post_body
 
 #phony
-.PHONY: all clean fclean re run tester
+.PHONY: all clean fclean re run ae 42 our tester rmtester rm42tester

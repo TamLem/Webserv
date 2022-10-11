@@ -198,7 +198,7 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 		exit(0);
 	}
 	else if (pid_timer == -1)
-		throw std::runtime_error("error executing cgi");
+		throw std::runtime_error("error forking");
 	else
 	{
 		pid_cgi = fork();
@@ -235,7 +235,7 @@ void Cgi::cgi_exit(int pid_timer, int pid_cgi)
 		if (waitpid(pid_cgi, &wstatus, WNOHANG) == pid_cgi)
 			break;
 	}
-	if (!WIFEXITED(wstatus)|| WEXITSTATUS(wstatus) != 0)
+	if (!WIFEXITED(wstatus))
 	{
 		kill(pid_cgi, SIGKILL);
 		throw std::runtime_error("error executing cgi");

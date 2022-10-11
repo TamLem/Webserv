@@ -46,22 +46,12 @@ void Response::receiveChunk(int i)
 				return ;
 			}
 			this->_receiveMap[i].bytesLeft = this->_receiveMap[i].total;
-			// bufferSize = this->_receiveMap[i].bufferSize;
 		}
-		// else
-		// {
-		// 	total = this->_receiveMap[i].total;
-		// 	bytesLeft = this->_receiveMap[i].bytesLeft;
-		// 	bufferSize = this->_receiveMap[i].bufferSize;
-		// }
 	}
-	// else
-	// {
-		total = this->_receiveMap[i].total;
-		bytesLeft = this->_receiveMap[i].bytesLeft;
-		bufferSize = this->_receiveMap[i].bufferSize;
-	// }
-// opening the file and checking if its open
+	total = this->_receiveMap[i].total;
+	bytesLeft = this->_receiveMap[i].bytesLeft;
+	bufferSize = this->_receiveMap[i].bufferSize;
+
 	if (this->_receiveMap[clientFd].isCgi == true)
 	{
 		this->_readForCgi(clientFd);
@@ -87,7 +77,6 @@ void Response::receiveChunk(int i)
 		if (buffer.is_open() == false)
 		{
 			throw ERROR_500();
-			// throw Response::ERROR_423();
 		}
 	// reading part
 		else if (total > bufferSize && bytesLeft > bufferSize)
@@ -107,7 +96,6 @@ void Response::receiveChunk(int i)
 
 		#ifdef SHOW_LOG_2
 			std::cout << BOLD << GREEN << "Bytes received from " << clientFd << ": " << n << RESET << std::endl;
-			// LOG_YELLOW(chunk); // REMOVE AFTER TESTING, this might break the server if a non text file is in the body!!
 		#endif
 	// checking for errors of read
 		if (n > 0)
@@ -127,10 +115,12 @@ void Response::receiveChunk(int i)
 			buffer.close();
 			throw Response::BadRequestException();
 		}
+
 	// writing the read contents to the file
 		// buffer[n] = '\0' // this would be needed for the next line
 		// buffer << chunk; // this will stop writing if encounters a '\0', wich can happen in binary data!
 		buffer.write(chunk, n); // with this there can even be a '\0' in there, it wont stop writing
+
 	// setting the bytesLeft and checking if all content was read
 		if (bytesLeft)
 		{
@@ -148,16 +138,12 @@ void Response::receiveChunk(int i)
 			this->_receiveMap[i].bytesLeft = bytesLeft;
 			buffer.close();
 		}
-		else /* if (this->_receiveMap[i].isChunked == false) */
+		else
 		{
 			buffer.close();
 			this->removeFromReceiveMap(clientFd);
 			this->constructPostResponse();
 			this->putToResponseMap(clientFd);
-			// std::string abc = this->_responseMap[clientFd].response;
-			// total = abc.length();
-			// this->_responseMap[clientFd].total = this->_responseMap[clientFd].response.length();
-			// this->_responseMap[clientFd].bytesLeft = this->_responseMap[clientFd].response.length();
 		}
 	}
 }
@@ -190,7 +176,6 @@ void Response::_readForCgi(size_t clientFd)
 
 	#ifdef SHOW_LOG_2
 		std::cout << BOLD << GREEN << "Bytes received from " << clientFd << ": " << n << RESET << std::endl;
-		// LOG_YELLOW(chunk); // REMOVE AFTER TESTING, this might break the server if a non text file is in the body!!
 	#endif
 // checking for errors of read
 	if (n > 0)
@@ -211,11 +196,13 @@ void Response::_readForCgi(size_t clientFd)
 		this->_tempFile.erase(clientFd);
 		throw Response::BadRequestException();
 	}
+
 // writing the read contents to the file
 	// buffer[n] = '\0' // this would be needed for the next line
 	// buffer << chunk; // this will stop writing if encounters a '\0', wich can happen in binary data!
 	size_t count = n;
 	this->_receiveMap[clientFd].bytesWritten += fwrite(chunk, sizeof(char), count, this->_tempFile[clientFd]); // with this there can even be a '\0' in there, it wont stop writing
+
 // setting the bytesLeft and checking if all content was read
 	if (bytesLeft)
 	{
@@ -231,7 +218,7 @@ void Response::_readForCgi(size_t clientFd)
 			throw Response::BadRequestException();
 		this->_receiveMap[clientFd].bytesLeft = bytesLeft;
 	}
-	else /* if (this->_receiveMap[i].isChunked == false) */
+	else
 	{
 		this->_receiveMap[clientFd].end = true;
 	}
@@ -363,29 +350,6 @@ void Response::setPostTarget(int clientFd, std::string target)
 }
 
 /**
- * @brief  checks existance of the target specified by the request
- * @note   POST can not write to a file that already is existing
- * @param  clientFd: clients filedescriptor
- * @param  &request: the request object
- * @param  port: the port that was used for the request
- * @retval None
- */
-// void Response::checkPostTarget(int clientFd, const Request &request, int port)
-// {
-// 	std::string target = request.getRoutedTarget();
-// 	if (access(target.c_str(), F_OK ) != -1)
-// 	{
-// 		this->removeFromReceiveMap(clientFd);
-// 		#ifdef SHOW_LOG_2
-// 			std::stringstream message;
-// 			message << "file " << target << " is already existing";
-// 			LOG_RED(message.str());
-// 		#endif
-// 		// this->_createFileExistingHeader(clientFd, request, port);
-// 	}
-// }
-
-/**
  * @brief  converts a string to a size_t, similar to atoi
  * @note
  * @param  str: the string that contains the number you want to convert
@@ -482,44 +446,3 @@ void Response::setIsCgi(int clientFd, bool state)
 	#endif
 	this->_receiveMap[clientFd].end = false;
 }
-
-
-
-////////// LEGACY CONTENT BELOW//////////
-
-// /**
-//  * @brief  creates a 303 response header for POST requests if the file is already existing
-//  * @note
-//  * @param  clientFd: clients filedescriptor
-//  * @param  &request: the request object
-//  * @param  port: the port on which the request came
-//  * @retval None
-//  */
-// void Response::_createFileExistingHeader(int clientFd, const Request &request, int port)
-// {
-// 	std::stringstream serverNamePort;
-// 	serverNamePort << request.getHostName() << ":" << port; // creates ie. localhost:8080
-// // clear all the unused data
-// 	this->headerFields.clear();
-// 	this->body.clear();
-// 	this->removeFromReceiveMap(clientFd);
-// 	this->removeFromResponseMap(clientFd);
-// // set all the data for the header
-// 	this->setProtocol(PROTOCOL);
-// 	this->setStatus("303");
-// 	std::string location = "http://" + serverNamePort.str() + request.getRawTarget();
-// 	this->addHeaderField("location", location);
-// 	this->addHeaderField("Connection", "close");
-// 	this->addHeaderField("Host", serverNamePort.str());
-// 	// this->setBody("http://" + serverNamePort.str() + request.getRawTarget()); // for testing only!!!
-
-// 	this->putToResponseMap(clientFd);
-// // only for testing !!!!!! removes all leftover contents from the clientFd // ILLEGAL READ !!!!!!
-// 	// char buffer[2];
-// 	// while (read(clientFd, buffer, 1) > 0)
-// 	// {
-// 	// 	buffer[1] = '\0';
-// 	// 	LOG_YELLOW(buffer);
-// 	// }
-// //
-// }

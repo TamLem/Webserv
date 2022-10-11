@@ -3,7 +3,7 @@
 #include "Cgi/Cgi.hpp"
 #include "Utils.hpp"
 #include <dirent.h> // dirent, opendir
-#include <cstdio> // remove
+// #include <cstdio> // remove
 
 
 
@@ -15,20 +15,13 @@ void Server::handle_signal(int sig)
 		std::cerr << BLUE << "SIGINT detected, terminating server now" << RESET << std::endl;
 		keep_running = 0;
 	}
-	else if (sig == SIGPIPE)
-	{
-		std::cerr << RED << "SIGPIPE detected, will end now" << RESET << std::endl;
-		keep_running = 0;
-	}
 }
 
 void Server::handle_signals(void)
 {
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
-	// signal(SIGPIPE, SIG_IGN);
 	signal(SIGINT, handle_signal);
-	// signal(SIGPIPE, handle_signal);
 }
 
 Server::Server(Config* config): _config(config), _socketHandler(new SocketHandler(_config))
@@ -59,7 +52,7 @@ void Server::runEventLoop()
 		int clientFd = -1;
 
 		tryRemove:
-		clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
+		clientFd = this->_socketHandler->removeInactiveClients();
 		if (clientFd != -1 && this->_response.isInResponseMap(clientFd) == false)
 		{
 			this->_socketHandler->removeKeepAlive(clientFd);
@@ -97,7 +90,7 @@ void Server::runEventLoop()
 				this->_socketHandler->setTimeout(clientFd);
 				continue ;
 			}
-			else if (this->_socketHandler->readFromClient(i) == true) /* && this->_response.isInResponseMap(this->_socketHandler->getFD(i)) == false */
+			else if (this->_socketHandler->readFromClient(i) == true)
 			{
 				#ifdef SHOW_LOG_2
 					std::cout << BLUE << "read from client " << clientFd << RESET << std::endl;
@@ -109,12 +102,12 @@ void Server::runEventLoop()
 					if (this->_response.isInReceiveMap(clientFd) == false)
 					{
 						this->_socketHandler->setWriteable(i);
-						this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_READ); // removes any possible read event that is still left
+						this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_READ);
 					}
 				}
 				catch(const std::exception& e)
 				{
-					this->_socketHandler->removeKeepAlive(clientFd); // needed so that the force remove works
+					this->_socketHandler->removeKeepAlive(clientFd);
 					#ifdef SHOW_LOG_EXCEPTION
 						std::cerr << YELLOW << "Exception: " << e.what() << RESET << '\n';
 					#endif
@@ -122,7 +115,7 @@ void Server::runEventLoop()
 					removeClientTraces(clientFd);
 				}
 			}
-			else if (this->_socketHandler->writeToClient(i) == true /* &&  !isCgiSocket(clientFd)   && this->_response.isInResponseMap(clientFd) */) // this commented part is a dirty workaround, only use it for testing!!!!
+			else if (this->_socketHandler->writeToClient(i) == true)
 			{
 				#ifdef SHOW_LOG_2
 					std::cout << BLUE << "write to client" << clientFd << RESET << std::endl;
@@ -142,8 +135,6 @@ void Server::runEventLoop()
 				}
 				if (this->_response.sendRes(clientFd) == true)
 				{
-					// if (this->_response.was3XXCode(clientFd) == false)
-					// 	this->_socketHandler->removeKeepAlive(clientFd);
 					if (this->_socketHandler->isKeepAlive(clientFd) == true && this->_response.isInResponseMap(clientFd) == false)
 					{
 						this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_READ);
@@ -161,7 +152,7 @@ void Server::runEventLoop()
 						this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_WRITE);
 				}
 			}
-			else if (/* this->_response.isInReceiveMap(this->_socketHandler->getFD(i)) == 0 &&  */this->_socketHandler->removeClient(i) == true) // removes inactive clients ???? really?
+			else if (this->_socketHandler->removeClient(i) == true)
 			{
 				removeClientTraces(clientFd);
 			}
@@ -169,21 +160,9 @@ void Server::runEventLoop()
 	}
 }
 
-// bool Server::isCgiSocket(int clientFd)
-// {
-// 	for (std::map<int, FILE *>::iterator it = this->_cgiSockets.begin(); it != this->_cgiSockets.end(); ++it)
-// 	{
-// 		if (it->second == clientFd)
-// 			return true;
-// 	}
-// 	return false;
-// }
-
-
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	// if (request.isFile == false && targetExists(request.getRoutedTarget() + request.indexPage) == false)
 	if (request.isFile == false)
 	{
 		if (targetExists(request.getRoutedTarget() + request.indexPage) == false)
@@ -201,7 +180,6 @@ void Server::handleGET(const Request& request)
 	}
 	else
 		_response.createBodyFromFile(request.getRoutedTarget());
-		// _response.createBodyFromFile(request.getRoutedTarget() + request.indexPage);
 	_response.addHeaderField("server", this->_currentConfig.serverName);
 	_response.addContentLengthHeaderField();
 	_response.setStatus("200");
@@ -334,9 +312,6 @@ void Server::applyCurrentConfig(const Request& request)
 		}
 		this->_currentConfig = this->_config->getConfigStruct(DEFAULT_SERVER_NAME);
 	}
-	// if (tokens.size() == 2)
-	// check port against portlist from config
-	//if server_name wrong -> default DEFAULT_SERVER_NAME
 }
 
 // removes any data of the client from _responseMap, _receiveMap, _tempFile and _keepalive
@@ -469,7 +444,7 @@ void Server::_readRequestHead(int clientFd)
 			#endif
 			throw Server::BadRequestException();
 		}
-		else if (n < 0) // read had an error reading from fd, was failing PUT
+		else if (n < 0)
 		{
 			#ifdef SHOW_LOG_2
 				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED, EOF OR CLIENT DISCONNECT" << std::endl;
@@ -546,7 +521,6 @@ void Server::cgi_handle(Request& request, int fd, ConfigStruct configStruct, FIL
 		fclose(outFile);
 		outFile = NULL;
 		this->_cgiSockets.erase(fd);
-		// this->_cgiSockets[fd] = nullptr;
 		#ifdef SHOW_LOG_CGI
 			LOG_RED('\t' << e.what());
 		#endif

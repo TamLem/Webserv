@@ -185,7 +185,7 @@ void Config::_createConfigStruct(std::string server)
 	#endif
 }
 
-ConfigStruct Config::_initConfigStruct() // think about using defines in the Base.hpp or Config.hpp to set the default value so they are easy to change!!!!!
+ConfigStruct Config::_initConfigStruct()
 {
 	ConfigStruct confStruct;
 	confStruct.serverName = "";

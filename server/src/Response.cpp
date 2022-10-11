@@ -1,12 +1,11 @@
 #include "Response.hpp"
 #include "Utils.hpp"
 
-//// might be temporary
 	bool Response::isInResponseMap(int clientFd)
 	{
 		return (this->_responseMap.count(clientFd));
 	}
-////
+
 bool Response::isValidStatus(const std::string& status)
 {
 	if (this->messageMap.count(status))
@@ -93,16 +92,6 @@ void Response::setProtocol(const std::string& protocol)
 	this->protocol = protocol;
 }
 
-// bool Response::was3XXCode(int clientFd)
-// {
-// 	(void)clientFd;
-// 	// if (this->_responseMap.count(clientFd))
-// 		// return (this->_responseMap[clientFd].status[0] == '3');
-// 		return (this->status[0] == '3');
-// 	// else
-// 	// 	return (false);
-// }
-
 const std::string& Response::getStatus(void) const
 {
 	return (this->status);
@@ -131,22 +120,10 @@ void Response::putToResponseMap(int fd)
 {
 	// i purposly do not check for existance before writing to it so that everything would be overridden if it existed
 
-	// this->_responseMap[fd].buffer = ""; // LEGACY
-	// this->_responseMap[fd].header = ""; // LEGACY
 	this->_responseMap[fd].response = this->getResponse();
 	this->_responseMap[fd].total = this->_responseMap[fd].response.length();
 	this->_responseMap[fd].bytesLeft = this->_responseMap[fd].total;
 }
-
-// std::string Response::constructHeader(void) // not sure where the other construct header came from, check this!!!!
-// {
-// 	std::stringstream buffer;
-// 	// buffer << this->constructHeader();
-// 	buffer << this->getBody();
-// 	buffer << CRLFTWO;
-
-// 	return (buffer.str());
-// }
 
 std::string Response::constructHeader(void)
 {
@@ -240,20 +217,11 @@ static bool staticTargetIsDir(const std::string& target) // AE does this work wh
 void Response::createBodyFromFile(const std::string& target)
 {
 	std::stringstream tempBody;
-	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
-	// if (access(target.c_str(), F_OK) != 0 && errno == EACCES)
-	// if (access(target.c_str(), F_OK) != 0)
-	// 	throw ERROR_404();
-	// if (access(target.c_str(), R_OK) != 0)
-	// 	throw ERROR_403();
-	// if (targetExists(target) == false || staticTargetIsDir(target) == true)
-	// 	throw ERROR_404();
 	if (staticTargetIsDir(target) == true)
 		throw ERROR_404();
 	std::ifstream file(target.c_str(), std::ios::binary);
 	if (file.is_open())
 	{
-		// std::cerr << BOLD << RED << "open" << RESET << std::endl;
 		tempBody << file.rdbuf();
 		file.close();
 		this->body = tempBody.str();
@@ -271,12 +239,8 @@ void Response::createBodyFromFile(const std::string& target)
 void Response::addContentLengthHeaderField(void)
 {
 	std::stringstream contentLength;
-	// addHeaderField("Server", "localhost:8080");
-	// if (headerFields.count("transfer-encoding") == 0)
-	// {
-		contentLength << this->body.length();
-		addHeaderField("content-length", contentLength.str());
-	// }
+	contentLength << this->body.length();
+	addHeaderField("content-length", contentLength.str());
 }
 
 void Response::createMessageMap(void)
@@ -423,11 +387,6 @@ const char* Response::NegativeDecimalsNotAllowedException::what(void) const thro
 	return ("400");
 }
 
-// const char* Response::ClientDisconnect::what(void) const throw()
-// {
-// 	return ("client disconnect");
-// }
-
 const char* Response::MissingChunkContentLengthException::what(void) const throw()
 {
 	return ("411");
@@ -437,45 +396,3 @@ const char* Response::BadRequestException::what(void) const throw()
 {
 	return ("400");
 }
-
-
-
-/********** LEGACY CODE BELOW **********/
-
-// int Response::sendall(const int sock_fd, char *buffer, const int len) const
-// {
-// 	int total;
-// 	int bytesleft;
-// 	int n;
-
-// 	total = len;
-// 	bytesleft = len;
-// 	while (total > 0)
-// 	{
-// 		n = send(sock_fd, buffer, bytesleft, 0);
-// 		if (n == -1)
-// 		{
-// 			perror("send");
-// 			return (-1);
-// 		}
-// 		total -= n;
-// 		bytesleft -= n;
-// 		buffer += n;
-// 	}
-// 	close(sock_fd);
-// 	#ifdef SHOW_LOG
-// 		std::cout << RED << "fd: " << sock_fd << " was closed after sending response" << RESET << std::endl;
-// 	#endif
-// 	return (0);
-// }
-
-// std::string Response::constructChunkedHeader(void)
-// {
-// 	std::stringstream stream;
-
-// 	stream << this->protocol << " " << this->status << " " << this->statusMessage << CRLF;
-// 	// stream << "Content-Type: " << "image/jpg" << CRLF;
-// 	stream << "Transfer-Encoding: chunked" << CRLFTWO;
-
-// 	return (stream.str());
-// }

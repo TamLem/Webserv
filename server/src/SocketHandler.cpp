@@ -30,7 +30,7 @@ void SocketHandler::_initMainSockets()
 			std::cerr << RED << "Error creating socket" << std::endl;
 			perror(NULL);
 			std::cerr << RESET;
-			return; // throw error
+			return;
 		}
 		else
 		{
@@ -71,7 +71,7 @@ void SocketHandler::_listenMainSockets()
 			std::cerr << RED << "Error listening" << std::endl;
 			perror(NULL);
 			std::cerr << RESET;
-			return; // throw error
+			return;
 		}
 		else
 		{
@@ -88,7 +88,7 @@ void SocketHandler::_initEventLoop()
 		std::cerr << RED << "Error creating kqueue" << std::endl;
 		perror(NULL);
 		std::cerr << RESET;
-		return; // throw error
+		return;
 	}
 	for (std::vector<int>::const_iterator it = this->_serverFds.begin(); it != this->_serverFds.end(); ++it)
 	{
@@ -108,7 +108,7 @@ bool SocketHandler::acceptConnection(int i)
 			std::cerr << RED << "Error accepting connection" << std::endl;
 			perror(NULL);
 			std::cerr << RESET;
-			return true; // throw exception here
+			return true;
 		}
 		#ifdef SHOW_LOG
 			std::cout << GREEN << "New connection on socket " << fd << RESET << std::endl;
@@ -125,7 +125,7 @@ bool SocketHandler::acceptConnection(int i)
 			std::cerr << RED << "Error adding client, another client already existing on socket" << std::endl;
 			perror(NULL);
 			std::cerr << RESET;
-			return true; // throw exception here
+			return true;
 		}
 		return true;
 	}
@@ -141,7 +141,6 @@ void SocketHandler::setNoSigpipe(int fd)
 {
 	int val = 1;
 	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
-	// setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // just for testing!!!!!
 }
 
 void SocketHandler::addSocket(int fd)
@@ -161,9 +160,7 @@ int SocketHandler::getEvents()
 	#ifdef SHOW_LOG
 		std::cout << "num clients: " << _clients.size() << std::endl;
 	#endif
-	// memset(this->_evList, 0, sizeof(this->_evList)); // just for testing!!!!!!
-	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, &timeout); // use this for final working version
-	// int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL); // use this only for testing !!!!!!
+	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, &timeout);
 	#ifdef SHOW_LOG
 		std::stringstream debug;
 		if (numEvents > 0)
@@ -228,11 +225,10 @@ bool SocketHandler::readFromClient(int i)
 		int status = this->_getClient(fd);
 		if (status == -1)
 		{
-			close(fd); // !!!!! never close the connection without remove client
+			close(fd);
 			std::cerr << RED << "read Error getting client for fd: " << fd << std::endl;
-			// perror(NULL); // check if illegal
 			std::cerr << RESET;
-			return (false); // throw exception
+			return (false);
 		}
 		return (true);
 	}
@@ -252,9 +248,8 @@ bool SocketHandler::writeToClient(int i)
 		{
 			close(fd);
 			std::cerr << RED << "write Error getting client for fd: " << fd << std::endl;
-			// perror(NULL); // check if illegal
 			std::cerr << RESET;
-			return (false); // throw exception
+			return (false);
 		}
 		return (true);
 	}
@@ -415,7 +410,6 @@ void SocketHandler::setTimeout(int clientFd)
 void SocketHandler::setWriteable(int i)
 {
 	int fd = this->_evList[i].ident;
-	// this->setEvent(fd, EV_DELETE, EVFILT_READ);
 	this->setEvent(fd, EV_ADD, EVFILT_WRITE);
 
 	this->setNoSigpipe(fd);

@@ -38,10 +38,10 @@
 // defines for reading from client
 #define MAX_REQUEST_LINE_SIZE 512 // change this to increase the max length of accepted URI
 #define MAX_REQUEST_HEADER_SIZE 1024 // change this to increase the size of accepted request-headers
-#define MAX_EVENTS 128
+#define MAX_EVENTS 128 // controlls the size of the evList for kqueue
 #define MAX_SEND_CHUNK_SIZE (1024 * 1024) // this controlls the size of the chunks we are sending back to the client
 #define CLIENT_TIMEOUT 60 // this will kick clients after X amount of inactivity
-#define DEFAULT_SERVER_NAME "default"
+#define DEFAULT_SERVER_NAME "default" // controlls the name the default server config will be named
 #define DEFAULT_CONFIG "server/config/test.conf" // this is the default config files path if no config file was provided on startup
 
 // ClientStruct
@@ -60,10 +60,7 @@ struct ResponseStruct
 	size_t total;
 	size_t bytesLeft;
 // header information
-	// std::string protocoll;
-	// std::string status;
-	// std::string statusMessage;
-	std::string target; // this is the target after directory/file routing
+	std::string target; // this is the target after directory/file routing // remove?
 };
 
 // LocationStruct
@@ -99,13 +96,11 @@ struct ConfigStruct
 // bare minimum of the .conf file
 	std::string								serverName;
 	std::map<std::string, unsigned short>	listen;
-	std::string								root;
-
-// not sure about these two???????????
-	std::map<std::string, std::string>		cgi;
-	std::string								cgiBin; // is this still needed???????????
 
 // these variables have default values if not set in the .conf file
+	std::string								root;
+	std::map<std::string, std::string>		cgi;
+	std::string								cgiBin;
 	size_t									clientBodyBufferSize;
 	size_t									clientMaxBodySize;
 	std::string								indexPage;
@@ -115,7 +110,3 @@ struct ConfigStruct
 };
 
 #endif // BASE_HPP
-
-// LEGACY from ResponseStruct
-	// std::string buffer; // LEGACY for when less than sendChunk() only sends part of the chunk
-	// std::string header; // LEGACY for chunked response only, was used in sendResponse()->sendChunk() not sure if still used????

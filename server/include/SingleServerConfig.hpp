@@ -44,8 +44,6 @@ class SingleServerConfig
 		std::string _printLocationStruct(LocationStruct locationStruct);
 		LocationStruct _fillLocationStruct(std::string block);
 		LocationStruct _initLocationStruct();
-		// void _handleMethod();
-		// void _handle
 
 	public:
 	// Constructors
@@ -57,17 +55,6 @@ class SingleServerConfig
 	// Public Methods
 
 	// Exceptions
-		// class NoRootException : public std::exception
-		// {
-		// 	public:
-		// 		virtual const char* what() const throw();
-		// };
-
-		// class NoIndexException : public std::exception
-		// {
-		// 	public:
-		// 		virtual const char* what() const throw();
-		// };
 
 		class NoPortException : public std::exception
 		{

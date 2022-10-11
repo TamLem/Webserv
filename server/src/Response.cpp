@@ -219,8 +219,6 @@ void Response::createIndex(const Request& request)
 	}
 	else
 	{
-		// std::cout << "errno: " << errno << std::endl; // AE remove
-		// throw ERROR_404();
 		if (errno == ENOENT)
 			throw ERROR_404();
 		if (errno == EACCES)
@@ -265,9 +263,6 @@ void Response::createBodyFromFile(const std::string& target)
 	}
 	else
 	{
-		// throw ERROR_500();
-		// std::cout << "errno: " << errno << std::endl; // AE remove
-		// throw ERROR_404();
 		if (errno == ENOENT)
 			throw ERROR_404();
 		if (errno == EACCES)

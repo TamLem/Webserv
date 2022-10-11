@@ -211,10 +211,10 @@ bool SocketHandler::removeClient(int i, bool force)
 			#ifdef SHOW_LOG_2
 				std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
 			#endif
-			close(clientFd);
-			int index = this->_getClient(this->_evList[i].ident);
-			if (index != -1)
-			{
+		shutdown(clientFd, SHUT_RDWR);
+		int index = this->_getClient(this->_evList[i].ident);
+		if (index != -1)
+		{
 
 				// this->setEvent(this->_evList[i].ident, EV_DELETE, EVFILT_WRITE); //event will be removed automatically when the fd is closed
 				this->_clients.erase(this->_clients.begin() + index);

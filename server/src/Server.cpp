@@ -385,10 +385,6 @@ void Server::errorResponse(const std::exception& exception, int clientFd)
 	std::cout << RED << "Exception: " << exception.what() << std::endl;
 	#endif
 	std::string code = exception.what();
-	if (std::string(exception.what()) == "client disconnect") // check if it is used in any way
-	{
-		throw exception; // AE @tam why do you do this? (happens e.g. with testcase " ")
-	}
 	if (_response.getMessageMap().count(code) != 1)
 		code = "500";
 	try

@@ -116,10 +116,10 @@ class Server
 	public:
 
 	// Exceptions
-		class ClientDisconnect: public  std::exception {
-			public:
-				virtual const char* what() const throw();
-		};
+		// class ClientDisconnect: public  std::exception {
+		// 	public:
+		// 		virtual const char* what() const throw();
+		// };
 		class InternalServerErrorException : public std::exception
 		{
 			public:

@@ -45,12 +45,17 @@ void Config::_checkBrackets(std::string all)
 		{
 			if (buffer.find(" {") == std::string::npos || buffer.find(" {") > buffer.find_first_of("#;"))
 			{
-				std::cout << RED << buffer << std::endl;
+				std::cout << RED << buffer << YELLOW << "<<< was not inside a server-block" << std::endl;
 				throw Config::WrongListenBlockException();
 			}
-			else if (openServer == false || openLocation == true)
+			else if (openServer == false)
 			{
-				std::cout << RED << buffer << std::endl;
+				std::cout << RED << buffer << YELLOW << "\t<<< was found outside a server-block, make sure to start the server-block like this " << BLUE << ">" << GREEN << "server {" << BLUE << "<" << RESET << std::endl;
+				throw Config::WrongListenBlockException();
+			}
+			else if (openLocation == true)
+			{
+				std::cout << RED << buffer << YELLOW << "\t<<< was inside another location-block" << std::endl;
 				throw Config::WrongListenBlockException();
 			}
 			else

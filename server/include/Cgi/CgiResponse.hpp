@@ -23,9 +23,6 @@ public:
 
 	string &getBody();
 	string readline(int fd);
-	bool checkForMandatoryHeaders(string& headerLine);
-	void parseSingleHeaderField(string& headerLine);
-	string getValue(std::string &keyValueString);
 };
 
 

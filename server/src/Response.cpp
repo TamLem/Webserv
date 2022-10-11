@@ -201,7 +201,7 @@ void Response::createIndex(const Request& request)
 	}
 }
 
-static bool staticTargetIsDir(const std::string& target) // AE does this work when no x permission for parent dir?
+static bool staticTargetIsDir(const std::string& target)
 {
 	struct stat statStruct;
 
@@ -368,7 +368,7 @@ const char* Response::ERROR_500::what() const throw()
 	return ("500");
 }
 
-bool targetExists(const std::string& target) // AE does this work when no x permission for parent dir
+bool targetExists(const std::string& target)
 {
 	struct stat statStruct;
 

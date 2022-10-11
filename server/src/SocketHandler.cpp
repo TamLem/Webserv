@@ -2,8 +2,6 @@
 #include "Response.hpp"
 #include "Utils.hpp"
 
-// Private Members
-
 // inits this->_ports
 void SocketHandler::_initPorts()
 {
@@ -247,8 +245,10 @@ bool SocketHandler::writeToClient(int i)
 		if (status == -1)
 		{
 			close(fd);
-			std::cerr << RED << "write Error getting client for fd: " << fd << std::endl;
-			std::cerr << RESET;
+			#ifdef SHOW_LOG_SOCKETS
+				std::cerr << RED << "write Error getting client for fd: " << fd << std::endl;
+				std::cerr << RESET;
+			#endif
 			return (false);
 		}
 		return (true);
@@ -363,18 +363,12 @@ SocketHandler::~SocketHandler()
 	#endif
 }
 
-// Overloaded Operators
-
-// Public Methods
-
 // Getter
 int SocketHandler::getFD(int i) const
 {
 	return (this->_evList[i].ident);
 }
 
-// be carefull with using this, if you put a bigger number than number of ports configured in the config file
-// it will give you the last port
 int SocketHandler::getPort(int i)
 {
 	std::set<int>::const_iterator it = this->_ports.begin();
@@ -386,8 +380,6 @@ int SocketHandler::getPort(int i)
 
 	return (*it);
 }
-
-// Setter
 
 // sets the timeout value of a client
 void SocketHandler::setTimeout(int clientFd)
@@ -416,12 +408,6 @@ void SocketHandler::setWriteable(int i)
 	this->setNonBlocking(fd);
 }
 
-/**
- * @brief adds events to the change list
- * @param ident fd of the client
- * @param flags event flag
- * @param filter event filter
- */
 void SocketHandler::setEvent(int ident, int flags, int filter)
 {
 	struct kevent ev;

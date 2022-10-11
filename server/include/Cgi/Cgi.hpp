@@ -51,7 +51,6 @@ class Cgi
 
 		void setEnv(Request &request);
 		void init_cgi(int client_fd, int cgi_out);
-		void phpHandler(Request &req);
 		void passAsInput();
 		void passAsOutput();
 		void printEnv();

@@ -29,7 +29,6 @@
 class SocketHandler
 {
 	private:
-	// defines only to not have undefined behaviour
 		SocketHandler();
 		SocketHandler(const SocketHandler &src);
 		SocketHandler &operator=(const SocketHandler &src);
@@ -46,8 +45,6 @@ class SocketHandler
 
 		std::map<int, int> _serverMap;
 		int _kq;
-		struct kevent _ev;
-
 
 	// Private Members
 		void _initPorts(); // read from ConfigStruct into _ports

@@ -51,12 +51,3 @@ string &CgiResponse::getBody()
 	}
 	return (_body);
 }
-
-
-string CgiResponse::getValue(std::string &keyValueString)
-{
-	string value;
-
-	value = keyValueString.substr(keyValueString.find(":") + 1, string::npos);
-	return value;
-}

@@ -118,6 +118,12 @@ run: all
 ae: all
 	./$(NAME) server/config/ae.conf
 
+site: all
+	./$(NAME) server/config/site.conf
+
+trans: all
+	./$(NAME) server/config/trans.conf
+
 42: all
 	./$(NAME) server/config/42tester.conf
 

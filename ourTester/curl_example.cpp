@@ -247,6 +247,8 @@ int main(void)
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<GET>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_get("http://webserv", "content of index.html in root", FILE_LINE);
 	curl_get("http://webserv:80", "content of index.html in root", FILE_LINE);
+	curl_get("http://webserv/route/lol/", "content of different.html in lol", FILE_LINE);
+	curl_get("http://webserv/route/lol/troll/", "content of index.html in troll", FILE_LINE);
 	curl_get("http://webserv:5500", "", FILE_LINE); //  can't connect
 	curl_get("http://webserv/route/dir/file", "content of file in dir", FILE_LINE);
 	curl_get("http://webserv/route/cgi/file", "content of file in cgi", FILE_LINE);

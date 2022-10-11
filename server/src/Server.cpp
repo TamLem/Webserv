@@ -191,9 +191,8 @@ void Server::handleGET(const Request& request)
 	{
 		if (targetExists(request.getRoutedTarget() + request.indexPage) == false)
 		{
-			if ((this->_currentLocationKey.empty() == false
-			&& (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
-			|| this->_currentConfig.autoIndex == true)
+			if ((this->_currentLocationKey.empty() == false && (this->_currentConfig.location.find(_currentLocationKey)->second.autoIndex == true))
+			|| (this->_currentLocationKey.empty() == true && this->_currentConfig.autoIndex == true))
 			{
 				_response.createIndex(request);
 			}

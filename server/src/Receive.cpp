@@ -344,19 +344,8 @@ size_t Response::_handleChunked(int clientFd)
 	size_t length = 0;
 	hexadecimal >> std::hex >> length;
 
-	#ifdef FORTYTWO_TESTER
-		if (this->_receiveMap[clientFd].target.find("post_body") != std::string::npos && length > this->_receiveMap[clientFd].maxBodySize)
-		{
-			char trashcan[2048];
-			int n = 0;
-			while (n >= 0)
-				n = read(clientFd, trashcan, 2048);
-			throw Response::ERROR_413();
-		}
-	#else
-		if (length > this->_receiveMap[clientFd].maxBodySize)
-			throw Response::ERROR_413();
-	#endif
+	if (length > this->_receiveMap[clientFd].maxBodySize)
+		throw Response::ERROR_413();
 
 	return (length);
 }

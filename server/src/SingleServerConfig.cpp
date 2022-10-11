@@ -539,11 +539,7 @@ LocationStruct SingleServerConfig::_fillLocationStruct(std::string block)
 					throw SingleServerConfig::InvalidWhitespaceException();
 				}
 				std::string tempValue = value.substr(0, value.find_first_of(WHITESPACE));
-				#ifdef FORTYTWO_TESTER
-				if((tempValue == "GET" || tempValue == "HEAD" || tempValue == "POST" || tempValue == "PUT" || tempValue == "DELETE") && locationStruct.allowedMethods.count(tempValue) == 0)
-				#else
 				if((tempValue == "GET" || tempValue == "POST" || tempValue == "DELETE") && locationStruct.allowedMethods.count(tempValue) == 0)
-				#endif
 					locationStruct.allowedMethods.insert(tempValue);
 				else
 				{

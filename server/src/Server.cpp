@@ -57,38 +57,35 @@ void Server::runEventLoop()
 		#endif
 		int numEvents = this->_socketHandler->getEvents();
 		int clientFd = -1;
-		// if (numEvents == 0)
-		// {
-		// #ifndef FORTYTWO_TESTER
-			tryRemove:
-			clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
-			if (clientFd != -1 && this->_response.isInResponseMap(clientFd) == false)
-			{
-				this->_socketHandler->removeKeepAlive(clientFd);
-				#ifdef SHOW_LOG
-					std::stringstream message;
-					message << "Client " << clientFd << " was timed-out";
-					LOG_RED(message.str());
-				#endif
-				this->_response.clear();
-				this->_response.setProtocol(PROTOCOL);
-				this->_response.setStatus("408");
-				this->_response.setRequestMethod("TIMEOUT");
-				this->_response.addHeaderField("Connection", "close");
-				this->_response.createErrorBody();
-				this->_response.putToResponseMap(clientFd);
-				this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
-				goto tryRemove;
-			}
-			#ifdef SHOW_LOG_2
-			else if (clientFd != -1) // only to make the printed LOG_2 more beautiful
-			{
-				std::cout << "\033[A\033[K";
-				std::cout << "\033[A\033[K";
-			}
+
+		tryRemove:
+		clientFd = this->_socketHandler->removeInactiveClients();	// remove inactive clients
+		if (clientFd != -1 && this->_response.isInResponseMap(clientFd) == false)
+		{
+			this->_socketHandler->removeKeepAlive(clientFd);
+			#ifdef SHOW_LOG
+				std::stringstream message;
+				message << "Client " << clientFd << " was timed-out";
+				LOG_RED(message.str());
 			#endif
-		// #endif
-		// }
+			this->_response.clear();
+			this->_response.setProtocol(PROTOCOL);
+			this->_response.setStatus("408");
+			this->_response.setRequestMethod("TIMEOUT");
+			this->_response.addHeaderField("Connection", "close");
+			this->_response.createErrorBody();
+			this->_response.putToResponseMap(clientFd);
+			this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
+			goto tryRemove;
+		}
+		#ifdef SHOW_LOG_2
+		else if (clientFd != -1) // only to make the printed LOG_2 more beautiful
+		{
+			std::cout << "\033[A\033[K";
+			std::cout << "\033[A\033[K";
+		}
+		#endif
+
 		for (int i = 0; i < numEvents; ++i)
 		{
 			#ifdef SHOW_LOG_2
@@ -244,23 +241,6 @@ void Server::handlePOST(int clientFd, const Request& request)
 	#endif
 	std::map<std::string, std::string> tempHeaderFields = request.getHeaderFields();
 
-	#ifdef FORTYTWO_TESTER
-	if (request.getMethod() == "PUT")
-	{
-		this->_response.setProtocol(PROTOCOL);
-		this->_response.addHeaderField("server", this->_currentConfig.serverName);
-		// this->_response.addHeaderField("connection", "close");
-		this->_response.setStatus("201");
-		// if (this->_socketHandler->isKeepAlive(clientFd)) // only for testing!!!!
-		// 	this->_response.addHeaderField("Connection", "keep-alive"); // only for testing !!!!
-		this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
-		this->_response.setPostBufferSize(clientFd, 100000, 1000000);
-		// this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize); // THIS IS THE ORIGINAL !!!!
-		this->_response.setPostChunked(clientFd, /* request.getRoutedTarget(), */ tempHeaderFields);
-		return ;
-	}
-	#endif
-
 	if (tempHeaderFields.count("content-length") == 0 && (tempHeaderFields.count("transfer-encoding") && tempHeaderFields["transfer-encoding"] == "chunked") == false)
 		throw Server::LengthRequiredException();
 	else if (tempHeaderFields.count("content-length") && _strToSizeT(tempHeaderFields["content-length"]) > this->_currentConfig.clientMaxBodySize)
@@ -269,20 +249,10 @@ void Server::handlePOST(int clientFd, const Request& request)
 	this->_response.setProtocol(PROTOCOL);
 	this->_response.addHeaderField("server", this->_currentConfig.serverName);
 	this->_response.setStatus("201");
-
 	this->_response.setPostTarget(clientFd, request.getRoutedTarget()); // puts target into the response class
 	this->_response.setPostLength(clientFd, tempHeaderFields);
-	#ifndef FORTYTWO_TESTER
-		this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize, this->_currentConfig.clientMaxBodySize);
-	#else
-		this->_response.setPostBufferSize(clientFd, 1000, this->_currentConfig.clientMaxBodySize); // @Tam here you can accelerate the POST 100.000.000 test of the tester by increasing this value to up to 32kB
-	#endif
-// LEGACY CONTENT
-	// this->_response.checkPostTarget(clientFd, request, this->_socketHandler->getPort(0));
-	// if (this->_response.getStatus() == "303")
-	// 	this->_socketHandler->removeKeepAlive(clientFd); // just for testing !!!!!!!!
-//
-	this->_response.setPostChunked(clientFd/* , request.getRoutedTarget() */, tempHeaderFields);
+	this->_response.setPostBufferSize(clientFd, this->_currentConfig.clientBodyBufferSize, this->_currentConfig.clientMaxBodySize);
+	this->_response.setPostChunked(clientFd, tempHeaderFields);
 }
 
 static void staticRemoveTarget(const std::string& path)
@@ -445,27 +415,21 @@ void Server::handleRequest(int clientFd)
 		#ifdef SHOW_LOG_ROUTING
 			std::cout  << GREEN << "Target after routing: " << request.getRoutedTarget() << RESET << std::endl;
 		#endif
-		#ifndef FORTYTWO_TESTER
+
 			if (request.getMethod() == "POST" && request.isFile == false)
 				throw Server::BadRequestException();
-		#endif
+
 			this->checkLocationMethod(request);
 			if ((request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive") || request.getHeaderFields().count("connection") == 0)
 				this->_socketHandler->addKeepAlive(clientFd);
 
-		#ifdef FORTYTWO_TESTER
-			if (request.getMethod() == "POST" || request.getMethod() == "PUT")
-		#else
 			if (request.getMethod() == "POST")
-		#endif
 				this->handlePOST(clientFd, request);
 			else if (request.getMethod() == "DELETE")
 			{
 				this->handleDELETE(request);
 				this->_response.putToResponseMap(clientFd);
 				this->_response.removeFromReceiveMap(clientFd);
-				// this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_READ);
-				// this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
 			}
 			else
 			{
@@ -476,8 +440,6 @@ void Server::handleRequest(int clientFd)
 				this->handleGET(request);
 				this->_response.putToResponseMap(clientFd);
 				this->_response.removeFromReceiveMap(clientFd);
-				// this->_socketHandler->setEvent(clientFd, EV_DELETE, EVFILT_READ);
-				// this->_socketHandler->setEvent(clientFd, EV_ADD, EVFILT_WRITE);
 			}
 		}
 	}
@@ -505,18 +467,14 @@ void Server::_readRequestHead(int clientFd)
 			#ifdef SHOW_LOG_2
 				LOG_RED("Incomplete Request detected");
 			#endif
-			#ifndef FORTYTWO_TESTER
-				throw Server::BadRequestException();
-			#endif
+			throw Server::BadRequestException();
 		}
 		else if (n < 0) // read had an error reading from fd, was failing PUT
 		{
 			#ifdef SHOW_LOG_2
 				std::cerr << RED << "READING FROM FD " << clientFd << " FAILED, EOF OR CLIENT DISCONNECT" << std::endl;
 			#endif
-			#ifndef FORTYTWO_TESTER
-				throw Server::BadRequestException(); // check if this is correct!!!!!!!
-			#endif
+			throw Server::BadRequestException();
 		}
 		else if (n == 0) // read reached eof
 			break ;

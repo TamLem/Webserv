@@ -122,9 +122,6 @@ std::string Response::getResponse()
 {
 	std::stringstream buffer;
 	buffer << this->constructHeader();
-	#ifdef FORTYTWO_TESTER
-	if (this->_requestMethod != "HEAD")
-	#endif
 	buffer << this->getBody();
 
 	return (buffer.str());

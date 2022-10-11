@@ -6,12 +6,6 @@
 #include <ios> //ios::eof
 #include <cctype> // isalnum isprint isspace
 
-// #ifdef FORTYTWO_TESTER
-// // only for the tester
-// 	static int count;
-// // end
-// #endif
-
 Request::Request(const std::string& message)
 {
 	#ifdef SHOW_CONSTRUCTION
@@ -90,12 +84,6 @@ void Request::breakUpTarget(const std::string& token)
 
 	pos = token.find_first_of("?#");
 	this->target = token.substr(0, pos);
-	#ifdef FORTYTWO_TESTER
-	if (this->target.compare("/directory") == 0)
-		this->target = "/directory/";
-	else if (this->target.compare("/directory/nop") == 0)
-		this->target = "/directory/nop/";
-	#endif
 	if (pos == std::string::npos)
 		return ;
 	else if (token[pos] == '?')
@@ -247,10 +235,6 @@ void Request::addMethods(void)
 	this->validMethods.insert("GET");
 	this->validMethods.insert("POST");
 	this->validMethods.insert("DELETE");
-	#ifdef FORTYTWO_TESTER
-	this->validMethods.insert("PUT");
-	this->validMethods.insert("HEAD");
-	#endif
 }
 
 std::ostream& operator<<(std::ostream& out, const Request& request)

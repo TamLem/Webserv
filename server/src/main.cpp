@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 		return (0);
 	}
 
-	#ifdef SHOW_LOG_2
+	#ifdef SHOW_LOG_CONFIG
 		config->printCluster();
 	#endif
 	ourServer->runEventLoop();

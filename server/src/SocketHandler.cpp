@@ -226,7 +226,7 @@ bool SocketHandler::removeClient(int i, bool force)
 			else
 			{
 				std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl;
-				exit(112); // carefull with exit please!!!! THIS IS BAD, NEVER EXIT!!!!
+				// exit(112); // carefull with exit please!!!! THIS IS BAD, NEVER EXIT!!!!
 			}
 		}
 	// }

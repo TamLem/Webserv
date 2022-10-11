@@ -223,8 +223,8 @@ int main(void)
 	my_request("GET / HTTP/1.1\r\nHost:    webserv\r\n\r\n", "400", FILE_LINE); // AE only one whitespace
 	my_request("GET / HTTP/1.1\r\nHost : webserv\r\n\r\n", "400", FILE_LINE);
 	my_request("GET /route/dir/%25file HTTP/1.1\r\nHost: webserv\r\n\r\n", "content of %file in dir", FILE_LINE);
-	my_request("GET /route/dir/%2file HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
-	my_request("GET /ü-ei HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
+	my_request("GET /route/dir/%2myfile HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE);
+	my_request("GET /ü-ei HTTP/1.1\r\nHost: webserv\r\n\r\n", "400", FILE_LINE); //not encoded
 	// my_request("", "408", FILE_LINE); // timeout
 	my_request("\n", "400", FILE_LINE);
 	my_request(" ", "400", FILE_LINE); // AE problem
@@ -279,6 +279,7 @@ int main(void)
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<POST>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_post("http://server2:8080/new.txt", "405", FILE_LINE);
 	curl_post("http://webserv/uploads/new.txt", "201", FILE_LINE);
+	curl_post("http://webserv/uploads/.ext", "201", FILE_LINE); // not an extension
 	curl_post("http://webserv/uploads/new.txt", "201", FILE_LINE);
 	curl_post("http://webserv/uploads/newdir/", "400", FILE_LINE); // create directory is not possible
 	curl_post("http://webserv/uploads/doesnotexist/new.txt", "404", FILE_LINE); // changed to be 404 instead of 400
@@ -294,6 +295,7 @@ int main(void)
 	//////// DELETE
 	std::cout << BLUE << "<<<<<<<<<<<<<<<<<<<<<<DELETE>>>>>>>>>>>>>>>>>>>>>>" << RESET << std::endl;
 	curl_delete("http://webserv/uploads/new.txt", "204", FILE_LINE);
+	curl_delete("http://webserv/uploads/.ext", "204", FILE_LINE);
 	curl_delete("http://webserv/uploads/newdir/", "204", FILE_LINE); // would have to be created first
 	curl_delete("http://webserv/uploads/cgi/new.txt", "404", FILE_LINE); // cgi directory has no permissions
 	curl_delete("http://webserv/uploads/file.cgi.not", "204", FILE_LINE);

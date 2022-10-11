@@ -2,15 +2,15 @@
 
 int Server::routeFile(Request& request, std::map<std::string, LocationStruct>::const_iterator it, const std::string& target)
 {
-	std::string extension;
-	size_t ext_len;
-	size_t target_len;
+	// std::string extension;
+	// size_t ext_len;
+	// size_t target_len;
 	std::string result;
 
-	target_len = target.length();
-	ext_len = it->first.length() - 1;
-	extension = it->first.substr(1, ext_len);
-	if (target_len > ext_len && target.compare(target_len - ext_len, ext_len, extension) == 0)
+	// target_len = target.length();
+	// ext_len = it->first.length() - 1;
+	// extension = it->first.substr(1, ext_len);
+	if (isExtension(target, it->first.substr(1)) == true)
 	{
 		if (it->second.root.empty())
 			result = this->_currentConfig.root;

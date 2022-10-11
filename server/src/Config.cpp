@@ -180,7 +180,7 @@ void Config::_createConfigStruct(std::string server)
 		serverName = DEFAULT_SERVER_NAME;
 		this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
 	}
-	#ifdef SHOW_LOG_2
+	#ifdef SHOW_LOG_CONFIG
 		std::cout << GREEN << "added server " << serverName << " to cluster" << RESET << std::endl;
 	#endif
 }

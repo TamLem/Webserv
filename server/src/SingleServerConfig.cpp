@@ -671,7 +671,12 @@ void SingleServerConfig::_handleLocation(std::string block)
 			std::cout << RED << key << RESET << std::endl;
 			throw SingleServerConfig::DuplicateLocationException();
 		}
-		if (key.find(".") != std::string::npos && key.find("*") == std::string::npos)
+		if (key.length() == 0 || key.substr(1) == "{")
+		{
+			std::cout << RED << line << RESET << std::endl;
+			throw LocationKeyMissingException();
+		}
+		else if (key.find(".") != std::string::npos && key.find("*") == std::string::npos)
 		{
 			std::cout << RED << key << RESET << std::endl;
 			throw SingleServerConfig::InvalidLocationException();
@@ -703,6 +708,11 @@ void SingleServerConfig::_handleLocation(std::string block)
 		{
 			std::cout << RED << ">" << key << "< is not a allowed pattern" << RESET << std::endl;
 			throw SingleServerConfig::InvalidLocationException(); // if the location key is not recognized
+		}
+		if (key.find("//") != std::string::npos)
+		{
+			std::cout << RED << key << RESET << std::endl;
+			throw InvalidLocationKeyException();
 		}
 
 		#ifdef SHOW_LOG_2
@@ -1048,4 +1058,14 @@ const char* SingleServerConfig::DuplicateMethodException::what(void) const throw
 const char* SingleServerConfig::TooManyLocationsException::what(void) const throw()
 {
 	return ("↑↑↑ too many location-blocks found inside one server-block (max 20)");
+}
+
+const char* SingleServerConfig::LocationKeyMissingException::what(void) const throw()
+{
+	return ("↑↑↑ here is a location key missing");
+}
+
+const char* SingleServerConfig::InvalidLocationKeyException::what(void) const throw()
+{
+	return ("↑↑↑ is an invalid location key");
 }

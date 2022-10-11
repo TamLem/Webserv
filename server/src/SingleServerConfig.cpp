@@ -691,7 +691,7 @@ void SingleServerConfig::_handleLocation(std::string block)
 			locationStruct.isDir = true;
 		else if (key == "/")
 			locationStruct.isDir = true;
-		else if ((key.substr(0, 2) == "*." && key.find("/") == std::string::npos) || key.substr(0, 1) == "/")
+		else if (key.substr(0, 2) == "*." && key.find("/") == std::string::npos)
 			locationStruct.isDir = false;
 		else
 		{

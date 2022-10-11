@@ -161,7 +161,7 @@ void Config::_createConfigStruct(std::string server)
 		throw Config::DuplicateServerNameException();
 	}
 
-	if (this->_cluster.size() == 10)
+	if (this->_cluster.size() == 11)
 	{
 		std::cout << RED << serverName << RESET << std::endl;
 		throw Config::TooManyServersException();

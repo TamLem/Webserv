@@ -189,7 +189,6 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 	struct ClientStruct c;
 	c.fd = fd;
 	c.addr = addr;
-	// c.timeout = time(NULL); // this is done later, not necessary here
 	this->_clients.push_back(c);
 	return (this->_clients.size() - 1);
 }
@@ -197,39 +196,27 @@ int SocketHandler::_addClient(int fd, struct sockaddr_in addr)
 // removes client from _clients and closes the connection if !keep-alive and only if EV_EOF | EV_ERROR is set
 bool SocketHandler::removeClient(int i, bool force)
 {
-	// if (clientFd != -1 && force && !this->_keepalive.count(clientFd))
-	// {
-	// 	close(clientFd);
-	// }
-	// else
-	// {
-		int clientFd = this->_evList[i].ident;
-		if ((this->_evList[i].flags == EV_EOF )  || (this->_evList[i].flags == EV_ERROR )/* || (this->_evList[i].flags & EV_CLEAR) */ || force)
-		{
-			if (this->_keepalive.count(clientFd))
-				return (false);
-			#ifdef SHOW_LOG_2
-				std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
-			#endif
+	int clientFd = this->_evList[i].ident;
+	if ((this->_evList[i].flags == EV_EOF )  || (this->_evList[i].flags == EV_ERROR ) || force)
+	{
+		if (this->_keepalive.count(clientFd))
+			return (false);
+		#ifdef SHOW_LOG_2
+			std::cout << RED << (force ? "Kicking client " : "Removing client ") <<  "fd: " << RESET << this->_evList[i].ident << std::endl;
+		#endif
 		shutdown(clientFd, SHUT_RDWR);
 		int index = this->_getClient(this->_evList[i].ident);
 		if (index != -1)
 		{
-
-				// this->setEvent(this->_evList[i].ident, EV_DELETE, EVFILT_WRITE); //event will be removed automatically when the fd is closed
-				this->_clients.erase(this->_clients.begin() + index);
-				#ifdef SHOW_LOG
-					std::cout << RED << "Client " << clientFd << " disconnected" << RESET << std::endl;
-				#endif
-				return (true);
-			}
-			else
-			{
-				std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl;
-				// exit(112); // carefull with exit please!!!! THIS IS BAD, NEVER EXIT!!!!
-			}
+			this->_clients.erase(this->_clients.begin() + index);
+			#ifdef SHOW_LOG
+				std::cout << RED << "Client " << clientFd << " disconnected" << RESET << std::endl;
+			#endif
+			return (true);
 		}
-	// }
+		else
+			std::cout << "error getting client on fd: " << this->_evList[i].ident << std::endl;
+	}
 	return (false);
 }
 

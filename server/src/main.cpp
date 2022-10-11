@@ -67,16 +67,26 @@ int main(int argc, char **argv)
 			delete config;
 			return (EXIT_FAILURE);
 	}
-	Server *test = new Server(config);
+	Server *ourServer = NULL;
+	try
+	{
+		ourServer = new Server(config);
+	}
+	catch (const std::exception &e)
+	{
+		LOG_RED("binding of ports failed, please make sure the ports you tried to use are not blocked by any other programm");
+		delete config;
+		return (0);
+	}
 
 	#ifdef SHOW_LOG_2
 		config->printCluster();
 	#endif
-	test->runEventLoop();
-	delete test;
+	ourServer->runEventLoop();
+	delete ourServer;
 	delete config;
+	ourServer = NULL;
 	config = NULL;
-	test = NULL;
 	// system("leaks webserv"); // use this to check for leaks
 	return (0);
 }

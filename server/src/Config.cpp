@@ -146,7 +146,6 @@ void Config::_parseServerBlock(std::string serverBlock)
 
 void Config::_createConfigStruct(std::string server)
 {
-	static size_t structsCreated;
 	#ifdef SHOW_LOG_2
 		std::cerr << "This was passed into _createConfigStruct:\n>" << server << "<" << std::endl;
 	#endif
@@ -161,11 +160,17 @@ void Config::_createConfigStruct(std::string server)
 		std::cerr << RED << serverName << std::endl;
 		throw Config::DuplicateServerNameException();
 	}
+
+	if (this->_cluster.size() == 10)
+	{
+		std::cout << RED << serverName << RESET << std::endl;
+		throw Config::TooManyServersException();
+	}
+
 	ConfigStruct confStruct = this->_initConfigStruct();
 	SingleServerConfig temp(server, &confStruct);
 	this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
-	++structsCreated;
-	if (structsCreated == 1)
+	if (this->_cluster.size() == 1)
 	{
 		serverName = DEFAULT_SERVER_NAME;
 		this->_cluster.insert(std::make_pair<std::string, ConfigStruct>(serverName, confStruct));
@@ -503,4 +508,9 @@ const char* Config::ContentOutsideServerBlockException::what(void) const throw()
 const char* Config::NoServerFoundException::what(void) const throw()
 {
 	return ("please provide at least one server-block in .conf file");
+}
+
+const char* Config::TooManyServersException::what(void) const throw()
+{
+	return ("↑↑↑ too many server-blocks inside one config (max 10)");
 }

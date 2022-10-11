@@ -642,6 +642,12 @@ std::string SingleServerConfig::_printLocationStruct(LocationStruct locationStru
 
 void SingleServerConfig::_handleLocation(std::string block)
 {
+	if (this->_conf->location.size() == 20)
+	{
+		std::cout << RED << block.substr(0, block.find_first_of('\n')) << RESET << std::endl;
+		throw SingleServerConfig::TooManyLocationsException();
+	}
+
 	std::stringstream bufferStream;
 	bufferStream << block;
 	std::string line;
@@ -1037,4 +1043,9 @@ const char* SingleServerConfig::DuplicateCGIBinException::what(void) const throw
 const char* SingleServerConfig::DuplicateMethodException::what(void) const throw()
 {
 	return ("↑↑↑ duplicate, method is already set up");
+}
+
+const char* SingleServerConfig::TooManyLocationsException::what(void) const throw()
+{
+	return ("↑↑↑ too many location-blocks found inside one server-block (max 20)");
 }

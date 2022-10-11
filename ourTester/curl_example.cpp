@@ -254,6 +254,9 @@ int main(void)
 	curl_get("http://webserv/route/cgi/file", "content of file in cgi", FILE_LINE);
 	curl_get("http://server1:6000/route/file", "content of file in server1", FILE_LINE);
 	curl_get("http://server1:6000/route/doesnotexist", "MY_CUSTOM_PAGE", FILE_LINE);
+	curl_get("http://server1:6000/", "content of default.html in root", FILE_LINE);
+	curl_get("http://server1:6000/index1/", "content of different.html in root", FILE_LINE);
+	curl_get("http://server1:6000/index2/", "content of default.html in root", FILE_LINE);
 	curl_get("http://server2/route/file", "405", FILE_LINE); // going for default server
 	curl_get("http://nonexistingserver:8080/route/file", "405", FILE_LINE); // going for default server
 	curl_get("http://server2:8080/route/file", "content of file in server2", FILE_LINE);

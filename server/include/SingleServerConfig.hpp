@@ -278,6 +278,12 @@ class SingleServerConfig
 			public:
 				virtual const char* what() const throw();
 		};
+
+		class TooManyLocationsException : public std::exception
+		{
+			public:
+				virtual const char* what() const throw();
+		};
 };
 
 #endif // SINGLESERVER_HPP

@@ -112,7 +112,6 @@ std::string Server::resoluteTarget(const std::string& input)
 
 	tokens = splitStringOnDelimiter(input, "/");
 
-	
 	std::list<std::string>::iterator it = tokens.begin();
 	while (it != tokens.end())
 	{

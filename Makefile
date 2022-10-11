@@ -142,4 +142,4 @@ rm42tester:
 	-rm 42tester/post_body
 
 #phony
-.PHONY: all clean fclean re run tester
+.PHONY: all clean fclean re run ae 42 our tester rmtester rm42tester

@@ -55,7 +55,7 @@ void SocketHandler::_initMainSockets()
 			std::cerr << RED << "Error binding socket: " << tempFD << std::endl;
 			perror(NULL);
 			std::cerr << RESET;
-			exit(EXIT_FAILURE); // maybe change to throw
+			throw std::exception();
 		}
 		std::cout << GREEN << "succeccfully bound socket " << *portsIt << RESET << std::endl;
 	}

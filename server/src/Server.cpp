@@ -474,8 +474,8 @@ void Server::handleRequest(int clientFd)
 			if (request.getMethod() == "POST" && request.isFile == false)
 				throw Server::BadRequestException();
 		#endif
-			if (this->_response.isCgi(clientFd) == false)
-				this->checkLocationMethod(request);
+			// if (this->_response.isCgi(clientFd) == false)
+			this->checkLocationMethod(request);
 			if ((request.getHeaderFields().count("connection") && request.getHeaderFields().find("connection")->second == "keep-alive") || request.getHeaderFields().count("connection") == 0)
 				this->_socketHandler->addKeepAlive(clientFd);
 

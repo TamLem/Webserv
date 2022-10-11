@@ -224,7 +224,7 @@ void Response::createIndex(const Request& request)
 	}
 }
 
-static bool staticTargetIsDir(const std::string& target) // AE does this work when no x permission for parent dir?
+static bool staticTargetIsDir(const std::string& target)
 {
 	struct stat statStruct;
 
@@ -240,20 +240,11 @@ static bool staticTargetIsDir(const std::string& target) // AE does this work wh
 void Response::createBodyFromFile(const std::string& target)
 {
 	std::stringstream tempBody;
-	// std::cerr << BOLD << RED << "target:" << target << RESET << std::endl;
-	// if (access(target.c_str(), F_OK) != 0 && errno == EACCES)
-	// if (access(target.c_str(), F_OK) != 0)
-	// 	throw ERROR_404();
-	// if (access(target.c_str(), R_OK) != 0)
-	// 	throw ERROR_403();
-	// if (targetExists(target) == false || staticTargetIsDir(target) == true)
-	// 	throw ERROR_404();
 	if (staticTargetIsDir(target) == true)
 		throw ERROR_404();
 	std::ifstream file(target.c_str(), std::ios::binary);
 	if (file.is_open())
 	{
-		// std::cerr << BOLD << RED << "open" << RESET << std::endl;
 		tempBody << file.rdbuf();
 		file.close();
 		this->body = tempBody.str();
@@ -404,7 +395,7 @@ const char* Response::ERROR_500::what() const throw()
 	return ("500");
 }
 
-bool targetExists(const std::string& target) // AE does this work when no x permission for parent dir
+bool targetExists(const std::string& target)
 {
 	struct stat statStruct;
 

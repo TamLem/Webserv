@@ -183,7 +183,6 @@ void Server::runEventLoop()
 void Server::handleGET(const Request& request)
 {
 	_response.setProtocol(PROTOCOL);
-	// if (request.isFile == false && targetExists(request.getRoutedTarget() + request.indexPage) == false)
 	if (request.isFile == false)
 	{
 		if (targetExists(request.getRoutedTarget() + request.indexPage) == false)
@@ -201,7 +200,6 @@ void Server::handleGET(const Request& request)
 	}
 	else
 		_response.createBodyFromFile(request.getRoutedTarget());
-		// _response.createBodyFromFile(request.getRoutedTarget() + request.indexPage);
 	_response.addHeaderField("server", this->_currentConfig.serverName);
 	_response.addContentLengthHeaderField();
 	_response.setStatus("200");
@@ -334,9 +332,6 @@ void Server::applyCurrentConfig(const Request& request)
 		}
 		this->_currentConfig = this->_config->getConfigStruct(DEFAULT_SERVER_NAME);
 	}
-	// if (tokens.size() == 2)
-	// check port against portlist from config
-	//if server_name wrong -> default DEFAULT_SERVER_NAME
 }
 
 // removes any data of the client from _responseMap, _receiveMap, _tempFile and _keepalive

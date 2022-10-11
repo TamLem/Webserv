@@ -53,7 +53,6 @@ void Request::parseStartLine(std::istringstream& stream)
 	std::getline(stream, line);
 	createStartLineTokens(tokens, line);
 	std::string method = tokens[0];
-	this->url = tokens[1]; // AE remove later
 	breakUpTarget(tokens[1]);
 	std::string protocol = tokens[2];
 	if (!isValidMethod(method))
@@ -286,11 +285,6 @@ void Request::setQuery(const std::string& query)
 const std::string& Request::getMethod(void) const
 {
 	return (this->method);
-}
-
-const std::string& Request::getUrl(void) const
-{
-	return (this->url);
 }
 
 const std::string& Request::getRawTarget(void) const

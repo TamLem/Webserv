@@ -107,7 +107,8 @@ class Server
 		void errorResponse(const std::exception& exception, int clientFd);
 		void _handleResponse(int i);
 
-		bool _isCgiRequest(const Request& request) const;
+		bool isExtension(const std::string&, const std::string&);
+		bool _isCgiRequest(const Request& request);
 		void cgi_handle(Request& request, int fd, ConfigStruct configStruct, FILE *tempFile);
 		void cgi_response_handle(int clientFd);
 

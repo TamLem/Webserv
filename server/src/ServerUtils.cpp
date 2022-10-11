@@ -62,7 +62,7 @@ std::string Server::percentDecoding(const std::string& str)
 		{
 			if (str[i + 1] == '\0' || str[i + 2] == '\0')
 				throw InvalidHex();
-			if (isdigit(str[i + 1]) != true || isdigit(str[i + 2]) != true)
+			if (isxdigit(str[i + 1]) != true || isxdigit(str[i + 2]) != true)
 				throw InvalidHex();
 			c = char(strtol(str.substr(i + 1, 2).c_str(), NULL, 16));
 			if (c == 0)
@@ -147,21 +147,25 @@ std::string Server::resoluteTarget(const std::string& input)
 	return (target);
 }
 
-bool Server::_isCgiRequest(const Request& request) const// AE this function has to be included in locationMatching
+bool Server::isExtension(const std::string& target, const std::string& ext)
 {
-	// if(request.getMethod() != "POST") //remove, to allow other cgi requests
-	// 	return (false);
+	size_t targetLen = target.length();
+	size_t extLen = ext.length();
+	if(targetLen - target.find_last_of('/') > extLen + 1
+	&& target.substr(targetLen - extLen, extLen) == ext)
+		return (true);
+	return (false);
+}
+
+bool Server::_isCgiRequest(const Request& request)
+{
 	std::string target = request.getDecodedTarget();
-	size_t targetlen = target.length();
 	if (this->_currentConfig.cgi.size() != 0)
 	{
 		std::map<std::string, std::string>::const_iterator it = this->_currentConfig.cgi.begin();
 		for (; it != this->_currentConfig.cgi.end(); ++it)
 		{
-			std::string ext = it->first;
-			size_t extlen = ext.length();
-			if(targetlen - target.find_last_of('/') > extlen + 1
-			&& target.substr(targetlen - extlen, extlen) == it->first)
+			if(isExtension(target, it->first) == true)
 				return (true);
 		}
 	}

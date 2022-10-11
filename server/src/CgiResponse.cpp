@@ -23,7 +23,9 @@ string CgiResponse::readline(int fd)
 	int n = read(fd, buf, 1);
 	if (n <= 0)
 	{
-		LOG_RED("Error reading from CGI");
+		#ifdef SHOW_LOG_CGI
+			LOG_RED("Error reading from CGI");
+		#endif
 		throw std::runtime_error("Error reading from CGI");
 	}
 	while (n > 0 && *buf != '\n')

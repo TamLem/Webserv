@@ -1,9 +1,3 @@
-document.getElementById('file').addEventListener('change', function() {
-    const uploadPath = '/uploads/' + this.value.substr(this.value.lastIndexOf('\\') + 1);
-    console.log('upload path: ', uploadPath);
-    document.getElementById('upload-form').setAttribute('action', uploadPath);
-});
-
 function uploadFile()
 {
     console.log('uploading file...');

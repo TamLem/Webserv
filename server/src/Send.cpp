@@ -28,7 +28,7 @@ bool Response::sendRes(int fd)
 		LOG_BLUE(this->_responseMap[fd].response.substr(0, 2000)); // BE CAREFULL WITH THIS will print the body of the response, might break your terminal
 	#endif
 	int n = send(fd, this->_responseMap[fd].response.c_str(), sendSize, 0);
-	if (n == -1)
+	if (n <= 0)
 	{
 		std::stringstream errorMessage;
 		errorMessage << "send Error sending response for fd: " << fd;

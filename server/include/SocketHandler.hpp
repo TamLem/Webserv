@@ -35,27 +35,22 @@
 class SocketHandler
 {
 	private:
-	// defines only to not have undefined behaviour
 		SocketHandler();
 		SocketHandler(const SocketHandler &src);
 		SocketHandler &operator=(const SocketHandler &src);
 
 	// Private Variables
-		// Config *_config; // maybe not needed
 		std::set<int> _ports;
 		std::map<std::string, ConfigStruct> _cluster;
 		std::set<int> _keepalive;
 		std::vector<ClientStruct> _clients;
-		std::vector<int> _serverFds; // maybe not needed
+		std::vector<int> _serverFds;
 
 		struct kevent _evList[MAX_EVENTS];
 		std::vector<struct kevent> _eventsChanges;
 
 		std::map<int, int> _serverMap;
 		int _kq;
-		// char _buffer[1024]; //temp
-		struct kevent _ev; // temp
-
 
 	// Private Members
 		void _initPorts(); // read from ConfigStruct into _ports
@@ -71,7 +66,7 @@ class SocketHandler
 		SocketHandler(Config *config);
 
 	// Deconstructors
-		~SocketHandler(); // have a loop that closes all used fd's stored in the ServerStruct
+		~SocketHandler(); // loop that closes all used fd's stored in the ServerStruct
 
 	// Overloaded Operators
 

@@ -2,8 +2,6 @@
 #include "Response.hpp"
 #include "Utils.hpp"
 
-// Private Members
-
 // inits this->_ports
 void SocketHandler::_initPorts()
 {
@@ -141,7 +139,6 @@ void SocketHandler::setNoSigpipe(int fd)
 {
 	int val = 1;
 	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, 4);
-	// setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, 4); // just for testing!!!!!
 }
 
 void SocketHandler::addSocket(int fd)
@@ -161,9 +158,8 @@ int SocketHandler::getEvents()
 	#ifdef SHOW_LOG
 		std::cout << "num clients: " << _clients.size() << std::endl;
 	#endif
-	// memset(this->_evList, 0, sizeof(this->_evList)); // just for testing!!!!!!
-	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, &timeout); // use this for final working version
-	// int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, NULL); // use this only for testing !!!!!!
+	// memset(this->_evList, 0, sizeof(this->_evList));
+	int numEvents = kevent(this->_kq, this->_eventsChanges.data(), this->_eventsChanges.size(), this->_evList, MAX_EVENTS, &timeout);
 	#ifdef SHOW_LOG
 		std::stringstream debug;
 		if (numEvents > 0)
@@ -228,9 +224,8 @@ bool SocketHandler::readFromClient(int i)
 		int status = this->_getClient(fd);
 		if (status == -1)
 		{
-			close(fd); // !!!!! never close the connection without remove client
+			close(fd);
 			std::cerr << RED << "read Error getting client for fd: " << fd << std::endl;
-			// perror(NULL); // check if illegal
 			std::cerr << RESET;
 			return (false); // throw exception
 		}
@@ -251,9 +246,10 @@ bool SocketHandler::writeToClient(int i)
 		if (status == -1)
 		{
 			close(fd);
-			std::cerr << RED << "write Error getting client for fd: " << fd << std::endl;
-			// perror(NULL); // check if illegal
-			std::cerr << RESET;
+			#ifdef SHOW_LOG_SOCKETS
+				std::cerr << RED << "write Error getting client for fd: " << fd << std::endl;
+				std::cerr << RESET;
+			#endif
 			return (false); // throw exception
 		}
 		return (true);
@@ -368,18 +364,12 @@ SocketHandler::~SocketHandler()
 	#endif
 }
 
-// Overloaded Operators
-
-// Public Methods
-
 // Getter
 int SocketHandler::getFD(int i) const
 {
 	return (this->_evList[i].ident);
 }
 
-// be carefull with using this, if you put a bigger number than number of ports configured in the config file
-// it will give you the last port
 int SocketHandler::getPort(int i)
 {
 	std::set<int>::const_iterator it = this->_ports.begin();
@@ -391,8 +381,6 @@ int SocketHandler::getPort(int i)
 
 	return (*it);
 }
-
-// Setter
 
 // sets the timeout value of a client
 void SocketHandler::setTimeout(int clientFd)
@@ -415,19 +403,12 @@ void SocketHandler::setTimeout(int clientFd)
 void SocketHandler::setWriteable(int i)
 {
 	int fd = this->_evList[i].ident;
-	// this->setEvent(fd, EV_DELETE, EVFILT_READ);
 	this->setEvent(fd, EV_ADD, EVFILT_WRITE);
 
 	this->setNoSigpipe(fd);
 	this->setNonBlocking(fd);
 }
 
-/**
- * @brief adds events to the change list
- * @param ident fd of the client
- * @param flags event flag
- * @param filter event filter
- */
 void SocketHandler::setEvent(int ident, int flags, int filter)
 {
 	struct kevent ev;

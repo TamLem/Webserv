@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-//print string map
 void printMap(std::map<std::string, std::string> map)
 {
 	std::map<std::string, std::string>::iterator it = map.begin();
@@ -49,7 +48,6 @@ Cgi::Cgi(Request &request, ConfigStruct configStruct, FILE *infile):
 			_scriptName = _confStruct.cgi[extension];
 		}
 		_pathInfo = url;
-		// _pathTranslated = "." + _docRoot + _pathInfo.substr(1);
 		_pathTranslated = _pathInfo;
 	}
 	_queryString = request.getQuery().length() > 1 ? request.getQuery().substr(1) : "";
@@ -64,10 +62,9 @@ Cgi::~Cgi()
 	#endif
 }
 
-void Cgi::setEnv(Request &request) // think about changing this to return a const char **
+void Cgi::setEnv(Request &request)
 {
 	std::map<std::string, std::string> reqHeaders = request.getHeaderFields();
-	//print header fields
 	_env["REQUEST_METHOD"] = _method;
 	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_env["PATH_INFO"] = _pathInfo;
@@ -219,7 +216,7 @@ void Cgi::init_cgi(int client_fd, int cgi_out)
 				#endif
 			}
 			free_env(env);
-			exit(1); // throw internal server error if this occurs
+			exit(1);
 		}
 	}
 	cgi_exit(pid_timer, pid_cgi);
@@ -241,11 +238,6 @@ void Cgi::cgi_exit(int pid_timer, int pid_cgi)
 		throw std::runtime_error("error executing cgi");
 	}
 }
-
-// const char *Cgi::CgiExceptionNotFound::what() const throw()
-// {
-// 	return "400";
-// }
 
 const char *Cgi::ERROR_403::what() const throw()
 {

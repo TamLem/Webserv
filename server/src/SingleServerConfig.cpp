@@ -9,6 +9,9 @@ SingleServerConfig::SingleServerConfig(std::string config, ConfigStruct *conf): 
 	#ifdef SHOW_LOG_2
 		std::cout << "This content reached the SingleServerConfigConstructor:\n>" << BLUE << config << RESET << "<" << std::endl;
 	#endif
+	this->_autoIndexSet = false;
+	this->_cbbsSet = false;
+	this->_cmbsSet = false;
 	this->_setVariables(config);
 	this->_checkConfigStruct();
 }

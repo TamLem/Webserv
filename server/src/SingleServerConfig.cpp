@@ -110,9 +110,9 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 		throw SingleServerConfig::NoValueFoundException();
 	}
 
-	static bool autoIndexSet;
-	static bool cbbsSet;
-	static bool cmbsSet;
+	// static bool _autoIndexSet;
+	// static bool _cbbsSet;
+	// static bool _cmbsSet;
 
 	std::string key = keyValue.substr(0, keyValue.find_first_of(WHITESPACE));
 	std::string value = "";
@@ -198,13 +198,13 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (autoindex):
 	{
-		if (autoIndexSet == true)
+		if (_autoIndexSet == true)
 		{
 			std::cout << RED << keyValue << RESET << std::endl;
 			throw SingleServerConfig::DuplicateAutoIndexException();
 		}
 		else
-			autoIndexSet = true;
+			_autoIndexSet = true;
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -239,13 +239,13 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (client_body_buffer_size):
 	{
-		if (cbbsSet == true)
+		if (_cbbsSet == true)
 		{
 			std::cout << RED << keyValue << RESET << std::endl;
 			throw SingleServerConfig::DuplicateCBBSException();
 		}
 		else
-			cbbsSet = true;
+			_cbbsSet = true;
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -263,13 +263,13 @@ void SingleServerConfig::_parseKeyValue(std::string keyValue)
 
 	case (client_max_body_size):
 	{
-		if (cmbsSet == true)
+		if (_cmbsSet == true)
 		{
 			std::cout << RED << keyValue << RESET << std::endl;
 			throw SingleServerConfig::DuplicateCMBSException();
 		}
 		else
-			cmbsSet = true;
+			_cmbsSet = true;
 		if (keyValue.find_first_of(WHITESPACE) != keyValue.find_last_of(WHITESPACE))
 		{
 			std::cout << RED << keyValue << std::endl;
@@ -1008,7 +1008,7 @@ const char* SingleServerConfig::DuplicateAutoIndexException::what(void) const th
 
 const char* SingleServerConfig::DuplicateIndexPageException::what(void) const throw()
 {
-	return ("↑↑↑ duplicate, autoindex is already set up");
+	return ("↑↑↑ duplicate, index_page is already set up");
 }
 
 const char* SingleServerConfig::DuplicateCBBSException::what(void) const throw()

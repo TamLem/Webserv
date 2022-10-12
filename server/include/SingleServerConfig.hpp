@@ -28,6 +28,10 @@ class SingleServerConfig
 	// private Members
 		ConfigStruct *_conf;
 
+		bool _autoIndexSet;
+		bool _cbbsSet;
+		bool _cmbsSet;
+
 	// Private Methods
 		void _checkConfigStruct();
 		void _setVariables(std::string config);

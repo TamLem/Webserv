@@ -224,8 +224,10 @@ bool SocketHandler::readFromClient(int i)
 		if (status == -1)
 		{
 			close(fd);
+			#ifdef SHOW_LOG_SOCKET
 			std::cerr << RED << "read Error getting client for fd: " << fd << std::endl;
 			std::cerr << RESET;
+			#endif
 			return (false);
 		}
 		return (true);

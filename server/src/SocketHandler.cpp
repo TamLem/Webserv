@@ -241,11 +241,13 @@ bool SocketHandler::readFromClient(int i)
 		int status = this->_getClient(fd);
 		if (status == -1)
 		{
-			close(fd); // !!!!! never close the connection without remove client
+			close(fd);
+			#ifdef SHOW_LOG_SOCKET
 			std::cerr << RED << "read Error getting client for fd: " << fd << std::endl;
 			// perror(NULL); // check if illegal
 			std::cerr << RESET;
-			return (false); // throw exception
+			#endif
+			return (false);
 		}
 		return (true);
 	}

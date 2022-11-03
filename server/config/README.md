@@ -97,4 +97,4 @@ This enables you to setup custom error pages for all the error pages where you d
 `error_page 404 /server/data/pages/404.html`
 ```
 
-[back to the main README](https://github.com/TamLem/Webserv/README.md)
+[back to the main README](https://github.com/TamLem/Webserv#webserv---an-http-web-server)

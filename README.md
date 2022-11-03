@@ -66,7 +66,7 @@ Use ```make run``` to run the server with the [default configuration](/server/co
 ```
 ./webserv server/config/test.conf
 ```
-For how to setup the config-file checkout the [config README](/server/config/README.md)
+For how to setup the config-file checkout the [config README](/server/config/README.md) and the [example config with explanations](/server/config/www.conf).
 
 ## Tester
 Inside the directory [ourTester](/ourTester) you are able to find our own tester that we created to test our project with.<br>

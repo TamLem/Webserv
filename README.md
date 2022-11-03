@@ -1,6 +1,6 @@
-# webserv - An HTTP Web Server
+# webserv - A HTTP Web Server
 
-This is an implementation of an HTTP Web Server, in **C++98** using **C** socket libraries<br>
+This is an implementation of a HTTP Web Server, in **C++98** using **C** socket libraries<br>
 and our solution for the webserv project of the 42 Core Curriculum.
 
 

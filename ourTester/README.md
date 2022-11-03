@@ -1,9 +1,14 @@
-Use through makefile of webserv project.
+# Tester
 
-```make tester``` (initializes filesystem permisions for testing, creates tester executable "testserv" and makes webserv with corresponding config)
+You can use this tester through the makefile of our webserv project.<br>
 
-```make rmtester``` to cleanup (reverting filesystem permission changes and removes tester executable "testerv")
+With `make tester` you can initialize the filesystem permisions for testing (it runs the [init.sh](https://github.com/TamLem/Webserv/ourTester/init.sh)), create the tester executable `testserv`, makes and starts our webserv with corresponding config file.<br>
 
-to execute: ```./testserv```
+⚠️ AFTER TESTING USE `make rmtester`, otherwise some of the filesystem can't be accessed anymore.⚠️<br>
+`make rmtester` will cleanup by reverting filesystem permission and removes tester executable `testerv` after you are done testing (it runs the [revert.sh](https://github.com/TamLem/Webserv/ourTester/revert.sh)).<br>
 
-AFTER TESTING USE ```make rmtester```, otherwise some of the filesystem can't be added to git
+
+In the output of the tester you can see which test comes from which line of code so it is easier to find out which test resulted in what.<br>
+These tests could be extended as far as you like, since it is quite self-explanatory.<br>
+
+[back to the main README](https://github.com/TamLem/Webserv/README.md)

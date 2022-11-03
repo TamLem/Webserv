@@ -1,14 +1,16 @@
 # webserv - A HTTP Web Server
 
 This is an implementation of a HTTP Web Server, in **C++98** using **C** socket libraries<br>
-and our solution for the webserv project of the 42 Core Curriculum.
+and our solution for the webserv project of the 42 Core Curriculum. The project is<br>
+the result of the colaboration between  [tblaase](https://github.com/tblaase), [TamLem](https://github.com/TamLem) and [aenglert](https://github.com/aenglert42).
 
 
 # Contents
-- [Features](https://github.com/TamLem/Webserv#features)
-- [Basics](https://github.com/TamLem/Webserv#Basics)
-- [Config File](https://github.com/TamLem/Webserv#config-file)
-- [Tester](https://github.com/TamLem/Webserv#tester)
+- [Features](#features)
+- [Basics](#basics)
+- [Config File](#config-file)
+- [How to launch](#how-to-launch)
+- [Tester](#tester)
 
 
 ## Features
@@ -54,11 +56,21 @@ Also you are able to setup multiple (virtual) servers in the same config file.<b
 This will lead the webserver to be able to run multiple configs at the same time and applying them depending on which host was called in the request.<br>
 
 
-[here](https://github.com/TamLem/Webserv/blob/master/server/config/www.conf) you can find an example config with explanations, or check [this README](https://github.com/TamLem/Webserv/blob/master/server/config/README.md), which explains our config-file in-depth.<br>
+[here](/server/config/www.conf) you can find an example config with explanations, or check [this README](/server/config/README.md), which explains our config-file in-depth.<br>
+
+## How to launch
+Compile the program via the Makefile by using ```make``` in the root directory of the repository.
+
+Use ```make run``` to run the server with the [default configuration](/server/config/test.conf) or execute the program with the path to a config-file as argument (in this case the file "test.conf" within the directory "server/config/"):
+
+```
+./webserv server/config/test.conf
+```
+For how to setup the config-file checkout the [config README](/server/config/README.md)
 
 ## Tester
-Inside the directory [ourTester](https://github.com/TamLem/Webserv/tree/master/ourTester) you are able to find our own tester that we created to test our project with.<br>
+Inside the directory [ourTester](/ourTester) you are able to find our own tester that we created to test our project with.<br>
 For some tests it uses a custom client (also written in c++ and c) and for some tests it uses curl.<br>
-For more information on how to use it check [this README](https://github.com/TamLem/Webserv/blob/master/ourTester/README.md) of the tester.<br>
+For more information on how to use it check [this README](/ourTester/README.md) of the tester.<br>
 
 

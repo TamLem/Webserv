@@ -9,7 +9,7 @@ Comments can be initialised by either a `#`  or a `;` and will set everything be
 
 
 This is how you can set up the ports inside a server-block.<br>
-There can be multiple ports for one server and the same ports can be used by different servers.<br>
+There can be multiple ports in one server-block and the same ports can be used in different servers-blocks.<br>
 
 ```
 listen 8080

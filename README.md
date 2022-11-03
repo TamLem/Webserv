@@ -54,11 +54,11 @@ Also you are able to setup multiple servers in the same config file.<br>
 This will lead the webserver to be able to run multiple configs at the same time and applying them depending on which host was called in the request.<br>
 
 
-[here](https://github.com/TamLem/Webserv/server/config/www.conf) you can find an example config with explanations, or check [this README](https://github.com/TamLem/Webserv/server/config/README.md), which explains our config-file in-depth.<br>
+[here](https://github.com/TamLem/Webserv/blob/master/server/config/www.conf) you can find an example config with explanations, or check [this README](https://github.com/TamLem/Webserv/blob/master/server/config/README.md), which explains our config-file in-depth.<br>
 
 ## Tester
-Inside the directory [ourTester]() you are able to find our own tester that we created to test our project with.<br>
+Inside the directory [ourTester](https://github.com/TamLem/Webserv/tree/master/ourTester) you are able to find our own tester that we created to test our project with.<br>
 For some tests it uses a custom client (also written in c++ and c) and for some tests it uses curl.<br>
-For more information on how to use it check [this README](https://github.com/TamLem/Webserv/ourTester/README.md) of the tester.<br>
+For more information on how to use it check [this README](https://github.com/TamLem/Webserv/blob/master/ourTester/README.md) of the tester.<br>
 
 

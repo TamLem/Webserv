@@ -2,18 +2,18 @@
 All key value pairs/triples have to be contained within the same line and have to be seperated by nothing else than one whitespace character, either ` ` or `\t`<br>
 
 Those are all the options:
-- [server](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#server)
-- [listen](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#listen)
-- [root](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#root)
-- [server_name](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#server_name)
-- [autoindex](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#autoindex)
-- [index_page](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#index_page)
-- [client_max_body_buffer_size](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#client_max_body_buffer_size)
-- [client_max_body_size](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#client_max_body_size)
-- [cgi](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#cgi)
-- [cgi_bin](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#cgi_bin)
-- [location](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#location)
-- [error_page](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#error_page)
+- [server](#server)
+- [listen](#listen)
+- [root](#root)
+- [server_name](#server_name)
+- [autoindex](#autoindex)
+- [index_page](#index_page)
+- [client_body_buffer_size](#client_body_buffer_size)
+- [client_max_body_size](#client_max_body_size)
+- [cgi](#cgi)
+- [cgi_bin](#cgi_bin)
+- [location](#location)
+- [error_page](#error_page)
 
 
 ## server
@@ -122,5 +122,5 @@ This enables you to setup custom error pages for all the error pages where you d
 ```
 `error_page 404 /server/data/pages/404.html`
 ```
-[back to the top](https://github.com/TamLem/Webserv/blob/master/server/config/README.md#explanations-on-how-to-use-our-config-file)<br>
-[back to the main README](https://github.com/TamLem/Webserv#webserv---an-http-web-server)
+[back to the top](#explanations-on-how-to-use-our-config-file)<br>
+[back to the main README](/README.md)

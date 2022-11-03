@@ -22,7 +22,7 @@ and our solution for the webserv project of the 42 Core Curriculum.
 
 
 ## Basics
-In this project we were challanged to create a webserver with quite a few functionalities that complies to the HTTP/1.1 standard.<br>
+In this project we were challanged to create a webserver with quite a few functionalities that complies with the HTTP/1.1 standard.<br>
 This, on its  own is already a challenge when you started coding only 1.5 years ago.<br>
 But to challange us even more we had to mainly use c++98 + and some c functions for alll the cases c++98 has no alternative like sockets and directory handling.<br>
 First challenge was to have a config file that has a lot of functionalities and works kinda like a config file for [nginx](https://www.nginx.com/resources/wiki/start/topics/examples/full/).<br>
@@ -33,7 +33,7 @@ One big and also complicated part was the implementation of chunked requests, be
 For our multiplexing we used kqueue, this enabled us to get the events (i.e. client connect, client send a request) directly from the kernel.<br>
 For this reason our webserv is only running on macOS, since kqueue is not implemented in linux.<br>
 The implementation of CGI's was a big part of the work too. On our webserv you can have as many cgi-extensions working as you like, as long as the cgi-executable is supplied.<br>
-And last but not least we had to make sure our webserv never crashes and gives back appropriate error codes if something gous wrong.<br>
+And last but not least we had to make sure our webserv never crashes and gives back appropriate error codes if something goes wrong.<br>
 
 
 ## Config File
@@ -42,7 +42,7 @@ Theses following variables can be set inside the config file:<br>
 - mutliple ports
 - turn on/off automatic directory listing
 - setup of an index file (server-wide and directory specific)
-- redirections for
+- routing for
   - certain directories
   - certain file-extensions
 - allowing methods for certain directories/file-extensions
@@ -50,7 +50,7 @@ Theses following variables can be set inside the config file:<br>
 - setup of max_client_body_size (max number of bytes allowed in a single file/chunk)
 
 
-Also you are able to setup multiple servers in the same config file.<br>
+Also you are able to setup multiple (virtual) servers in the same config file.<br>
 This will lead the webserver to be able to run multiple configs at the same time and applying them depending on which host was called in the request.<br>
 
 
